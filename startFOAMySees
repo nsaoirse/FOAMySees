@@ -1,0 +1,134 @@
+#!/bin/sh
+
+rm -rf OldRuns;
+
+mv -f ./Run OldRuns; mkdir ./Run
+
+cp -r ./ProgramFiles/FOAMySees/* ./Run          
+
+cd ./Run/
+
+inputFilesLocation="../../src"
+NPROC=40 #default number of processors, in case this isn't specified in the json file
+
+
+# this might need to be an input (to the bash script, I mean...)
+HydrojsonFile="input.json"
+
+# pretty sure you can change this, but why would you?
+nameOfCoupledPatchOrSurfaceFile="interface"
+
+
+# these are easy to change without messing things up 
+OpenFOAMSolver="olaFlow"
+OpenFOAMFileHandler="collated"
+
+
+
+
+# don't change any of this unless you feel like debugging
+parallel=1	# this is a flag, which I don't use
+solverroot="./"	# where all the magic happens
+Participant1="OpenFOAMCase"	# the name of the openfoam case folder with which the structural analysis solution is coupled
+Participant2="FOAMySeesCouplingDriver"	# the name of the python script holding the coupling driver for the structural analysis solver
+configfile="precice-config.xml"	# name of the preCICE case configuration file (this is automatically generated for you, depending on your settings)
+CouplingDataProjectionMesh="CouplingDataProjectionMesh.obj" # this is the name of the file which will be loaded into the coupling driver as the coupling data projection mesh -
+makeCouplingDataProjectionMesh=1	# the file can be generated automatically, using the name of the coupled patch specified above under nameOfCoupledPatchOrSurfaceFile
+OpenSeesPyModelFile=OpenSeesModel.py # this is the name of the OpenSees model python file which will construct the coupled OpenSees model. 
+# This file can contain preliminary analyses, but the time series and pattern objects should be removed before a FSI analysis
+OpenFOAMCaseFolder="OpenFOAMCase" # this is the name of the folder within which the OpenFOAM case will be held
+isPartOfHydro="Yes" # is this analysis run through HydroUQ?
+
+useExistingOpenFOAMCaseFolder=0 # flag (unused at the moment)
+
+ExistingOpenFOAMCase="../existingCase" # similarly, unused at the moment
+
+
+
+
+# preparing the case folder
+rm -rf RunCase
+mkdir RunCase
+
+# entering the case folder
+cd RunCase
+cp -r ../FOAMySeesFiles/* .
+cp -r ${ExistingOpenFOAMCase}/* ./OpenFOAMCase
+# mv fromUserDefaults/* ./
+cp -r ${inputFilesLocation}/* ./
+
+# echo determining parallel processing parameters...
+. $WM_PROJECT_DIR/bin/tools/RunFunctions    # Tutorial run functions
+
+
+# configuring the case
+python3 configureCoupledCase.py ${isPartOfHydro} ${HydrojsonFile} ${nameOfCoupledPatchOrSurfaceFile} ${CouplingDataProjectionMesh} ${makeCouplingDataProjectionMesh} ${OpenSeesPyModelFile} ${OpenFOAMCaseFolder} ${OpenFOAMSolver} ${NPROC} ${OpenFOAMFileHandler} ${useExistingOpenFOAMCaseFolder} ${ExistingOpenFOAMCase}
+
+# starting the OpenSees model preliminary analysis and waiting for coupling to initialize
+echo "Starting ${Participant2} participant..."
+mpirun -np 1 python3 ${solverroot}${Participant2}.py ${solverroot}${configfile} ${CouplingDataProjectionMesh} > ${Participant2}.log 2>&1 &
+PIDParticipant2=$!        
+
+# starting the OpenFOAM model
+echo "Preparing the ${Participant1} participant..."
+cd ${OpenFOAMCaseFolder}
+        nproc=$(getNumberOfProcessors)
+        Solver1=$(getApplication)    # solver
+cd ..
+
+surfaceMeshExtract -case ${OpenFOAMCaseFolder} -patches ${nameOfCoupledPatchOrSurfaceFile} -latestTime ${CouplingDataProjectionMesh}
+cp ${OpenFOAMCaseFolder}/${CouplingDataProjectionMesh} .
+decomposePar -force -fileHandler ${OpenFOAMFileHandler} -case ${OpenFOAMCaseFolder} > decomposePar.log 2>&1 &
+mpirun -np ${nproc} ${Solver1} -parallel -fileHandler ${OpenFOAMFileHandler} -case ${OpenFOAMCaseFolder} > ${Participant1}.log 2>&1 &
+PIDParticipant1=$!
+
+# tailing the OpenSees output (OpenFOAM is verbose)
+tail -f ${Participant2}.log &
+tail -f ${Participant1}.log &
+
+# waiting for input to cancel
+while [ -e /proc/${PIDParticipant1} ]; do
+    read -r  input
+    if [ "$input" = "c" ]; then
+        kill ${PIDParticipant1}
+        kill ${PIDParticipant2}
+        false
+    fi
+done
+
+# if anything went wrong, do this
+if [ $? -ne 0 ] || [ "$(grep -c -E "error:" ${Participant1}.log)" -ne 0 ] || [ "$(grep -c -E "error:" ${Participant2}.log)" -ne 0 ]; then
+    echo ""
+    echo "Something went wrong... See the log files for more."
+    # Precaution
+    kill ${PIDParticipant1}
+    kill ${PIDParticipant2}
+else # nothing went wrong, but double check to make sure
+    echo ""
+    echo "The simulation seems to be complete, but make sure by looking at the log files and output!"
+    if [ $parallel -eq 1 ]; then
+        echo "Reconstructing fields..."
+        reconstructPar -case ${Participant1} > ${Participant1}_reconstructPar.log 2>&1 & 
+    fi
+        wait 
+        foamToVTK -case ${PIDParticipant1}
+        wait
+        
+        python3 FSIPVD.py
+        python3 FOAMySeesPlotter.py
+        wait
+        mkdir results
+        cp -r SeesOutput results
+        cp -r OpenSeesOutput.pvd results
+        cp -r ${PIDParticipant1}/VTK results
+        cp -r ${PIDParticipant1}/postProcessing results        
+        zip -r ../results.zip results
+
+fi
+
+echo ""
+
+cd ..
+
+echo 'Analysis Complete, results stored in results.zip'
+
