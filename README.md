@@ -66,16 +66,21 @@ pip3 install openseespy
 pip3 install pyprecice
 
 # Author
-This code was developed by Nicolette S. Lewis, PhD, at the University of Washington, from 2021 to 2023. For specific questions, please email me. 
+This code was developed by Nicolette S. Lewis, PhD, at the University of Washington, from 2021 to 2023. For specific questions, please email me.  
 
 # Legal Disclaimer
-By using this code, you agree that the author, NHERI, the NHERI SimCenter, the Univeristy of Washington, and all others associated with this research assume no responsibility for the accuracy of models coupled with this tool, or the purposes for which any model with this tool was utilized. Any person or person(s) conducting simulations with this code holds responsibility for ensuring that their solution is physically correct. 
+By using this code, you agree that the author, Nicolette S. Lewis, NHERI, the NHERI SimCenter, the University of Washington, and all others associated with this research assume no responsibility for results obtained with this tool or the applications of such results. Please 
 
-More specifically, and more clearly, for anyone not well-versed in what the above means: what you do with this code is up to you, and as such, the consequences of what you do with this code rest solely on you. 
+As always, the person, person(s), or otherwise conducting simulations or calculations with this code holds responsibility for ensuring that their solution is physically correct. 
 
-Due to the large possibility of errors in modelling complicated coupled systems, any engineering design, analysis result, parametric study, academic or commercial finding, application, future application, or otherwise obtained utilizing this code or one of its derivatives is the sole responsibility of the person who constructed and ran the analysis using this code. 
+The code as-is was intended to be used specifically for investigating the resilience of civil engineering structures when subject to flows resembling those of natural hazards, such as floods, tsunamis, windstorms, and otherwise. Any use of the code beyond these applications is not verified, and as such caution must be taken when utilizing these procedures in cases not investigated within the doctoral thesis for which the code originally was developed and tested. 
 
+Please do not use this code as the only means of analysis for a given problem. Any design or conclusion originating from analyses conducted with this code should be validated through independent hand calculations, an alternative software (preferably something validated), or should be subject to rigorous investigation by experts of a given problem of interest. 
+Due to the large possibility of errors in modelling complicated coupled systems, it is imperative that independent analyses are conducted to ensure that the results obtained from analyses with the offered code are accurate or reasonable. Any findings or otherwise obtained utilizing this code or one of its derivatives is the sole responsibility of the person who constructed and ran the analysis from which such findings were obtained. 
+
+**More specifically, and more clearly, for anyone not well-versed in what the above means: what the user does with this code is up to them, and as such, the consequences of what the user does with this code rest solely on the user, and the user alone. **
+**
 This code is offered AS-IS at the time of completion of my Doctoral Disseration, December 15th, 2023. I make no assurances that this code will work for future versions of preCICE, OpenSees, or OpenFOAM, but I will try my best to keep this alive as long as I can. Feel free to take this research and do other things with it, including update it for future versions of preCICE, OpenFOAM, or OpenSees.
-
+**
 # Acknowlegdments
 The work which led to development of this tool was funded by the National Science Foundation (NSF) and Joy Pauschke (program manager) through Grants CMMI-1726326, CMMI-1933184, and CMMI-2131111. Thank you to NHERI Computational Modeling and Simulation Center (SimCenter), as well as their developers, funding sources, and staff for their continued support. It was a great experience to work with the SimCenter to implement this tool allowing for partitioned coupling of OpenSees and OpenFOAM as part of a digital-twin module within the NHERI SimCenter Hydro-UQ framework. Much of the development work of the research tool presented was conducted using University of Washington's HYAK Supercomputing resources. Thank you to UW HYAK and to the support staff of the UW HPC resources for their maintenance of the supercomputer cluster and for offering a stable platform for HPC development and computation, as well as for all of the great support over the last few years.  
