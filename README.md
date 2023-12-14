@@ -3,6 +3,41 @@ First public release of Python+preCICE-based coupling driver for OpenSees models
 
 Note: I intend to add more example cases, as they are created. Let me know if you are trying something different than what is provided here and I can maybe help figure it out. 
 
+#Dependencies
+Python 3.7 or higher
+OpenFOAM (any version which can be used with preCICE)
+preCICE v2.5.0 (if you change this version, you will need to modify the FOAMySeesCouplingDriver.py file to change the Python language bindings. I think the functions change from preCICE v2.5 to preCICE v3.0. I have not incorporated the v3.0 bindings into the coupling driver yet.)
+Python packages: (install with pip)
+# pip3 install os
+# pip3 install concurrent.futures
+# pip3 install logging
+# pip3 install queue
+# pip3 install random
+# pip3 install subprocess
+# pip3 install time
+# pip3 install argparse
+# pip3 install copy
+# pip3 install sys
+
+# ## math and matrices
+# pip3 install numpy 
+# pip3 install pandas
+# pip3 install re, csv
+# pip3 install math
+
+# ### meshes and visualization
+# pip3 install meshio
+# pip3 install matplotlib
+# pip3 install scipy
+# pip3 install vtk
+# pip3 install pyvista 
+
+# ## openseespy
+# pip3 install openseespy.opensees 
+
+# ## precice
+# pip3 install pyprecice
+
 #Author
 This code was developed by Nicolette S. Lewis, PhD, at the University of Washington, from 2021 to 2023. For specific questions, please email me. 
 
