@@ -5,8 +5,13 @@ Note: I intend to add more example cases, as they are created. Let me know if yo
 
 # Dependencies
 Python 3.7 or higher
+
 OpenFOAM (any version which can be used with preCICE)
+
 preCICE v2.5.0 (if you change this version, you will need to modify the FOAMySeesCouplingDriver.py file to change the Python language bindings. I think the functions change from preCICE v2.5 to preCICE v3.0. I have not incorporated the v3.0 bindings into the coupling driver yet.)
+
+OpenSeesPy 
+
 # Required Python packages: (install with pip)
 pip3 install os
 
