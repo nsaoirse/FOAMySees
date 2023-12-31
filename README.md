@@ -12,7 +12,7 @@ preCICE v2.5.0 (if you use a different version, you will need to modify the FOAM
 
 OpenSeesPy 
 
-# Required Python packages: (install with pip)
+# Required Python packages: (install with pip, will install automatically with provided bash installation script)
 
 os
 concurrent.futures
@@ -65,3 +65,29 @@ This code is offered AS-IS. I make no assurances that this code will work for fu
 
 # Acknowlegdments
 The work which led to development of this tool was funded by the National Science Foundation (NSF) and Joy Pauschke (program manager) through Grants CMMI-1726326, CMMI-1933184, and CMMI-2131111. Thank you to NHERI Computational Modeling and Simulation Center (SimCenter), as well as their developers, funding sources, and staff for their continued support. It was a great experience to work with the SimCenter to implement this tool allowing for partitioned coupling of OpenSees and OpenFOAM as part of a digital-twin module within the NHERI SimCenter Hydro-UQ framework. Much of the development work of the research tool presented was conducted using University of Washington's HYAK Supercomputing resources. Thank you to UW HYAK and to the support staff of the UW HPC resources for their maintenance of the supercomputer cluster and for offering a stable platform for HPC development and computation, as well as for all of the great support over the last few years.  
+
+
+# Instructions
+Download the Github repository
+
+navigate to the folder containing the repository files and the 'installFOAMySees' file 
+
+run 'chmod u+x installFOAMySees; ./installFOAMySees' within the repository directory 
+
+If successful:
+startFOAMySees should be available as a command after running the installation script
+
+In order to run a case, you will need an OpenFOAM case folder, and an OpenSees model
+
+Some example cases are provided. 
+
+One could modify these cases to perform various types of analysis. 
+
+Alternatively, https://precice.org/adapter-openfoam-config.html#fsi
+Configure your OpenFOAM case according to the above link. 
+
+The controlDict, preciceDict, and precice-config.xml files will be automatically generated for your case depending on the settings you have chosen.
+
+The boundary conditions will need to be modified automatically, within the 0.org folder of the OpenFOAM case with which you would like to run a case. 
+
+
