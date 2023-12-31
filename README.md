@@ -13,6 +13,7 @@ preCICE v2.5.0 (if you use a different version, you will need to modify the FOAM
 OpenSeesPy 
 
 # Required Python packages: (install with pip)
+
 os
 concurrent.futures
 logging
@@ -25,6 +26,7 @@ copy
 sys
 
 #math and matrices
+
 numpy 
 pandas
 re
@@ -32,6 +34,7 @@ csv
 math
 
 #meshes and visualization
+
 meshio
 matplotlib
 scipy
@@ -39,9 +42,11 @@ vtk
 pyvista 
 
 #openseespy
+
 openseespy 
 
 #precice
+
 pyprecice
 
 # Author
