@@ -8,7 +8,7 @@ Python 3.7 or higher
 
 OpenFOAM (any version which can be used with preCICE)
 
-preCICE v2.5.0 (if you change this version, you will need to modify the FOAMySeesCouplingDriver.py file to change the Python language bindings. I think the functions change from preCICE v2.5 to preCICE v3.0. I have not incorporated the v3.0 bindings into the coupling driver yet.)
+preCICE v2.5.0 (if you use a different version, you will need to modify the FOAMySeesCouplingDriver.py file to change the Python language bindings. I think the functions change from preCICE v2.5 to preCICE v3.0. I have not incorporated the v3.0 bindings into the coupling driver yet. Seems like the code will work with v2.4 as well, but 2.5 is recommended)
 
 OpenSeesPy 
 
