@@ -30,7 +30,9 @@ If successful:
 as well as other aliases:
 >> createFOAMySeesInputFiles - which will copy files necessary to start a coupled analysis with FOAMySees to the current directory
 
-# Running the Code
+# # Running the Code
+
+# Examples
 
 Some example cases are provided. 
 
@@ -44,35 +46,44 @@ cd FOAMySeesExampleCases/FixedFixedBeam
 startFOAMySees
 )
 
-
-
-
-Alternatively, https://precice.org/adapter-openfoam-config.html#fsi
-Configure your OpenFOAM case according to the above link. 
-
-The controlDict, preciceDict, and precice-config.xml files will be automatically generated for your case depending on the settings you have chosen.
-
-The boundary conditions will need to be modified automatically, within the 0.org folder of the OpenFOAM case with which you would like to run a case. 
-
-
+______________________________________
+# Making your own case
 
 Navigate to your analysis directory
 In order to run a case, you will need an OpenFOAM case folder, and an OpenSees model
 
-If you haven't done so, create an OpenFOAM model.
+**OpenFOAM Case Folder**
 
+If you haven't done so, create an OpenFOAM model, or find a model with which to couple a structure. There are plenty in the OpenFOAM tutorials directory which could be modified!
+The boundary conditions of the OpenFOAM will need to be modified manually, within the 0.org folder of the OpenFOAM case with which you would like to run a case. 
+Configure your OpenFOAM case according to the preCICE guidelines.   https://precice.org/adapter-openfoam-config.html#fsi 
+The controlDict, preciceDict, and precice-config.xml files will be automatically generated for your case depending on the settings you have chosen by the FOAMySees code.
 
-Put these into a new folder alone, and run 'createFOAMySeesInputFiles
+**OpenSees Model**
 
-Currently, the inputs to an analysis are managed through two additional files placed in a folder along with the case files.
+Construct an OpenSees model geometrically near, or within the volume of, the coupled surface of the OpenFOAM model.
+
+**Running a Coupled Case**
+
+Put the OpenFOAM Case folder and OpenSees Model into a new folder alone, and run 'createFOAMySeesInputFiles' within that folder. Two files should be generated,
+
 These files are:
-
-> caseSetup.sh
-
+**caseSetup.sh**
 and
-
-> coupledAnalysisSettings.py
+**coupledAnalysisSettings.py**
 ______________
+
+Currently, the inputs to an analysis are managed through these two additional files placed in a folder along with the case files.
+
+Modify the settings in both files, caseSetup.sh, and coupledAnalysisSettings.py
+______
+Run 'startFOAMySees'
+
+
+---------------------------------------
+
+
+
 
 # Dependencies
 Python 3 (3.6 or higher, likely)
