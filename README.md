@@ -26,9 +26,9 @@ chmod u+x installFOAMySees; ./installFOAMySees
 within the repository directory 
 
 If successful:
->> startFOAMySees should be available as an alias command after running the installation script
+**startFOAMySees** should be available as an alias command after running the installation script
 as well as other aliases:
->> createFOAMySeesInputFiles - which will copy files necessary to start a coupled analysis with FOAMySees to the current directory
+**createFOAMySeesInputFiles** - which will copy files necessary to start a coupled analysis with FOAMySees to the current directory
 
 # # Running the Code
 
