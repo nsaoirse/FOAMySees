@@ -26,14 +26,26 @@ chmod u+x installFOAMySees; ./installFOAMySees
 within the repository directory 
 
 If successful:
-startFOAMySees should be available as a command after running the installation script
-createFOAMySeesInputFiles will copy files necessary to start a coupled analysis with FOAMySees to the current directory
+>> startFOAMySees should be available as an alias command after running the installation script
+as well as other aliases:
+>> createFOAMySeesInputFiles - which will copy files necessary to start a coupled analysis with FOAMySees to the current directory
 
+# Running the Code
 
-In order to run a case, you will need an OpenFOAM case folder, and an OpenSees model
 Some example cases are provided. 
 
 One could modify these cases to perform various types of analysis. 
+
+Running the command 'startFOAMySees' will initialize the cases within the provided Examples folder.
+
+Navigate to the case directory and submit 'startFOAMySees' into the terminal
+(e.g. 
+cd FOAMySeesExampleCases/FixedFixedBeam
+startFOAMySees
+)
+
+
+
 
 Alternatively, https://precice.org/adapter-openfoam-config.html#fsi
 Configure your OpenFOAM case according to the above link. 
@@ -41,6 +53,16 @@ Configure your OpenFOAM case according to the above link.
 The controlDict, preciceDict, and precice-config.xml files will be automatically generated for your case depending on the settings you have chosen.
 
 The boundary conditions will need to be modified automatically, within the 0.org folder of the OpenFOAM case with which you would like to run a case. 
+
+
+
+Navigate to your analysis directory
+In order to run a case, you will need an OpenFOAM case folder, and an OpenSees model
+
+If you haven't done so, create an OpenFOAM model.
+
+
+Put these into a new folder alone, and run 'createFOAMySeesInputFiles
 
 Currently, the inputs to an analysis are managed through two additional files placed in a folder along with the case files.
 These files are:
