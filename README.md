@@ -3,8 +3,57 @@ First public release of Python+preCICE-based coupling driver for OpenSees models
 
 I intend to add example cases, as they are created. Let me know if you are trying something different than what is provided here and I can maybe help figure it out. 
 
+
+
+# Installation Instructions
+Download the Github repository to somewhere you'd like it to stay. 
+The files within the repository are largely Python and bash files which will construct a coupled analysis case, depending on the inputs to the program provided. (the files are needed for case setup, and this directory is added to your user .bashrc profile, as well as a few aliases)
+
+cd {folder where you're keeping the source files }
+git clone thisrepo
+unzip FOAMySees-main.zip
+
+navigate to the folder containing the repository files and the 'installFOAMySees' file 
+
+cd FOAMySees-main/
+
+run the installation bash script, which modifies your .bashrc file (doesn't do much else)
+
+./installFOAMySees
+
+If you don't have permission, run
+chmod u+x installFOAMySees; ./installFOAMySees
+within the repository directory 
+
+If successful:
+startFOAMySees should be available as a command after running the installation script
+createFOAMySeesInputFiles will copy files necessary to start a coupled analysis with FOAMySees to the current directory
+
+
+In order to run a case, you will need an OpenFOAM case folder, and an OpenSees model
+Some example cases are provided. 
+
+One could modify these cases to perform various types of analysis. 
+
+Alternatively, https://precice.org/adapter-openfoam-config.html#fsi
+Configure your OpenFOAM case according to the above link. 
+
+The controlDict, preciceDict, and precice-config.xml files will be automatically generated for your case depending on the settings you have chosen.
+
+The boundary conditions will need to be modified automatically, within the 0.org folder of the OpenFOAM case with which you would like to run a case. 
+
+Currently, the inputs to an analysis are managed through two additional files placed in a folder along with the case files.
+These files are:
+
+> caseSetup.sh
+
+and
+
+> coupledAnalysisSettings.py
+______________
+
 # Dependencies
-Python 3.7 or higher
+Python 3 (3.6 or higher, likely)
 
 OpenFOAM (any version which can be used with preCICE)
 
@@ -65,29 +114,5 @@ This code is offered AS-IS. I make no assurances that this code will work for fu
 
 # Acknowlegdments
 The work which led to development of this tool was funded by the National Science Foundation (NSF) and Joy Pauschke (program manager) through Grants CMMI-1726326, CMMI-1933184, and CMMI-2131111. Thank you to NHERI Computational Modeling and Simulation Center (SimCenter), as well as their developers, funding sources, and staff for their continued support. It was a great experience to work with the SimCenter to implement this tool allowing for partitioned coupling of OpenSees and OpenFOAM as part of a digital-twin module within the NHERI SimCenter Hydro-UQ framework. Much of the development work of the research tool presented was conducted using University of Washington's HYAK Supercomputing resources. Thank you to UW HYAK and to the support staff of the UW HPC resources for their maintenance of the supercomputer cluster and for offering a stable platform for HPC development and computation, as well as for all of the great support over the last few years.  
-
-
-# Instructions
-Download the Github repository
-
-navigate to the folder containing the repository files and the 'installFOAMySees' file 
-
-run 'chmod u+x installFOAMySees; ./installFOAMySees' within the repository directory 
-
-If successful:
-startFOAMySees should be available as a command after running the installation script
-
-In order to run a case, you will need an OpenFOAM case folder, and an OpenSees model
-
-Some example cases are provided. 
-
-One could modify these cases to perform various types of analysis. 
-
-Alternatively, https://precice.org/adapter-openfoam-config.html#fsi
-Configure your OpenFOAM case according to the above link. 
-
-The controlDict, preciceDict, and precice-config.xml files will be automatically generated for your case depending on the settings you have chosen.
-
-The boundary conditions will need to be modified automatically, within the 0.org folder of the OpenFOAM case with which you would like to run a case. 
 
 
