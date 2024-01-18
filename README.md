@@ -1,5 +1,5 @@
 # FOAMySees
-First public release of Python+preCICE-based coupling driver for OpenSees models. This tool was developed specifically for the purpose of coupled simulation of centerline-extruded finite element models of civil engineering structures constructed within the OpenSees framework through the OpenSeesPy and preCICE Python Language bindings. 
+First public release of Python+preCICE-based coupling driver for OpenSeesPy models. This tool was developed specifically for the purpose of coupled simulation of finite element models of civil engineering structures constructed within the OpenSees framework through the OpenSeesPy Package and preCICE Python Language bindings. 
 
 I intend to add example cases, as they are created. Let me know if you are trying something different than what is provided here and I can maybe help figure it out. 
 
