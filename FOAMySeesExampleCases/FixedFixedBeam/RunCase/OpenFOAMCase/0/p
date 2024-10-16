@@ -1,0 +1,58 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
+{
+
+	   interface
+    {
+        type           calculated;
+				value $internalField;
+    }
+sideB
+    {
+        type           empty;
+    }
+
+sideA
+    {
+        type             zeroGradient;
+		value $internalField;
+    }
+
+    lowerWall
+    {
+        type            zeroGradient;
+		value $internalField;
+    }
+
+    atmosphere
+    {
+        type            totalPressure;
+        U               U;
+        phi             phi;
+        rho             rho;
+        psi             none;
+        gamma           1;
+        p0              $internalField;
+        value           $internalField;
+    }
+
+    defaultFaces
+    {
+        type            zeroGradient;
+    }
+}
+
+// ************************************************************************* //
+

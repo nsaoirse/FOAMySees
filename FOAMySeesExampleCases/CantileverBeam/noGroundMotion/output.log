@@ -1,0 +1,207 @@
+fromUser
+This is the input files location, copying from there
+these are the inputs to the configuration file
+FYS_nameOfCoupledPatchOrSurfaceFile interface \n FYS_CouplingDataProjectionMesh CouplingDataProjectionMesh.obj \n FYS_makeCouplingDataProjectionMesh 1 \n FYS_OpenSeesPyModelFile OpenSeesModel.py \n FYS_OpenFOAMCaseFolder OpenFOAMCase \n FYS_OpenFOAMSolver interFoam \n FYS_Nprocessors 1 \n FYS_OpenFOAMFileHandler uncollated \n FYS_useExistingOpenFOAMCaseFolder 1 \n FYS_ExistingOpenFOAMCase Fluid \n FYS_numOpenSeesSubSteps 1 \n FYS_numOpenFOAMSubSteps 1 \n FYS_isPartOfHydro No \n FYS_HydrojsonFile none
+/home/vagrant/Desktop/FOAMySeesExampleCases/Walhorn/noGroundMotion/RunCase
+blockMesh meshing...
+  Preparing the mesh...
+preparing 0 folder...
+Setting the fields...
+OpenFOAM Domain built, Initial Conditions set
+CouplingDataProjectionMesh ['CouplingDataProjectionMesh.obj']
+OpenFOAMFileHandler ['uncollated']
+makeCouplingDataProjectionMesh [1]
+nameOfCoupledPatchOrSurfaceFile ['interface']
+writeOpenFOAMHere ['OpenFOAMCase']
+readOpenFOAMFromHere ['OpenFOAMCase']
+NPROCRUN [1]
+OpenSees Python Input Script:  ['OpenSeesModel.py']
+OFCaseExists [1]
+OpenFOAMSolver ['interFoam']
+number of OpenFOAM Steps Per Coupling Timestep:  [1]
+number of OpenSees Steps Per Coupling Timestep:  [1]
+copied input case files to RunCase directory
+Writing OpenFOAM decomposeParDict file
+Writing OpenFOAM preciceDict file
+name of coupled surface(s) : interface
+Building OpenSees Model
+OpenSeesModel.py
+Configuring preCICE
+implicitOrExplicit,outputDataFromCouplingIterations,couplingIterationOutputDataFrequency,couplingConvergenceTol,initialRelaxationFactor,couplingDataAccelerationMethod,mapType,SolutionDT,endTime,maximumCouplingIterations
+Explicit No 1000 0.005 0.1 IQN-ILS nearest-neighbor 0.0001 1 100
+Writing the precice config.xml file
+Building OpenFOAM Case
+Base of CFD mesh built
+Preparing the 0 time folder, Meshing the structure, Setting Fields
+Building SHM and Surface Feature Extract Dictionaries
+Structure Meshed, writing OpenFOAM Case Settings and functionObjects
+['0.006', '0.04', '-0']
+writing OpenFOAM controlDict
+                   %%%%%%%%%%%%% <<<<<<<<<<<<<<<<<<FOAMySEES CONFIGURED>>>>>>>>>>>>>>>>>> %%%%%%%%%%%%%                   
+Starting FOAMySeesCouplingDriver participant...
+Preparing the OpenFOAMCase participant...
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2112                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : _d44c8318-20220111 OPENFOAM=2112 version=2112
+Arch   : "LSB;label=32;scalar=64"
+Exec   : surfaceMeshExtract -case OpenFOAMCase -patches interface -latestTime CouplingDataProjectionMesh.obj
+Date   : Aug 09 2024
+Time   : 01:56:19
+Host   : precicevm
+PID    : 2953
+I/O    : uncollated
+Case   : /home/vagrant/Desktop/FOAMySeesExampleCases/Walhorn/noGroundMotion/RunCase/OpenFOAMCase
+nProcs : 1
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Overriding DebugSwitches according to controlDict
+    level (unregistered)
+    lduMatrix       2;
+
+    libs (unregistered)
+Overriding OptimisationSwitches according to controlDict
+    fileHandler (unregistered)
+    maxThreadFileBufferSize 5e+09;
+
+    maxMasterFileBufferSize 5e+09;
+
+Extracting surface from boundaryMesh ...
+
+Including all processor patches.
+
+Including patches (interface)
+
+Reading mesh from time 0
+Create polyMesh for time = 0
+
+Time [0] = 0
+surfZone 0 : interface
+Writing merged surface to "/home/vagrant/Desktop/FOAMySeesExampleCases/Walhorn/noGroundMotion/RunCase/OpenFOAMCase/CouplingDataProjectionMesh.obj"
+End
+
+starting coupled analysis
+analysis logs tailed
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2112                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : _d44c8318-20220111 OPENFOAM=2112 version=2112
+Arch   : "LSB;label=32;scalar=64"
+Exec   : interFoam -case OpenFOAMCase
+Date   : Aug 09 2024
+Time   : 01:56:20
+Host   : precicevm
+PID    : 2963
+I/O    : uncollated
+Case   : /home/vagrant/Desktop/FOAMySeesExampleCases/Walhorn/noGroundMotion/RunCase/OpenFOAMCase
+nProcs : 1
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Overriding DebugSwitches according to controlDict
+    level (unregistered)
+    lduMatrix       2;
+
+    libs (unregistered)
+Overriding OptimisationSwitches according to controlDict
+    fileHandler (unregistered)
+    maxThreadFileBufferSize 5e+09;
+
+    maxMasterFileBufferSize 5e+09;
+
+Create mesh for time = 0
+
+Selecting dynamicFvMesh dynamicMotionSolverFvMesh
+Selecting motion solver: displacementLaplacian
+Applying solid body motion to entire mesh
+Selecting motion diffusion: quadratic
+Selecting motion diffusion: inverseDistance
+--> FOAM Warning : 
+    From Foam::labelHashSet Foam::polyBoundaryMesh::patchSet(const Foam::UList<Foam::wordRe>&, bool, bool) const
+    in file meshes/polyMesh/polyBoundaryMesh/polyBoundaryMesh.C at line 915
+    Cannot find any patch or group names matching paddle
+--> FOAM Warning : 
+    From Foam::labelHashSet Foam::polyBoundaryMesh::patchSet(const Foam::UList<Foam::wordRe>&, bool, bool) const
+    in file meshes/polyMesh/polyBoundaryMesh/polyBoundaryMesh.C at line 915
+    Cannot find any patch or group names matching flumeFloor
+Selecting patchDistMethod meshWave
+
+PIMPLE: no residual control data found. Calculations will employ 5 corrector loops
+
+Reading field p_rgh
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Reading transportProperties
+
+Selecting incompressible transport model Newtonian
+Selecting incompressible transport model Newtonian
+Selecting turbulence model type laminar
+Selecting laminar stress model Stokes
+
+Reading g
+
+Reading hRef
+Calculating field g.h
+
+No MRF models present
+
+Creating finite volume options from "constant/fvOptions"
+
+Selecting finite volume options type buoyancyForce
+    Source: buoyancy1
+   Normalisation factor = 1e-20
+DICPCG:  Solving for pcorr, Initial residual = 0, Final residual = 0, No Iterations 0
+   Normalisation factor = 1e-20
+DICPCG:  Solving for pcorr, Initial residual = 0, Final residual = 0, No Iterations 0
+   Normalisation factor = 1e-20
+DICPCG:  Solving for pcorr, Initial residual = 0, Final residual = 0, No Iterations 0
+   Normalisation factor = 1e-20
+DICPCG:  Solving for pcorr, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 0, global = 0, cumulative = 0
+Constructing face velocity Uf
+
+Courant Number mean: 0 max: 0
+
+Starting time loop
+
+---[preciceAdapter] Loaded the OpenFOAM-preCICE adapter - v1.1.0.
+---[preciceAdapter] Reading preciceDict...
+---[precice] [0m This is preCICE version 2.3.0
+---[precice] [0m Revision info: v2.3.0
+---[precice] [0m Configuration: Debug
+---[precice] [0m Configuring preCICE with configuration "./precice-config.xml"
+---[precice] [0m I am participant "OpenFOAMCase"
+---[precice] [0m Setting up master communication to coupling partner/s
+OpenSees Solution Maximum dT= 0.0001
+Initializing FOAMySees Coupling Driver
+trying to find a coupled nodes list...
+[0.006, 0.0, 0.005, 0.006, 0.08, 0.005]
+OpenSees Model Initialized...
+Number of Coupled OpenSees Nodes: 49
+Configuring preCICE library
+---[precice] [0m This is preCICE version 2.3.0
+---[precice] [0m Revision info: v2.3.0
+---[precice] [0m Configuration: Debug
+---[precice] [0m Configuring preCICE with configuration "./precice-config.xml"
+---[precice] [0m I am participant "FOAMySeesCouplingDriver"
+preCICE successfully configured

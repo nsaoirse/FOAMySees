@@ -1,0 +1,401 @@
+{
+    "Applications": {
+        "EDP": {
+            "Application": "StandardEDP",
+            "ApplicationData": {
+            }
+        },
+        "Events": [
+            {
+                "Application": "CoupledDigitalTwin",
+                "ApplicationData": {
+                },
+                "EventClassification": "Hydro"
+            }
+        ],
+        "Modeling": {
+            "Application": "MDOF_BuildingModel",
+            "ApplicationData": {
+            }
+        },
+        "Simulation": {
+            "Application": "OpenSees-Simulation",
+            "ApplicationData": {
+            }
+        },
+        "UQ": {
+            "Application": "Dakota-UQ",
+            "ApplicationData": {
+            }
+        }
+    },
+    "DefaultValues": {
+        "driverFile": "driver",
+        "edpFiles": [
+            "EDP.json"
+        ],
+        "filenameAIM": "AIM.json",
+        "filenameDL": "BIM.json",
+        "filenameEDP": "EDP.json",
+        "filenameEVENT": "EVENT.json",
+        "filenameSAM": "SAM.json",
+        "filenameSIM": "SIM.json",
+        "rvFiles": [
+            "AIM.json",
+            "SAM.json",
+            "EVENT.json",
+            "SIM.json"
+        ],
+        "workflowInput": "scInput.json",
+        "workflowOutput": "EDP.json"
+    },
+    "EDP": {
+        "type": "StandardEDP"
+    },
+    "Events": [
+        {
+            "AdjustTimeStep": "No",
+            "Application": "CoupledDigitalTwin",
+            "ApplyGravity": "No",
+            "CouplingScheme": "Explicit",
+            "EventClassification": "Hydro",
+            "SeesVTKOUT": "Yes",
+            "SeesVTKOUTRate": 0.01,
+            "SimDuration": 10,
+            "SolutionDT": 0.0005,
+            "Turbulence": "Yes",
+            "bathSTL": "PykeExperimentFlumeFloor.stl",
+            "bathType": "STL File",
+            "bathXZData": [
+                [
+                    19.908,
+                    -1
+                ],
+                [
+                    19.908,
+                    0.152
+                ],
+                [
+                    23.568,
+                    0.152
+                ],
+                [
+                    31.8,
+                    0.838
+                ],
+                [
+                    83,
+                    0.838
+                ],
+                [
+                    101.5,
+                    2
+                ]
+            ],
+            "cellSize": 0.1,
+            "couplingConvergenceTol": 0.005,
+            "couplingDataAccelerationMethod": "Constant",
+            "couplingIterationOutputDataFrequency": 100,
+            "cutSurfaceLocsDirsFields": [
+                [
+                    20,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    "XSec1",
+                    "p,U,alpha.water"
+                ]
+            ],
+            "cutSurfaceOutput": "Yes",
+            "domainSubType": "OSU LWF",
+            "fieldProbeLocs": [
+                [
+                    28.579,
+                    -1.34,
+                    0.916,
+                    "VelocityProbe1",
+                    "U"
+                ],
+                [
+                    32.22,
+                    -1.34,
+                    0.922,
+                    "VelocityProbe2",
+                    "U"
+                ],
+                [
+                    36.078,
+                    -1.34,
+                    0.922,
+                    "VelocityProbe3",
+                    "U"
+                ],
+                [
+                    39.738,
+                    -1.34,
+                    2.465,
+                    "VelocityProbe4",
+                    "U"
+                ],
+                [
+                    40.62,
+                    -0.2,
+                    3.52,
+                    "pressureA01",
+                    "p"
+                ],
+                [
+                    40.62,
+                    0,
+                    3.52,
+                    "pressureB01",
+                    "p"
+                ],
+                [
+                    40.62,
+                    0.39,
+                    3.52,
+                    "pressureD01",
+                    "p"
+                ],
+                [
+                    40.62,
+                    0.2,
+                    2.76,
+                    "pressureC06",
+                    "p"
+                ],
+                [
+                    40.62,
+                    0,
+                    2.76,
+                    "pressureB06",
+                    "p"
+                ],
+                [
+                    40.62,
+                    0.39,
+                    2.76,
+                    "pressureD06",
+                    "p"
+                ],
+                [
+                    40.62,
+                    -0.2,
+                    2.02,
+                    "pressureA11",
+                    "p"
+                ],
+                [
+                    40.62,
+                    0,
+                    2.02,
+                    "pressureB11",
+                    "p"
+                ],
+                [
+                    40.62,
+                    0.39,
+                    2.02,
+                    "pressureD11",
+                    "p"
+                ]
+            ],
+            "fieldProbes": "Yes",
+            "flumeHeight": 5,
+            "flumeLength": 80,
+            "flumeWidth": 3.658,
+            "freeSurfOut": "Yes",
+            "freeSurfProbeLocs": [
+                [
+                    13.957,
+                    -1.389,
+                    1.325,
+                    "WaveGauge1"
+                ],
+                [
+                    17.62,
+                    -1.391,
+                    1.309,
+                    "WaveGauge2"
+                ],
+                [
+                    21.284,
+                    -1.389,
+                    1.309,
+                    "WaveGauge3"
+                ],
+                [
+                    24.934,
+                    -1.383,
+                    1.324,
+                    "WaveGauge4"
+                ],
+                [
+                    28.588,
+                    -1.38,
+                    1.323,
+                    "WaveGauge5"
+                ],
+                [
+                    32.237,
+                    -1.376,
+                    1.324,
+                    "WaveGauge6"
+                ],
+                [
+                    36.044,
+                    -1.373,
+                    3.632,
+                    "USWG1"
+                ],
+                [
+                    39.967,
+                    -0.03,
+                    3.82,
+                    "USWG2"
+                ]
+            ],
+            "freeSurfProbes": "Yes",
+            "g": -9.81,
+            "initVelocity": 0,
+            "initialRelaxationFactor": 0.1,
+            "interfaceSurface": "PykeSpecimenModel.stl",
+            "interfaceSurfaceOutput": "Yes",
+            "mapType": "Nearest Neighbor",
+            "maximumCouplingIterations": 100,
+            "numProcessors": 2,
+            "openSeesPyScript": "PykeSpecimenModel.py",
+            "outputDataFromCouplingIterations": "No",
+            "paddleDispFile": "paddleDisplacement.csv",
+            "periodicWaveCelerity": 1,
+            "periodicWaveMagnitude": 1,
+            "periodicWaveRepeatPeriod": 1,
+            "refPressure": 0,
+            "runPrelim": "No",
+            "start": 8,
+            "stillWaterLevel": 2,
+            "turbIntensity": 0.25,
+            "turbRefLength": 0.125,
+            "turbReferenceVel": 2.5,
+            "velocityFile": " ",
+            "waveType": "Paddle Generated Waves",
+            "writeDT": 0.05
+        }
+    ],
+    "GeneralInformation": {
+        "NumberOfStories": 3,
+        "PlanArea": 129600,
+        "StructureType": "RM1",
+        "YearBuilt": 1990,
+        "depth": 360,
+        "height": 432,
+        "location": {
+            "latitude": 37.8715,
+            "longitude": -122.273
+        },
+        "name": "",
+        "planArea": 129600,
+        "stories": 3,
+        "units": {
+            "force": "kips",
+            "length": "in",
+            "temperature": "C",
+            "time": "sec"
+        },
+        "width": 360
+    },
+    "Modeling": {
+        "Bx": 0.1,
+        "By": 0.1,
+        "Fyx": 1000000,
+        "Fyy": 1000000,
+        "Krz": 10000000000,
+        "Kx": 100,
+        "Ky": 100,
+        "ModelData": [
+            {
+                "Fyx": 1000000,
+                "Fyy": 1000000,
+                "Ktheta": 10000000000,
+                "bx": 0.1,
+                "by": 0.1,
+                "height": 144,
+                "kx": 100,
+                "ky": 100,
+                "weight": 144
+            },
+            {
+                "Fyx": 1000000,
+                "Fyy": 1000000,
+                "Ktheta": 10000000000,
+                "bx": 0.1,
+                "by": 0.1,
+                "height": 144,
+                "kx": 100,
+                "ky": 100,
+                "weight": 144
+            },
+            {
+                "Fyx": 1000000,
+                "Fyy": 1000000,
+                "Ktheta": 10000000000,
+                "bx": 0.1,
+                "by": 0.1,
+                "height": 144,
+                "kx": 100,
+                "ky": 100,
+                "weight": 144
+            }
+        ],
+        "dampingRatio": 0.02,
+        "height": 144,
+        "massX": 0,
+        "massY": 0,
+        "numStories": 3,
+        "randomVar": [
+        ],
+        "responseX": 0,
+        "responseY": 0,
+        "type": "MDOF_BuildingModel",
+        "weight": 144
+    },
+    "Simulation": {
+        "Application": "OpenSees-Simulation",
+        "algorithm": "Newton",
+        "analysis": "Transient -numSubLevels 2 -numSubSteps 10",
+        "convergenceTest": "NormUnbalance 1.0e-2 10",
+        "dampingModel": "Rayleigh Damping",
+        "firstMode": 1,
+        "integration": "Newmark 0.5 0.25",
+        "modalRayleighTangentRatio": 0,
+        "numModesModal": -1,
+        "rayleighTangent": "Initial",
+        "secondMode": -1,
+        "solver": "Umfpack"
+    },
+    "UQ": {
+        "parallelExecution": true,
+        "samplingMethodData": {
+            "method": "LHS",
+            "samples": 500,
+            "seed": 700
+        },
+        "saveWorkDir": true,
+        "uqType": "Forward Propagation"
+    },
+    "localAppDir": "C:/Users/nsaoirse/Desktop/HydroUQ_Windows_Download",
+    "nodeCount": 1,
+    "numP": 56,
+    "processorsOnEachNode": 56,
+    "randomVariables": [
+    ],
+    "remoteAppDir": "/work2/00477/tg457427/frontera/SimCenterBackendApplications/v4.2.0",
+    "resultType": "SimCenterUQResultsSampling",
+    "runType": "runningRemote",
+    "summary": [
+    ],
+    "workingDir": "C:/Users/nsaoirse/Documents/HydroUQ/RemoteWorkDir"
+}

@@ -1,0 +1,171 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  7.0                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+solvers
+{
+"alpha.water"
+    {
+        nAlphaCorr      		1; // changed from 1, which was probably left over from trying the CrankNicolson ddt scheme
+        nAlphaSubCycles 		1;
+        alphaOuterCorrectors 	yes;
+        cAlpha          		1;
+		icAlpha					0; // newly added
+        MULESCorr       		yes; // changed from no
+        nLimiterIter    		10; // changed from 3
+		applyAlphaPrevCorr		yes; // newly added
+        solver          		smoothSolver;
+        smoother        		symGaussSeidel;
+        tolerance       		1e-8;
+        relTol          		0;
+		minIter					1; // newly added
+    }
+"alpha.waterFinal"
+    {
+        nAlphaCorr      		2; // changed from 1, which was probably left over from trying the CrankNicolson ddt scheme
+        nAlphaSubCycles 		1;
+        alphaOuterCorrectors 	yes;
+        cAlpha          		1;
+		icAlpha					0; // newly added
+        MULESCorr       		yes; // changed from no
+        nLimiterIter    		10; // changed from 3
+		applyAlphaPrevCorr		yes; // newly added
+        solver          		smoothSolver;
+        smoother        		symGaussSeidel;
+        tolerance       		1e-8;
+        relTol          		0;
+		minIter					1; // newly added
+    }
+ 
+
+     "cellDisplacement.*"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+
+        tolerance       1e-06;
+        relTol          0;
+        maxIter         100;
+    }
+"yPsi.*"
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+
+        tolerance       1e-06;
+        relTol          0;
+        maxIter         100;
+    }
+
+    "alpha.water.*"
+    {
+        nAlphaCorr      2;
+        nAlphaSubCycles 2;
+        cAlpha          1;
+        icAlpha         0;
+
+        MULESCorr       yes;
+        nLimiterIter    5;
+        alphaApplyPrevCorr  no;
+
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-8;
+        relTol          0;
+    }
+
+    "pcorr.*"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-9;
+        relTol          0;
+    }
+
+    p_rgh
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-9;
+        relTol          0.01;
+    }
+
+    p_rghFinal
+    {
+        $p_rgh;
+        relTol          0;
+    }
+
+    "(U|k|omega|epsilon).*"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-08;
+        relTol          0;
+    }
+
+
+    "cellDisplacementFinal"
+    {
+        $cellDisplacement;
+        relTol          		0;
+    }
+}
+
+PIMPLE
+{
+	momentumPredictor yes;
+
+    nOuterCorrectors 5;
+    nCorrectors      3;
+    nNonOrthogonalCorrectors 1;
+
+    ddtCorr                 no;
+    correctPhi      no;
+    moveMeshOuterCorrectors yes;
+    consistent               yes;   
+	
+	turbOnFinalIterOnly no;
+    oversetAdjustPhi    no;
+
+    pRefCell                 0;
+    pRefValue                0;
+	
+//   nOuterCorrectors         1000;    
+//   residualControl
+//   {
+//       "(U|p)"
+//       {
+//           relTol          0;
+//           tolerance       1e-6;
+//       }
+//   }  
+//	
+}
+
+relaxationFactors
+{
+    fields
+    {
+    }
+    equations
+    {
+        ".*" 0.5;
+    }
+}
+
+// ************************************************************************* //

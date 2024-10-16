@@ -1,0 +1,4 @@
+
+
+FOR PROBLEMS WITH A SURFACE WHICH IS BEARING WATER UPON IT
+type fixedFluxExtrapolatedPressure; IS THE p_rgh boundary condition needed.

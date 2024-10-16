@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<VTKFile type="Collection" compressor="vtkZLibDataCompressor">
+  <Collection>
+    <DataSet timestep="1.00000e-04" group="" part="0" file="SeesOutput/SeesOutput_T1.00000e-04_P0.vtu"/>
+    <DataSet timestep="1.00000e-04" group="" part="1" file="SeesOutput/SeesOutput_T1.00000e-04_P1.vtu"/>
+  </Collection>
+</VTKFile>

@@ -1,0 +1,42 @@
+/*---------------------------------------------------------------------------*| =========                                               ____/_________\____     _.*_*.             |
+| \      /      F ield           |   |  S tructural      ||__|/\|___|/\|__||      \ \ \.           |
+|  \    /       O peration       |___|  E ngineering &   ||__|/\|___|/\|__||       | | | \._        |
+|   \  /        A nd                 |  E arthquake      ||__|/\|___|/\|__||      _/_/_/ | .\.__... |
+|    \/         M anipulation    |___|  S imulation      ||__|/\|___|/\|__||   __/, / _ \___...     |
+|_________________________________________________________||  |/\| | |/\|  ||__/,_/__,_____/...______|
+	\*---------------------------------------------------------------------------*/
+	FoamFile
+	{
+		version		 2.0;
+		format		  ascii;
+		location		"system";
+		class		   dictionary;
+		object		  decomposeParDict;
+	}
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+	numberOfSubdomains   2;
+	method			   simple;
+
+	simpleCoeffs
+	{
+		n			   (2 1 1);
+		delta		   0.001;
+	}
+
+	 constraints
+	{
+	   patches
+		{
+			type	preservePatches;
+			patches (interface);
+			enabled true;
+		}
+	}
+		distributed false;
+		roots
+		(
+		);
+
+
+	// ************************************************************************* //
+	

@@ -1,0 +1,109 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2112                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      binary;
+    arch        "LSB;label=32;scalar=64";
+    class       decomposedBlockData;
+    location    "0";
+    object      pointDisplacement;
+    data.format ascii;
+    data.class  pointVectorField;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+// processor0
+
+803
+(FoamFile
+{
+    version     2.0;
+    format      ascii;
+    arch        "LSB;label=32;scalar=64";
+    class       pointVectorField;
+    location    "0";
+    object      pointDisplacement;
+}
+dimensions      [0 1 0 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    sideA
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    sideB
+    {
+        type            empty;
+    }
+    interface
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    atmosphere
+    {
+        type            fixedNormalSlip;
+        n               (0 -1 0);
+    }
+    defaultFaces
+    {
+        type            fixedNormalSlip;
+        n               (0 1 0);
+    }
+    procBoundary0to1
+    {
+        type            processor;
+    }
+}
+)
+
+// processor1
+
+614
+(dimensions      [0 1 0 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    sideA
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    sideB
+    {
+        type            empty;
+    }
+    interface
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    atmosphere
+    {
+        type            fixedNormalSlip;
+        n               (0 -1 0);
+    }
+    defaultFaces
+    {
+        type            fixedNormalSlip;
+        n               (0 1 0);
+    }
+    procBoundary1to0
+    {
+        type            processor;
+    }
+}
+)

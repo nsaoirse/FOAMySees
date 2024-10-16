@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+	<precice-configuration>
+		<log>
+
+		</log>
+
+		<solver-interface dimensions="3">
+		<data:vector name="Force" />
+		<data:vector name="Displacement" />
+
+		<mesh name="OpenFOAM-Mesh">
+			<use-data name="Displacement" />
+			<use-data name="Force" />
+		</mesh>
+
+		<mesh name="Coupling-Data-Projection-Mesh">
+			<use-data name="Displacement" />
+			<use-data name="Force" />
+		</mesh>
+
+		<participant name="FOAMySeesCouplingDriver">
+	
+			<use-mesh name="Coupling-Data-Projection-Mesh" provide="yes" />
+			<write-data name="Displacement" mesh="Coupling-Data-Projection-Mesh" />
+			<read-data name="Force" mesh="Coupling-Data-Projection-Mesh" />
+		</participant>
+		
+		<participant name="OpenFOAMCase">
+					
+	
+			<use-mesh name="OpenFOAM-Mesh" provide="yes" />
+			<use-mesh name="Coupling-Data-Projection-Mesh" from="FOAMySeesCouplingDriver" />
+			<write-data name="Force" mesh="OpenFOAM-Mesh" />
+			<read-data name="Displacement" mesh="OpenFOAM-Mesh" />
+			<mapping:nearest-neighbor
+			direction="write"
+			from="OpenFOAM-Mesh"
+			to="Coupling-Data-Projection-Mesh"
+			constraint="conservative" />
+			<mapping:nearest-neighbor
+			direction="read"
+			from="Coupling-Data-Projection-Mesh"
+			to="OpenFOAM-Mesh"
+			constraint="consistent" />
+		</participant>
+		
+		<m2n:sockets from="OpenFOAMCase" to="FOAMySeesCouplingDriver" exchange-directory=".." />
+			<coupling-scheme:parallel-implicit>
+				<time-window-size value="0.0001" />
+				<max-time value="1"/>
+				<participants first="OpenFOAMCase" second="FOAMySeesCouplingDriver"/>
+			<exchange data="Force" mesh="Coupling-Data-Projection-Mesh" from="OpenFOAMCase" to="FOAMySeesCouplingDriver" />
+			<exchange data="Displacement" mesh="Coupling-Data-Projection-Mesh" from="FOAMySeesCouplingDriver" to="OpenFOAMCase" />
+				
+				<max-iterations value="100" />
+	 		<relative-convergence-measure limit="0.005" data="Displacement" mesh="Coupling-Data-Projection-Mesh" />
+	 		<relative-convergence-measure limit="0.005" data="Force" mesh="Coupling-Data-Projection-Mesh" />		
+				
+			
+			<acceleration:IQN-ILS>
+	
+			<data name="Displacement" mesh="Coupling-Data-Projection-Mesh" />
+			<data name="Force" mesh="Coupling-Data-Projection-Mesh" />
+						
+				<filter type="QR2" limit="5e-3" />
+				<initial-relaxation value="0.1" />
+				<max-used-iterations value="5" />
+				<time-windows-reused value="3" />
+		</acceleration:IQN-ILS>
+			</coupling-scheme:parallel-implicit>
+		</solver-interface>
+	</precice-configuration>
+	

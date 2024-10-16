@@ -1,0 +1,16 @@
+
+
+Migrate all the settings to one file
+Get rid of the opensees settings files
+
+add a bunch of options
+
+including 
+
+option to start the openfoam case from the beginning or latesttime
+all the analysis options generated with the hydroUQ files 
+
+
+fix the function input problems you are having with the argparse function
+
+

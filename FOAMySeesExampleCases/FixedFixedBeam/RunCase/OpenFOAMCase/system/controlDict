@@ -1,0 +1,117 @@
+FoamFile{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+libs            (overset fvMotionSolvers);
+
+DebugSwitches
+{
+    overset                 0;
+    dynamicOversetFvMesh    0;
+    cellVolumeWeight        0;
+}
+
+//application     olaDyMFlow;
+application     interFoam;
+//application     interIsoFoam;
+//overOlaDyMFlow;
+
+startFrom       latestTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         25.0;
+
+deltaT          0.0005;
+
+writeControl    adjustable;
+
+writeInterval   0.05;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable yes;
+fileHandler collated;
+adjustTimeStep no;
+
+DebugSwitches
+{
+  level	2;
+  lduMatrix 2;
+  libs 2;
+}
+OptimisationSwitches
+{
+fileHandler collated;
+maxThreadFileBufferSize 1e9; // v1712 default is 0;
+maxMasterFileBufferSize 1e9;
+}
+
+
+maxCo           1;
+maxAlphaCo      1;
+maxDeltaT 0.0005;
+        functions 
+        {
+            preCICE_Adapter
+    {
+       type preciceAdapterFunctionObject;
+        libs ("libpreciceAdapterFunctionObject.so");
+    }
+     freeSurface
+   {   
+       type            surfaces;
+       functionObjectLibs
+       (   
+           "libsampling.so" 
+       );  
+       outputControl   outputTime;
+       outputInterval  1;  
+       surfaceFormat  vtk;
+       fields
+       (   
+           alpha.water
+       );  
+       surfaces
+       (   
+           freeSurface
+           {   
+               type        isoSurfaceCell;
+               isoField    alpha.water;
+               isoValue    0.5;
+               interpolate false;
+               regularise  false;
+           }   
+           yCut
+            {
+            // Cutingplane using iso surface
+            type            cuttingPlane;
+            planeType       pointAndNormal;
+            pointAndNormalDict
+            {
+                basePoint       (0.0 0.0 0.0);
+                normalVector    (0.0 1.0 0.0);
+            }
+            interpolate     true;       
+            }
+           
+       );  
+       interpolationScheme cell;
+   }  
+}
+// ************************************************************************* //

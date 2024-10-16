@@ -1,0 +1,69 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     4.0                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p_rgh;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [1 -1 -2 0 0 0 0];
+
+internalField   uniform 0;
+
+//interfaceCompression
+
+//zeroGradient
+boundaryField
+{
+    interface
+    {
+
+        type    fixedFluxExtrapolatedPressure;
+	    value $internalField;
+    }
+	sideB
+    {
+        type           empty;
+    }
+
+sideA
+    {
+        type             zeroGradient;
+		value $internalField;
+    }
+
+    lowerWall
+    {
+        type            zeroGradient;
+		value $internalField;
+    }
+
+    atmosphere
+    {
+        type            totalPressure;
+        U               U;
+        phi             phi;
+        rho             rho;
+        psi             none;
+        gamma           1;
+        p0              $internalField;
+        value           $internalField;
+    }
+
+
+    defaultFaces
+    {
+        type            zeroGradient;
+    }
+}
+
+
+// ************************************************************************* //
