@@ -4,7 +4,11 @@ Code changes include minor bug-fixes due to the port from preCICE v2 to v3.
 Tested on Ubuntu 24.04.1 LTS, machine type: Dell Inc. OptiPlex 9020 
 In this branch, I used precice-3.1.2, OpenFOAM v2406, and Python 3.12, along with a pip-installed version of openseespy the python precice bindings
 
-# Dependencies (quite a few, but hoping to reduce this over time as the code develops)
+The best approach I have found to compile all the dependencies is to use something like Spack as a package manager, or to install
+*everything* with sudo/root priveleges. The installation shell scripts for the various dependencies are great,
+but I recommend using something like ccmake and cmake in addition to these to configure your makefiles with some sort of GUI.
+Some of the required packages will be found through pkg-config, some through the PATH variable, and some will need a specific environment
+variable to be defined to locate the .H files required to compile shared objects. Thus, preliminary attempts at constructing a dockerized container of all required libraries are in progress...
 
 # Dependencies
 Python 3 (3.6 or higher, likely. I used 3.12)
@@ -16,42 +20,9 @@ preCICE v3.1.2
 OpenSeesPy 
 
 / Required Python packages: (import or install with pip, will install automatically with provided bash installation script)
-os
-concurrent.futures
-logging
-queue
-random
-subprocess
-time
-argparse
-copy
-sys
 
-/ math and matrices
-numpy 
-pandas
-re
-csv
-math
+Don't worry about these. Follow the instructions below and everything _should_ install properly...
 
-/ meshes and visualization
-meshio
-matplotlib
-scipy
-vtk
-pyvista 
-
-/ openseespy
-openseespy 
-
-/ preCICE
-pyprecice
-
-The best approach I have found to compile all the dependencies is to use something like Spack as a package manager, or to install
-*everything* with sudo/root priveleges. The installation shell scripts for the various dependencies are great,
-but I recommend using something like ccmake and cmake in addition to these to configure your makefiles with some sort of GUI.
-Some of the required packages will be found through pkg-config, some through the PATH variable, and some will need a specific environment
-variable to be defined to locate the .H files required to compile shared objects. Thus, preliminary attempts at constructing a dockerized container of all required libraries are in progress...
 
 # Installation Instructions
 Download the Github repository to somewhere you'd like it to stay. 
