@@ -52,7 +52,7 @@ as well as other aliases:
 **createFOAMySeesInputFiles** - which will copy files necessary to start a coupled analysis with FOAMySees to the current directory
 
 **Attempt at a full-install script (probably will error out at some point, but if you know what you're doing, this should get you most of the way to a complete environment**
-# Update and install dependencies
+**Update and install dependencies**
 sudo apt-get update
 sudo apt-get install -y libhdf5-serial-dev
 sudo apt-get install -y python3-full
@@ -76,7 +76,7 @@ sudo pip install -y --break-system-packages conan==1.60
 sudo apt-get install build-essential cmake git ca-certificates flex
 
 
-# Install MUMPS for massively parallel simulation
+**Install MUMPS for massively parallel simulation**
 git clone https://github.com/OpenSees/mumps.git
 cd mumps
 mkdir build
@@ -96,10 +96,10 @@ $HOME/.local/bin/conan install .. --build missing
 cmake .. -DMUMPS_DIR=$PWD/../../mumps/build
 cmake --build .. --target OpenSees -j8
 cmake --build .. --target OpenSeesPy -j8
-**at this point in the installation of opensees, i had some trouble with conan. might not be worth installing from source for this purpose, since we are just using it to build openseespy anyway. The intent of attempting this would be to allow for MPI communication between the Python initialized OpenSeesPy model and the preCICE coupling library. Would be worth it, if you had a million degrees of freedom to couple! 
-
-**mv ./lib/OpenSeesPy.so ./opensees.so
+mv ./lib/OpenSeesPy.so ./opensees.so
 cd ../..
+
+_at this point in the installation of opensees, i had some trouble with conan. might not be worth installing from source for this purpose, since we are just using it to build openseespy anyway. The intent of attempting this would be to allow for MPI communication between the Python initialized OpenSeesPy model and the preCICE coupling library. Would be worth it, if you had a million degrees of freedom to couple!_
 
 **you could probably just use pip**
 pip install openseespy
