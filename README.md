@@ -2,8 +2,52 @@
 This version uses preCICE v3 for additional functionality and stability.
 Code changes include minor bug-fixes due to the port from preCICE v2 to v3.
 Tested on Ubuntu 24.04.1 LTS, machine type: Dell Inc. OptiPlex 9020 
+In this branch, I used precice-3.1.2, OpenFOAM v2406, and Python 3.12, along with a pip-installed version of openseespy the python precice bindings
 
-The best approach I have found is to use something like Spack as a package manager, or to install
+# Dependencies (quite a few, but hoping to reduce this over time as the code develops)
+
+# Dependencies
+Python 3 (3.6 or higher, likely. I used 3.12)
+
+OpenFOAM (any version which can be used with preCICE)
+
+preCICE v3.1.2
+
+OpenSeesPy 
+
+# Required Python packages: (import or install with pip, will install automatically with provided bash installation script)
+os
+concurrent.futures
+logging
+queue
+random
+subprocess
+time
+argparse
+copy
+sys
+
+#math and matrices
+numpy 
+pandas
+re
+csv
+math
+
+#meshes and visualization
+meshio
+matplotlib
+scipy
+vtk
+pyvista 
+
+#openseespy
+openseespy 
+
+#precice
+pyprecice
+
+The best approach I have found to compile all the dependencies is to use something like Spack as a package manager, or to install
 *everything* with sudo/root priveleges. The installation shell scripts for the various dependencies are great,
 but I recommend using something like ccmake and cmake in addition to these to configure your makefiles with some sort of GUI.
 Some of the required packages will be found through pkg-config, some through the PATH variable, and some will need a specific environment
@@ -191,51 +235,6 @@ Run 'startFOAMySees'
 
 
 
-# Dependencies
-Python 3 (3.6 or higher, likely)
-
-OpenFOAM (any version which can be used with preCICE)
-
-preCICE v2.5.0 (if you use a different version, you will need to modify the FOAMySeesCouplingDriver.py file to change the Python language bindings. I think the functions change from preCICE v2.5 to preCICE v3.0. I have not incorporated the v3.0 bindings into the coupling driver yet. Seems like the code will work with v2.4 as well, but 2.5 is recommended)
-
-OpenSeesPy 
-
-# Required Python packages: (install with pip, will install automatically with provided bash installation script)
-
-os
-concurrent.futures
-logging
-queue
-random
-subprocess
-time
-argparse
-copy
-sys
-
-#math and matrices
-
-numpy 
-pandas
-re
-csv
-math
-
-#meshes and visualization
-
-meshio
-matplotlib
-scipy
-vtk
-pyvista 
-
-#openseespy
-
-openseespy 
-
-#precice
-
-pyprecice
 
 # Author
 This code was developed by Nicolette S. Lewis, PhD, at the University of Washington, from 2021 to 2023. For specific questions, please email me at nicolette.s.lewis@outlook.com with "FOAMySees" in the subject line. I will respond to messages as I can.  
