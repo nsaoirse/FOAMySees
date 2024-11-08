@@ -1,5 +1,9 @@
 # FOAMySees development Version
 This version uses preCICE v3 for additional functionality and stability.
+Code changes include minor bug-fixes due to the port from preCICE v2 to v3.
+Tested on Ubuntu 24
+
+
 Preliminary attempts at constructing a dockerized container of all required libraries are in progress...
 
 
@@ -76,6 +80,8 @@ $HOME/.local/bin/conan install .. --build missing
 cmake .. -DMUMPS_DIR=$PWD/../../mumps/build
 cmake --build .. --target OpenSees -j8
 cmake --build .. --target OpenSeesPy -j8
+# at this point in the installation of opensees, i had some trouble with conan. might not be worth installing from source.
+# you could probably get by with using pip to install openseespy /and/or/ openseespylinux
 mv ./lib/OpenSeesPy.so ./opensees.so
 cd ../..
 
