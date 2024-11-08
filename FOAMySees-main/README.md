@@ -1,8 +1,27 @@
-# FOAMySees
-First public release of Python+preCICE-based coupling driver for OpenSeesPy models. This tool was developed specifically for the purpose of coupled simulation of finite element models of civil engineering structures constructed within the OpenSees framework through the OpenSeesPy Package and preCICE Python Language bindings. 
+# FOAMySees development Version
+This version uses preCICE v3 for additional functionality and stability.
+Code changes include minor bug-fixes due to the port from preCICE v2 to v3.
+Tested on Ubuntu 24.04.1 LTS, machine type: Dell Inc. OptiPlex 9020 
+In this branch, I used precice-3.1.2, OpenFOAM v2406, and Python 3.12, along with a pip-installed version of openseespy and the python precice bindings
 
-I intend to add example cases, as they are created. Let me know if you are trying something different than what is provided here and I can maybe help figure it out. 
+The best approach I have found to compile all the dependencies is to use something like Spack as a package manager, or to install
+*everything* with sudo/root priveleges. The installation shell scripts for the various dependencies are great,
+but I recommend using something like ccmake and cmake in addition to these to configure your makefiles with some sort of GUI.
+Some of the required packages will be found through pkg-config, some through the PATH variable, and some will need a specific environment
+variable to be defined to locate the .H files required to compile shared objects. Thus, preliminary attempts at constructing a dockerized container of all required libraries are in progress...
 
+# Dependencies
+Python 3 (3.6 or higher, likely. I used 3.12)
+
+OpenFOAM (any version which can be used with preCICE)
+
+preCICE v3.1.2
+
+OpenSeesPy 
+
+/ Required Python packages: (import or install with pip, will install automatically with provided bash installation script)
+
+Don't worry about these. Follow the instructions below and everything _should_ install properly...
 
 
 # Installation Instructions
@@ -25,14 +44,152 @@ If you don't have permission, run
 chmod u+x installFOAMySees; ./installFOAMySees
 within the repository directory 
 
+./setFOAMySeesEnvironment
+
 If successful:
 **startFOAMySees** should be available as an alias command after running the installation script
 as well as other aliases:
 **createFOAMySeesInputFiles** - which will copy files necessary to start a coupled analysis with FOAMySees to the current directory
 
-# # Running the Code
+_**Attempt at a full-install script (probably will error out at some point, but if you know what you're doing, this should get you most of the way to a complete environment**_
 
-# Examples
+
+**Update and install dependencies**
+
+sudo apt-get update
+
+sudo apt-get install -y libhdf5-serial-dev python3-full build-essential cmake git ca-certificates flex
+
+sudo apt update 
+
+sudo apt install -y build-essential cmake libeigen3-dev libxml2-dev libboost-all-dev petsc-dev python3-dev python3-numpy gfortran g++ git cmake gcc python3-pip liblapack-devlibopenmpi-dev libmkl-rt libmkl-blacs-openmpi-lp64 libscalapack-openmpi-dev tcl-dev tk-dev libeigen3-dev
+
+sudo pip install -y --break-system-packages conan==1.60
+
+**Install MUMPS for massively parallel simulation**
+
+git clone https://github.com/OpenSees/mumps.git
+
+cd mumps
+
+mkdir build
+
+cd build
+
+cmake .. -Darith=d
+
+cmake --build . --config Release --parallel 4
+
+cd ../..
+
+**Install OpenSees from source, or....**
+
+git clone https://github.com/OpenSees/OpenSees.git
+
+cd OpenSees
+
+rm -rf build
+
+mkdir build
+
+cd build
+
+conan profile detect
+
+$HOME/.local/bin/conan install .. --build missing
+
+cmake .. -DMUMPS_DIR=$PWD/../../mumps/build
+
+cmake --build .. --target OpenSees -j8
+
+cmake --build .. --target OpenSeesPy -j8
+
+mv ./lib/OpenSeesPy.so ./opensees.so
+
+cd ../..
+
+_at this point in the installation of opensees, i had some trouble with conan. might not be worth installing from source for this purpose, since we are just using it to build openseespy anyway. The intent of attempting this would be to allow for MPI communication between the Python initialized OpenSeesPy model and the preCICE coupling library. Would be worth it, if you had a million degrees of freedom to couple!_
+
+**......you could probably just use pip**
+pip install openseespy
+
+** Install OpenFOAM from source ( you will need the header files to install the OpenFOAM preCICE adapter)**
+
+git clone https://develop.openfoam.com/Development/openfoam.git
+
+cd openfoam
+
+sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
+
+sudo add-apt-repository http://dl.openfoam.org/ubuntu
+
+source etc/bashrc
+
+git clone https://github.com/OpenFOAM/ThirdParty-dev.git
+
+cd ThirdParty*
+
+export WM_THIRD_PARTY_DIR=$PWD
+
+cd ..
+
+foamSystemCheck
+
+./Allwmake
+
+cd ..
+
+**Link to the header files for Eigen3**
+
+mkdir Eigen3
+
+cd Eigen3
+
+wget https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz
+
+tar -xvf eig*
+
+cd eig*
+
+export Eigen3_ROOT=$PWD
+
+cd ../..
+
+**download preCICE and install it**
+
+git clone https://github.com/precice/precice.git
+
+cd precice* # Enter the preCICE source directory
+
+cmake --list-presets
+
+cd precice-3.1.2 # Enter the preCICE source directory
+
+cmake --preset=production # Configure using the production preset
+
+mkdir build 
+
+cd build
+
+cmake ..; make -j; sudo make install
+
+cd ..
+
+git clone https://github.com/precice/openfoam-adapter.git
+
+cd openfoam-adapter
+
+./Allwmake
+
+cd ..
+
+pip install pyprecice --break-system-packages
+
+---------------------------------------
+
+# Running the Code
+
+**Examples**
 
 Some example cases are provided. 
 
@@ -46,24 +203,26 @@ cd FOAMySeesExampleCases/FixedFixedBeam
 startFOAMySees
 )
 
+If the required files are not in the folder, FOAMySees will tell you that it cannot be run
+
 ______________________________________
-# Making your own case
+**Making your own case**
 
 Navigate to your analysis directory
 In order to run a case, you will need an OpenFOAM case folder, and an OpenSees model
 
-**OpenFOAM Case Folder**
+_**OpenFOAM Case Folder**_
 
 If you haven't done so, create an OpenFOAM model, or find a model with which to couple a structure. There are plenty in the OpenFOAM tutorials directory which could be modified!
 The boundary conditions of the OpenFOAM will need to be modified manually, within the 0.org folder of the OpenFOAM case with which you would like to run a case. 
 Configure your OpenFOAM case according to the preCICE guidelines.   https://precice.org/adapter-openfoam-config.html#fsi 
 The controlDict, preciceDict, and precice-config.xml files will be automatically generated for your case depending on the settings you have chosen by the FOAMySees code.
 
-**OpenSees Model**
+_**OpenSees Model**_
 
 Construct an OpenSees model geometrically near, or within the volume of, the coupled surface of the OpenFOAM model.
 
-**Running a Coupled Case**
+_**Running a Coupled Case**_
 
 Put the OpenFOAM Case folder and OpenSees Model into a new folder alone, and run 'createFOAMySeesInputFiles' within that folder. Two files should be generated,
 
@@ -82,55 +241,6 @@ Run 'startFOAMySees'
 
 ---------------------------------------
 
-
-
-
-# Dependencies
-Python 3 (3.6 or higher, likely)
-
-OpenFOAM (any version which can be used with preCICE)
-
-preCICE v2.5.0 (if you use a different version, you will need to modify the FOAMySeesCouplingDriver.py file to change the Python language bindings. I think the functions change from preCICE v2.5 to preCICE v3.0. I have not incorporated the v3.0 bindings into the coupling driver yet. Seems like the code will work with v2.4 as well, but 2.5 is recommended)
-
-OpenSeesPy 
-
-# Required Python packages: (install with pip, will install automatically with provided bash installation script)
-
-os
-concurrent.futures
-logging
-queue
-random
-subprocess
-time
-argparse
-copy
-sys
-
-#math and matrices
-
-numpy 
-pandas
-re
-csv
-math
-
-#meshes and visualization
-
-meshio
-matplotlib
-scipy
-vtk
-pyvista 
-
-#openseespy
-
-openseespy 
-
-#precice
-
-pyprecice
-
 # Author
 This code was developed by Nicolette S. Lewis, PhD, at the University of Washington, from 2021 to 2023. For specific questions, please email me at nicolette.s.lewis@outlook.com with "FOAMySees" in the subject line. I will respond to messages as I can.  
 
@@ -147,5 +257,4 @@ This code is offered AS-IS. I make no assurances that this code will work for fu
 
 # Acknowlegdments
 The work which led to development of this tool was funded by the National Science Foundation (NSF) and Joy Pauschke (program manager) through Grants CMMI-1726326, CMMI-1933184, and CMMI-2131111. Thank you to NHERI Computational Modeling and Simulation Center (SimCenter), as well as their developers, funding sources, and staff for their continued support. It was a great experience to work with the SimCenter to implement this tool allowing for partitioned coupling of OpenSees and OpenFOAM as part of a digital-twin module within the NHERI SimCenter Hydro-UQ framework. Much of the development work of the research tool presented was conducted using University of Washington's HYAK Supercomputing resources. Thank you to UW HYAK and to the support staff of the UW HPC resources for their maintenance of the supercomputer cluster and for offering a stable platform for HPC development and computation, as well as for all of the great support over the last few years.  
-
 
