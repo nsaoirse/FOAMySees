@@ -101,7 +101,7 @@ cmake --build .. --target OpenSeesPy -j8
 mv ./lib/OpenSeesPy.so ./opensees.so
 cd ../..
 
-# Install OpenFOAM from source
+# Install OpenFOAM from source ( you will need the header files to install the OpenFOAM preCICE adapter)
 git clone https://develop.openfoam.com/Development/openfoam.git
 cd openfoam
 sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
@@ -148,6 +148,8 @@ cd ..
 
 pip install pyprecice --break-system-packages
 
+
+---------------------------------------
 
 # # Running the Code
 
@@ -202,10 +204,6 @@ Run 'startFOAMySees'
 
 
 ---------------------------------------
-
-
-
-
 
 # Author
 This code was developed by Nicolette S. Lewis, PhD, at the University of Washington, from 2021 to 2023. For specific questions, please email me at nicolette.s.lewis@outlook.com with "FOAMySees" in the subject line. I will respond to messages as I can.  
