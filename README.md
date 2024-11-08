@@ -110,7 +110,7 @@ cd ../..
 
 _at this point in the installation of opensees, i had some trouble with conan. might not be worth installing from source for this purpose, since we are just using it to build openseespy anyway. The intent of attempting this would be to allow for MPI communication between the Python initialized OpenSeesPy model and the preCICE coupling library. Would be worth it, if you had a million degrees of freedom to couple!_
 
-**you could probably just use pip**
+**......you could probably just use pip**
 pip install openseespy
 
 ** Install OpenFOAM from source ( you will need the header files to install the OpenFOAM preCICE adapter)**
