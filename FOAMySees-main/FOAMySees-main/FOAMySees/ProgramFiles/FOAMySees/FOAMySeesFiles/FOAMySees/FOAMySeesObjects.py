@@ -224,7 +224,7 @@ class FOAMySeesInstance():
 				
 		Currdt=stepDT/CurrSteps
 		# ops.partition()
-		# self.timeInt()
+		self.timeInt()
 
 		StepCheck=ops.analyze(CurrSteps, Currdt, 1e-10, Currdt, 100)
 		# StepCheck=ops.analyze(CurrSteps,Currdt,1e-10,Currdt, 100)
