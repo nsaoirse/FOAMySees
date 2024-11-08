@@ -51,7 +51,9 @@ If successful:
 as well as other aliases:
 **createFOAMySeesInputFiles** - which will copy files necessary to start a coupled analysis with FOAMySees to the current directory
 
-**Attempt at a full-install script (probably will error out at some point, but if you know what you're doing, this should get you most of the way to a complete environment**
+_**Attempt at a full-install script (probably will error out at some point, but if you know what you're doing, this should get you most of the way to a complete environment**_
+
+
 **Update and install dependencies**
 
 sudo apt-get update
