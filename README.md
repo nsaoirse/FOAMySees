@@ -1,7 +1,6 @@
-# FOAMySees
-First public release of Python+preCICE-based coupling driver for OpenSeesPy models. This tool was developed specifically for the purpose of coupled simulation of finite element models of civil engineering structures constructed within the OpenSees framework through the OpenSeesPy Package and preCICE Python Language bindings. 
-
-I intend to add example cases, as they are created. Let me know if you are trying something different than what is provided here and I can maybe help figure it out. 
+# FOAMySees development Version
+This version uses preCICE v3 for additional functionality and stability.
+Preliminary attempts at constructing a dockerized container of all required libraries are in progress...
 
 
 
@@ -25,10 +24,108 @@ If you don't have permission, run
 chmod u+x installFOAMySees; ./installFOAMySees
 within the repository directory 
 
+./setFOAMySeesEnvironment
+
 If successful:
 **startFOAMySees** should be available as an alias command after running the installation script
 as well as other aliases:
 **createFOAMySeesInputFiles** - which will copy files necessary to start a coupled analysis with FOAMySees to the current directory
+
+**Attempt at a full-install script (probably will error out at some point, but if you know what you're doing, this should get you most of the way to a complete environment**
+# Update and install dependencies
+sudo apt-get update
+sudo apt-get install -y libhdf5-serial-dev
+sudo apt-get install -y python3-full
+sudo apt update 
+sudo apt install -y build-essential cmake libeigen3-dev libxml2-dev libboost-all-dev petsc-dev python3-dev python3-numpy
+sudo apt install -y gfortran
+sudo apt install -y g++
+sudo apt install -y git
+sudo apt install -y cmake
+sudo apt install -y gcc g++ gfortran
+sudo apt install -y python3-pip
+sudo apt install -y liblapack-dev
+sudo apt install -y libopenmpi-dev
+sudo apt install -y libmkl-rt
+sudo apt install -y libmkl-blacs-openmpi-lp64
+sudo apt install -y libscalapack-openmpi-dev
+sudo apt install -y tcl-dev
+sudo apt install -y tk-dev
+sudo apt install -y libeigen3-dev
+sudo pip install -y --break-system-packages conan==1.60
+sudo apt-get install build-essential cmake git ca-certificates flex
+
+
+# Install MUMPS for massively parallel simulation
+git clone https://github.com/OpenSees/mumps.git
+cd mumps
+mkdir build
+cd build
+cmake .. -Darith=d
+cmake --build . --config Release --parallel 4
+cd ../..
+
+# Install OpenSees from source and make sure MPI is not linked in OpenSeesPy makefile, otherwise you might be sad
+git clone https://github.com/OpenSees/OpenSees.git
+cd OpenSees
+rm -rf build
+mkdir build
+cd build
+conan profile detect
+$HOME/.local/bin/conan install .. --build missing
+cmake .. -DMUMPS_DIR=$PWD/../../mumps/build
+cmake --build .. --target OpenSees -j8
+cmake --build .. --target OpenSeesPy -j8
+mv ./lib/OpenSeesPy.so ./opensees.so
+cd ../..
+
+# Install OpenFOAM from source
+git clone https://develop.openfoam.com/Development/openfoam.git
+cd openfoam
+sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
+sudo add-apt-repository http://dl.openfoam.org/ubuntu
+
+source etc/bashrc
+
+git clone https://github.com/OpenFOAM/ThirdParty-dev.git
+cd ThirdParty*
+export WM_THIRD_PARTY_DIR=$PWD
+cd ..
+
+foamSystemCheck
+./Allwmake
+cd ..
+
+# Link to the header files for Eigen3
+mkdir Eigen3
+cd Eigen3
+wget https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz
+tar -xvf eig*
+cd eig*
+export Eigen3_ROOT=$PWD
+cd ../..
+
+# download preCICE and install it
+git clone https://github.com/precice/precice.git
+cd precice* # Enter the preCICE source directory
+
+
+cmake --list-presets
+cd precice-3.1.2 # Enter the preCICE source directory
+cmake --preset=production # Configure using the production preset
+mkdir build 
+cd build
+cmake ..; make -j; sudo make install
+cd ..
+
+git clone https://github.com/precice/openfoam-adapter.git
+cd openfoam-adapter
+./Allwmake
+
+cd ..
+
+pip install pyprecice --break-system-packages
+
 
 # # Running the Code
 
@@ -45,6 +142,8 @@ Navigate to the case directory and submit 'startFOAMySees' into the terminal
 cd FOAMySeesExampleCases/FixedFixedBeam
 startFOAMySees
 )
+
+If the required files are not in the folder, FOAMySees will tell you that it cannot be run
 
 ______________________________________
 # Making your own case
