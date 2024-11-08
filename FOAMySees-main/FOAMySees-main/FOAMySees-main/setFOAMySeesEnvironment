@@ -1,0 +1,42 @@
+unzip FOAMySees.zip 
+unzip FOAMySeesExampleCases.zip 
+cd FOAMySees
+FOAMySeesSrcDir=(`pwd`)
+
+echo "export FOAMySeesSrcDir=$FOAMySeesSrcDir">>~/.bashrc
+
+chmod u+x startFOAMySees 
+chmod u+x createFOAMySeesInputFiles
+
+echo "alias startFOAMySees=$FOAMySeesSrcDir/startFOAMySees">>~/.bashrc
+
+# # load OpenFOAM, add preCICE library to path in the right places, install all the python things you need... 
+
+sudo apt install python3-pip
+sudo apt-get install libxrender1
+pip3 install --break-system-packages os
+pip3 install --break-system-packages concurrent.futures
+pip3 install --break-system-packages logging
+pip3 install --break-system-packages queue
+pip3 install --break-system-packages random
+pip3 install --break-system-packages subprocess
+pip3 install --break-system-packages time
+pip3 install --break-system-packages argparse
+pip3 install --break-system-packages copy
+pip3 install --break-system-packages sys
+
+# ## math and matrices
+pip3 install --break-system-packages numpy 
+pip3 install --break-system-packages pandas
+pip3 install --break-system-packages re
+pip3 install --break-system-packages csv
+pip3 install --break-system-packages math
+
+# ### meshes and visualization
+pip3 install --break-system-packages meshio
+pip3 install --break-system-packages matplotlib
+pip3 install --break-system-packages scipy
+pip3 install --break-system-packages vtk
+pip3 install --break-system-packages pyvista 
+
+bash

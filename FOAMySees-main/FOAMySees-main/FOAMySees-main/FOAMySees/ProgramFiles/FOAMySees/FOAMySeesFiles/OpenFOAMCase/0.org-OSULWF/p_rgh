@@ -1,0 +1,95 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  7.0                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p_rgh;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include      "ICfiles/initialConditions"
+dimensions    [1 -1 -2 0 0 0 0];
+internalField uniform $p_rghIC;
+boundaryField 
+{
+    paddle
+    {
+        type            fixedFluxPressure;
+        value           $internalField;
+    }
+    comprBottom 
+    {
+        type            fixedFluxPressure;
+        value           $internalField;
+    }
+    comprRight
+    {
+        type            fixedFluxPressure;
+        value           $internalField;
+    }
+	comprLeft
+	{
+        type            fixedFluxPressure;
+        value           $internalField;
+    }
+    comprAtmosphere 
+    {
+        type            totalPressure;
+        U               U;
+        phi             phi;
+        rho             rho;
+        psi             none;
+        gamma           1;
+        p0              $internalField;
+        value           $internalField;
+    }
+	fixedEnd 
+    {
+      type            fixedFluxPressure;
+        value           $internalField;
+    }
+    fixedBottom
+    {
+        type            fixedFluxPressure;
+        value           $internalField;
+    }
+	fixedRight
+    {
+        type            fixedFluxPressure;
+        value           $internalField;
+    }
+	fixedLeft
+    {
+        type            fixedFluxPressure;
+        value           $internalField;
+    }
+	fixedAtmosphere
+	{
+        type            totalPressure;
+        U               U;
+        phi             phi;
+        rho             rho;
+        psi             none;
+        gamma           1;
+        p0              $internalField;
+        value           $internalField;
+    }
+	flumeFloor
+	{
+        type            fixedFluxPressure;
+        value           $internalField;
+    }
+	interface
+    {
+        type            zeroGradient;
+        value           $internalField;
+    }
+
+}
+// ************************************************************************* //

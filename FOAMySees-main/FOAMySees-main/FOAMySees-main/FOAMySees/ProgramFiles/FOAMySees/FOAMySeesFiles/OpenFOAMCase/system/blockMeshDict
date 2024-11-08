@@ -1,0 +1,164 @@
+/*--------------------------------*- C++ -*----------------------------------*| =========				 |												 |
+| \	  /  F ield		 | OpenFOAM: The Open Source CFD Toolbox		   |
+|  \	/   O peration	 | Version:  7.0								   |
+|   \  /	A nd		   | Web:	  www.OpenFOAM.com					  |
+|	\/	 M anipulation  |												 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+	version		 2.0;
+	format		  ascii;
+	class		   dictionary;
+	object		  blockMeshDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 1;
+
+// User-defined parameters
+stroke 4.0; // wavemaker piston stroke
+SWL 2.0; // still water level
+Wflume 3.658; // actual flume width
+Lflume 50.0; // truncated flume length
+Lcomp 30.0; // compressible mesh region length
+zK 4.6;
+
+// Vertex coordinates
+xI #calc "-$stroke/2.0"; // initial paddle position
+xJ #calc "$xI+$Lcomp"; // compressible mesh region end
+xK $Lflume; // flume end
+yI #calc "-$Wflume/2.0"; // right flume wall
+yJ #calc "$Wflume/2.0"; // left flume wall
+zI 0.0; // flume bottom
+zJ 2.0; // still water level
+
+
+vertices
+(
+	($xI $yI $zI) // 0
+	($xI $yI $zJ) // 1
+	($xI $yI $zK) // 2
+	($xJ $yI $zI) // 3
+	($xJ $yI $zJ) // 4
+	($xJ $yI $zK) // 5
+	($xK $yI $zI) // 6
+	($xK $yI $zJ) // 7
+	($xK $yI $zK) // 8
+	($xI $yJ $zI) // 9
+	($xI $yJ $zJ) // 10
+	($xI $yJ $zK) // 11
+	($xJ $yJ $zI) // 12
+	($xJ $yJ $zJ) // 13
+	($xJ $yJ $zK) // 14
+	($xK $yJ $zI) // 15
+	($xK $yJ $zJ) // 16
+	($xK $yJ $zK) // 17
+);
+
+blocks		  
+(
+	hex (0 3 12 9  1 4 13 10) (299.0 36.0 19.0)	simpleGrading (1 1 1) // compressible water-filled block
+	hex (1 4 13 10 2 5 14 11) (299.0 36.0 25.0)	simpleGrading (1 1 1 // compressible air-filled block
+	hex (3 6 15 12 4 7 16 13) (199.0 36.0 19.0)   simpleGrading (1 1 1) // fixed water-filled block
+	hex (4 7 16 13 5 8 17 14) (199.0 36.0 25.0)  simpleGrading (1 1 1) // fixed air-filled block
+);
+
+edges		   
+(
+);
+
+boundary
+(
+	paddle
+	{
+		type wall;
+		faces
+		(
+			(0 1 10 9) // compressible water-filled block DM...out of the box
+			(1 2 11 10) // compressi1ble air-filled block
+		);
+	}
+	comprBottom
+	{
+		type wall;
+		faces
+		(
+			(0 9 12 3) // compressible water-filled block
+		);
+	}
+	comprRight
+	{
+		type wall;
+		faces
+		(
+			(0 3 4 1) // compressible water-filled block
+			(1 4 5 2) // compressible air-filled block
+		);
+	}
+	comprLeft
+	{
+		type wall;
+		faces
+		(
+			(9  10 13 12) // compressible water-filled block
+			(10 11 14 13) // compressible air-filled block
+		);
+	}
+	comprAtmosphere
+	{
+		type patch;
+		faces
+		(
+			(2 5 14 11) // compressible air-filled block
+		);
+	}
+	fixedEnd
+	{
+		type patch;
+		faces
+		(
+			(6 15 16 7) // fixed water-filled block
+			(7 16 17 8) // fixed air-filled block
+		);
+	}
+	fixedBottom
+	{
+		type wall;
+		faces
+		(
+			(3 12 15 6) // fixed water-filled block
+		);
+	}
+	fixedRight
+	{
+		type wall;
+		faces
+		(
+			(3 6 7 4) // fixed water-filled block
+			(4 7 8 5) // fixed air-filled block
+		);
+	}
+	fixedLeft
+	{
+		type wall;
+		faces
+		(
+			(12 13 16 15) // fixed water-filled block
+			(13 14 17 16) // fixed air-filled block
+		);
+	}
+	fixedAtmosphere
+	{
+		type patch;
+		faces
+		(
+			(5 8 17 14) // fixed air-filled block
+		);
+	}
+);
+
+mergePatchPairs
+(
+);
+// ************************************************************************* //

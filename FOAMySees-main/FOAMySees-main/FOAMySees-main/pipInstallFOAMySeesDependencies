@@ -1,0 +1,9 @@
+python3 -m pip install --upgrade pip
+python3 -m pip install numpy
+python3 -m pip install pandas
+python3 -m pip install pyvista
+python3 -m pip install meshio
+python3 -m pip install opensees
+python3 -m pip install matplotlib
+python3 -m pip install PyQt5
+

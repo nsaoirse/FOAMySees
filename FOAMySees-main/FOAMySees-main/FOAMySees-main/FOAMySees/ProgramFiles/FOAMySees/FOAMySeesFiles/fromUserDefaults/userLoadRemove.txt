@@ -1,0 +1,10 @@
+# default is to pass
+pass
+#
+#
+# Anything you apply you must remove, as well
+#TSTAG=2
+#IDloadTag = 400
+#ops.remove('loadPattern',IDloadTag-1) 
+#ops.remove('loadPattern',IDloadTag)
+#ops.remove('timeSeries', TSTAG) 
