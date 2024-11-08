@@ -1,6 +1,0 @@
-# Source: https://precice.org/installation-packages.html
-# this is for ubuntu 22.0.4
-
-
-wget https://github.com/precice/precice/releases/download/v2.5.0/libprecice2_2.5.0_jammy.deb
-sudo apt install ./libprecice2_2.5.0_jammy.deb

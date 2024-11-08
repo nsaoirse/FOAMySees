@@ -1,5 +1,0 @@
-# source https://olaflow.github.io/source-code/
-
-git clone https://github.com/phicau/olaFlow.git
-cd olaFlow
-./allMake
