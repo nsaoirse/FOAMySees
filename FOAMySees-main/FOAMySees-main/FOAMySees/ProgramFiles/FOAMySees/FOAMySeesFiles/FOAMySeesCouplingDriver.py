@@ -217,8 +217,12 @@ if __name__ == '__main__':# and rank==0:
 	stepOut=1
 	oneWay=1
 	oneWayD=1
+	onewaystatus="this simulation is..."
+	with open('WorkInAndOut.log', 'a+') as f:
+                print(FOAMySees.config.oneWay,onewaystatus,file=f)
 	if FOAMySees.config.oneWay==1:
 	    oneWay*=0
+	    onewaystatus="this is a one-way simulation: work errors make sense!"
 	if FOAMySees.config.oneWay==2:
 	    oneWayD*=0
 	
@@ -325,18 +329,19 @@ if __name__ == '__main__':# and rank==0:
 				
 		#################################################################################################			
 		# projecting the displacement field from OpenSees to the coupling data projection mesh				
-		Displacement=FOAMySees.projectDisplacements(Displacement)
+		Displacement=oneWay*FOAMySees.projectDisplacements(Displacement)
 		
 		#################################################################################################			
 		# calculating the Work
 				
 		FOAMySees.WorkIn=np.sum(FOAMySees.forceandmoment*(FOAMySees.displacement-FOAMySees.lastDisplacements))
 		FOAMySees.WorkOut=0
-
+		with open('WorkInAndOut.log', 'a+') as f:
+                        print(FOAMySees.config.oneWay,onewaystatus,file=f)
 		for substep in range(1,noOpenFOAMsubsteps+1):
 			FOAMySees.WorkOut+=np.sum((Forces)*(Displacement-LastDisplacement)*(1/noOpenFOAMsubsteps))
 			with open('FOAMySeesCouplingDriver.log', 'a+') as f:
-				print('iteration:',iteration,', Time: ',ops.getTime(),'Work In/Out -- error (%)',(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' In/Out (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', Work In (Joules): ',FOAMySees.WorkIn,', Work Out (Joules): ',FOAMySees.WorkOut,file=f)
+				print('iteration:',iteration,', Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f)  (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
 		
 			#################################################################################################
 			# sending the projected displacements to preCICE to be mapped to OpenFOAM during the next iteration or timestep
@@ -361,11 +366,11 @@ if __name__ == '__main__':# and rank==0:
 			# letting preCICE know we are finished going back in time			
 		else:
 			with open('FOAMySeesCouplingDriver.log', 'a+') as f:
-				print(' Time: ',ops.getTime(),'Work In/Out -- error (%)',(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' In/Out (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', Work In (Joules): ',FOAMySees.WorkIn,', Work Out (Joules): ',FOAMySees.WorkOut,file=f)
+				print(' Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f) (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
 			with open('WorkInAndOut.log', 'a+') as f:
-				print(' Time: ',ops.getTime(),'Work In/Out -- error (%)',(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' In/Out (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', Work In (Joules): ',FOAMySees.WorkIn,', Work Out (Joules): ',FOAMySees.WorkOut,file=f)
+				print(' Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f) (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
 			with open('WorkInAndArray.log', 'a+') as f:
-				print(ops.getTime(),(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,FOAMySees.WorkIn/FOAMySees.WorkOut,FOAMySees.WorkIn,FOAMySees.WorkOut,file=f)	
+				print(ops.getTime(),100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,FOAMySees.WorkIn/FOAMySees.WorkOut,FOAMySees.WorkIn,FOAMySees.WorkOut,file=f)	
 			LastForces=copy.deepcopy(Forces)
 			LastDisplacement=copy.deepcopy(Displacement)
 			FOAMySees.StepsPerFluidStep=1

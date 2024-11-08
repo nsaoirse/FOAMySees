@@ -213,7 +213,7 @@ echo "">WorkInAndOut.log
 # tailing the OpenSees output (OpenFOAM is verbose)
 tail -f ${Participant2}.log &
 #tail -f ${Participant1}.log &
-
+tail -f WorkInAndOut.log
 echo analysis logs tailed
 # waiting for input to cancel
 while [ -e /proc/${PIDParticipant1} ]; do
