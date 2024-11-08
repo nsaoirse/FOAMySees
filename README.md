@@ -15,7 +15,7 @@ preCICE v3.1.2
 
 OpenSeesPy 
 
-$ Required Python packages: (import or install with pip, will install automatically with provided bash installation script)
+/ Required Python packages: (import or install with pip, will install automatically with provided bash installation script)
 os
 concurrent.futures
 logging
@@ -27,24 +27,24 @@ argparse
 copy
 sys
 
-$ math and matrices
+/ math and matrices
 numpy 
 pandas
 re
 csv
 math
 
-$ meshes and visualization
+/ meshes and visualization
 meshio
 matplotlib
 scipy
 vtk
 pyvista 
 
-$ openseespy
+/ openseespy
 openseespy 
 
-$ preCICE
+/ preCICE
 pyprecice
 
 The best approach I have found to compile all the dependencies is to use something like Spack as a package manager, or to install
