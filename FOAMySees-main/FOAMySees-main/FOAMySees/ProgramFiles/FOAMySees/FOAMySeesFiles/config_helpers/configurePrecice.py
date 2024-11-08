@@ -79,52 +79,54 @@ def configurePrecice(implicitOrExplicit,outputDataFromCouplingIterations,couplin
 	#		enabled="true" />
 			
 	preCICEdict=['''<?xml version="1.0" encoding="UTF-8" ?>
-	<precice-configuration>
-		<log>
+<precice-configuration>
+	<log>
 
-		</log>
+	</log>
+	<data:vector name="Force" />
+	<data:vector name="Displacement" />
 
-		<solver-interface dimensions="3">
-		<data:vector name="Force" />
-		<data:vector name="Displacement" />
+	<mesh name="OpenFOAM-Mesh" dimensions="3">
+		<use-data name="Displacement" />
+		<use-data name="Force" />
+	</mesh>
 
-		<mesh name="OpenFOAM-Mesh">
-			<use-data name="Displacement" />
-			<use-data name="Force" />
-		</mesh>
+	<mesh name="Coupling-Data-Projection-Mesh" dimensions="3">
+		<use-data name="Displacement" />
+		<use-data name="Force" />
+	</mesh>
 
-		<mesh name="Coupling-Data-Projection-Mesh">
-			<use-data name="Displacement" />
-			<use-data name="Force" />
-		</mesh>
-
-		<participant name="FOAMySeesCouplingDriver">
+	<participant name="FOAMySeesCouplingDriver">
 	''',doWeOutputPreCICEData,'''
-			<use-mesh name="Coupling-Data-Projection-Mesh" provide="yes" />
-			<write-data name="Displacement" mesh="Coupling-Data-Projection-Mesh" />
-			<read-data name="Force" mesh="Coupling-Data-Projection-Mesh" />
-		</participant>
+		<provide-mesh name="Coupling-Data-Projection-Mesh"/>
+		<write-data name="Displacement" mesh="Coupling-Data-Projection-Mesh" />
+		<read-data name="Force" mesh="Coupling-Data-Projection-Mesh" />
+	</participant>
 		
-		<participant name="OpenFOAMCase">
+	<participant name="OpenFOAMCase">
 					''',FluidWatchPoints,'''
 	''',doWeOutputPreCICEData,'''
-			<use-mesh name="OpenFOAM-Mesh" provide="yes" />
-			<use-mesh name="Coupling-Data-Projection-Mesh" from="FOAMySeesCouplingDriver" />
-			<write-data name="Force" mesh="OpenFOAM-Mesh" />
-			<read-data name="Displacement" mesh="OpenFOAM-Mesh" />
-			<mapping:{}'''.format(mapType),'''
-			direction="write"
-			from="OpenFOAM-Mesh"
-			to="Coupling-Data-Projection-Mesh"
-			constraint="conservative" />
-			<mapping:{}'''.format(mapType),'''
-			direction="read"
-			from="Coupling-Data-Projection-Mesh"
-			to="OpenFOAM-Mesh"
-			constraint="consistent" />
-		</participant>
-		''']
-				# <mapping:{}'''.format(mapType),'''
+		<receive-mesh name="Coupling-Data-Projection-Mesh" from="FOAMySeesCouplingDriver" />
+		<provide-mesh name="OpenFOAM-Mesh" />
+		<write-data name="Force" mesh="OpenFOAM-Mesh" />
+		<read-data name="Displacement" mesh="OpenFOAM-Mesh" />
+		<mapping:{}'''.format(mapType),'''
+		direction="write"
+		from="OpenFOAM-Mesh"
+		to="Coupling-Data-Projection-Mesh"
+		constraint="conservative" />
+		<mapping:{}'''.format(mapType),'''
+		direction="read"
+		from="Coupling-Data-Projection-Mesh"
+		to="OpenFOAM-Mesh"
+		constraint="consistent" />
+	</participant>
+	<m2n:sockets acceptor="OpenFOAMCase" connector="FOAMySeesCouplingDriver" exchange-directory="."/>
+				''']
+        # <m2n:mpi acceptor="OpenFOAMCase" connector="FOAMySeesCouplingDriver"/>
+        # <m2n:sockets port="10101" acceptor="OpenFOAMCase" connector="FOAMySeesCouplingDriver" exchange-directory=".." enforce-gather-scatter="1"/>
+	
+        # <mapping:{}'''.format(mapType),'''
 			# direction="read"
 			# from="Coupling-Data-Projection-Mesh"
 			# to="OpenFOAM-Mesh"
@@ -145,27 +147,24 @@ def configurePrecice(implicitOrExplicit,outputDataFromCouplingIterations,couplin
 	if implicit==1:
 		preCICEdict.append(
 		'''
-		<m2n:sockets from="OpenFOAMCase" to="FOAMySeesCouplingDriver" exchange-directory=".." />
-			<coupling-scheme:parallel-implicit>
-				<time-window-size value="{}"'''.format(SolutionDT)),
+		<coupling-scheme:parallel-implicit>
+			<time-window-size value="{}"'''.format(SolutionDT)),
 		preCICEdict.append(''' />
-				<max-time value="{}"/>'''.format(endTime))
+			<max-time value="{}"/>'''.format(endTime))
 		preCICEdict.append('''
-				<participants first="OpenFOAMCase" second="FOAMySeesCouplingDriver"/>'''+exchangeWhatData+'''
-				<max-iterations value="{}"'''.format(maximumCouplingIterations))
+			<participants first="OpenFOAMCase" second="FOAMySeesCouplingDriver"/>'''+exchangeWhatData+'''
+			<max-iterations value="{}"'''.format(maximumCouplingIterations))
 		preCICEdict.append(relConvMeasures)
 		preCICEdict.append('''		
 				
 			''')
 		preCICEdict.append(accelType)
 		preCICEdict.append('''
-			</coupling-scheme:parallel-implicit>
-		</solver-interface>
+		</coupling-scheme:parallel-implicit>
 	</precice-configuration>
 	''')
 	else:
 		preCICEdict.append(''' 
-		<m2n:sockets from="OpenFOAMCase" to="FOAMySeesCouplingDriver" exchange-directory=".." />
 			<coupling-scheme:parallel-explicit>
 				<time-window-size value="{}"'''.format(SolutionDT))
 		preCICEdict.append(''' />
@@ -173,7 +172,6 @@ def configurePrecice(implicitOrExplicit,outputDataFromCouplingIterations,couplin
 		preCICEdict.append('''
 				<participants first="OpenFOAMCase" second="FOAMySeesCouplingDriver"/>'''+exchangeWhatData+'''
 			</coupling-scheme:parallel-explicit>
-		</solver-interface>
 	</precice-configuration>
 		''')
 	print('Writing the precice config.xml file')

@@ -1,4 +1,8 @@
-
+if ! test -f ./caseSetup.sh; then
+  echo "ERROR: FOAMySees Case files do not exist in the current working directory."
+  echo "Please ensure you are in the proper folder before executing the 'startFOAMySees' command"
+  exit 1
+fi
 ###########################################################################################################################
 ###########################################################################################################################
 					# LOAD MODULES IF NECESSARY
@@ -176,7 +180,7 @@ python3 configureCoupledCase.py  ${FYS_nameOfCoupledPatchOrSurfaceFile} ${FYS_Co
 
 # starting the OpenSees model preliminary analysis and waiting for coupling to initialize
 echo "Starting ${Participant2} participant..."
-mpirun -np 1 python3 ${solverroot}${Participant2}.py ${solverroot}${configfile} ${CouplingDataProjectionMesh} > ${Participant2}.log 2>&1 &
+mpirun -np 1 python3 ${solverroot}${Participant2}.py ${solverroot}${configfile} ${CouplingDataProjectionMesh} > ${Participant2}.log & 
 PIDParticipant2=$!        
 
 # starting the OpenFOAM model
@@ -192,9 +196,9 @@ decomposePar -force -fileHandler ${FYS_OpenFOAMFileHandler} -case ${FYS_OpenFOAM
 
 
 if [ ${nproc} -ne 1 ]; then
-	mpirun -np ${nproc} ${Solver1} -parallel -case ${FYS_OpenFOAMCaseFolder} > ${Participant1}.log 2>&1 &
+	mpirun -np ${nproc} ${Solver1} -parallel -case ${FYS_OpenFOAMCaseFolder} > ${Participant1}.log &
 else
-	mpirun -np 1 ${Solver1} -case ${FYS_OpenFOAMCaseFolder} > ${Participant1}.log 2>&1 &
+	mpirun -np 1 ${Solver1} -case ${FYS_OpenFOAMCaseFolder} > ${Participant1}.log & 
 fi
 PIDParticipant1=$!
 
@@ -205,10 +209,10 @@ echo starting coupled analysis
 ########################################################################################################
 ########################################################################################################
 
-
+echo "">WorkInAndOut.log
 # tailing the OpenSees output (OpenFOAM is verbose)
 tail -f ${Participant2}.log &
-tail -f ${Participant1}.log &
+#tail -f ${Participant1}.log &
 
 echo analysis logs tailed
 # waiting for input to cancel

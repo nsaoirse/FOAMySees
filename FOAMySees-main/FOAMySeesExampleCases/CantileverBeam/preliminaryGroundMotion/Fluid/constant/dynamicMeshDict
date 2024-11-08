@@ -1,0 +1,63 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  7.0                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dynamicFvMesh      dynamicMotionSolverFvMesh;
+motionSolverLibs   ("libfvMotionSolvers.so");
+
+solver            displacementLaplacian;
+
+displacementLaplacianCoeffs
+{
+    \\ diffusivity inversePointDistance (inlet);
+    \\ refPlaneX 12;
+\\diffusivity uniform;
+\\diffusivity inverseDistance (paddle flumeFloor interface);
+diffusivity quadratic inverseDistance (paddle flumeFloor interface);
+}
+
+
+
+// dynamicFvMesh dynamicMotionSolverListFvMesh; // dynamicMultiMotionSolverFvMesh;
+// 
+// solvers{
+// 	solver1{
+// 
+// 			dynamicFvMesh dynamicMotionSolverFvMesh;
+// 
+// 			motionSolver      displacementLaplacian;
+// 
+// 			displacementLaplacianCoeffs {
+// 			   diffusivity uniform;
+// 			}
+// 		}
+// 	solver2{
+// 	
+// 	 dynamicFvMesh      dynamicMotionSolverFvMesh;
+// 	 motionSolverLibs   ("libfvMotionSolvers.so");
+// 	 
+// 	 solver            displacementLaplacian;
+// 	 
+// 	 displacementLaplacianCoeffs
+// 			 {  \\ diffusivity inversePointDistance (inlet);
+// 				\\ refPlaneX 12;
+// 				\\ diffusivity uniform;
+// 				diffusivity quadratic inverseDistance (CFT1 CFT2 CFT3 CFT4 breakawaySlab);
+// 				}
+// 		}
+// }
+
+// ************************************************************************* //

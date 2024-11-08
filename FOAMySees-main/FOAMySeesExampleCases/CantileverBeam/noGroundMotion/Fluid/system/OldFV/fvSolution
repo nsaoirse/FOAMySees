@@ -1,0 +1,153 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  7.0                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Modified on 11/28/2018 by AOW
+
+solvers
+{
+    "alpha*"
+    {
+        nAlphaCorr      		2; // changed from 1, which was probably left over from trying the CrankNicolson ddt scheme
+        nAlphaSubCycles 		2;
+        alphaOuterCorrectors 	yes;
+        cAlpha          		1;
+		icAlpha					0; // newly added
+        MULESCorr       		yes; // changed from no
+        nLimiterIter    		10; // changed from 3
+		applyAlphaPrevCorr		yes; // newly added
+        solver          		smoothSolver;
+        smoother        		symGaussSeidel;
+        tolerance       		1e-8;
+        relTol          		0;
+		minIter					1; // newly added
+    }
+"alpha.water"
+    {
+        nAlphaCorr      		2; // changed from 1, which was probably left over from trying the CrankNicolson ddt scheme
+        nAlphaSubCycles 		2;
+        alphaOuterCorrectors 	yes;
+        cAlpha          		1;
+		icAlpha					0; // newly added
+        MULESCorr       		yes; // changed from no
+        nLimiterIter    		10; // changed from 3
+		applyAlphaPrevCorr		yes; // newly added
+        solver          		smoothSolver;
+        smoother        		symGaussSeidel;
+        tolerance       		1e-8;
+        relTol          		0;
+		minIter					1; // newly added
+    }
+"alpha.waterFinal"
+    {
+        nAlphaCorr      		2; // changed from 1, which was probably left over from trying the CrankNicolson ddt scheme
+        nAlphaSubCycles 		2;
+        alphaOuterCorrectors 	yes;
+        cAlpha          		1;
+		icAlpha					0; // newly added
+        MULESCorr       		yes; // changed from no
+        nLimiterIter    		10; // changed from 3
+		applyAlphaPrevCorr		yes; // newly added
+        solver          		smoothSolver;
+        smoother        		symGaussSeidel;
+        tolerance       		1e-8;
+        relTol          		0;
+		minIter					1; // newly added
+    }
+
+    "pcorr"
+    {
+        solver          		PCG;
+        preconditioner
+        {
+            preconditioner  	GAMG;
+            smoother        	GaussSeidel;
+            tolerance       	1e-5;
+            relTol          	0;
+        };
+        tolerance       		1e-5;
+        relTol          		0;
+    }
+
+    "pcorrFinal"
+    {
+        $pcorr;
+        relTol          		0;
+    }
+
+    "p_rgh"
+    {
+        solver          		GAMG; // changed from PCG
+		smoother		  		DIC; // changed to a smoother instead of a preconditioner for the GAMG solver
+        tolerance       		1e-08;
+        relTol          		0.01; // changed from 0.05
+    }
+
+    "p_rghFinal"
+    {
+        $p_rgh;
+        relTol          		0;
+    }
+
+    "(U|k|omega).*"
+    {
+		// nLimiterIter    		1;
+        solver          		smoothSolver;
+        smoother        		symGaussSeidel;
+        tolerance       		1e-08;
+        relTol          		0.1; // changed from 0
+        minIter         		1; // newly added
+    }
+
+    "cellDisplacement"
+    {
+        solver          		GAMG;
+        tolerance       		1e-5;
+        relTol          		0;
+        smoother        		GaussSeidel;
+        cacheAgglomeration		false;
+        nCellsInCoarsestLevel 	10;
+        agglomerator    		faceAreaPair;
+        mergeLevels     		1;
+    }
+
+    "cellDisplacementFinal"
+    {
+        $cellDisplacement;
+        relTol          		0;
+    }
+}
+
+PIMPLE
+{
+    momentumPredictor   		no;
+    nOuterCorrectors    		1;
+    nCorrectors         		1;
+    nNonOrthogonalCorrectors 	0;
+}
+
+relaxationFactors
+{
+    fields
+    {
+    }
+    equations
+    {
+        ".*" 1;
+    }
+}
+
+// ************************************************************************* //

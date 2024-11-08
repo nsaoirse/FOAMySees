@@ -5,7 +5,7 @@ def writeUserLoadRoutines(writeHere,applyLoad='pass',removeLoad='pass'):
     Popen("pwd",shell=True)
     userLoads=['''import openseespy.opensees as ops
 # FOAMySees GUI Generated User Loads, time written={}'''.format(time.time()),'''
-def applyGM(startTime):
+def applyGM(time):
 ''']
     with open(applyLoad) as f:
         for line in f:

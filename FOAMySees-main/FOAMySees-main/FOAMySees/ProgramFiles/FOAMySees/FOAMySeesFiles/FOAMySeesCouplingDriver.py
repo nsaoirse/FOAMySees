@@ -73,14 +73,19 @@ if __name__ == '__main__':# and rank==0:
 	# reporting
 	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
 		print("Configuring preCICE library",file=f)
-	interface = precice.Interface(solverName, configFileName, 0, 1)
+        # precice v2
+	# interface = precice.Interface(solverName, configFileName, 0, 1)
+        # precice v3
+	interface = precice.Participant(solverName, configFileName, 0, 1)
 	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
 		print("preCICE successfully configured",file=f)
 	#################################################################################################
-	# returning the dimensions defined by the coupling library
-	dimensions = interface.get_dimensions()
-	dimensions=3 # overruling that
+
+    
 	#################################################################################################
+	# returning the dimensions defined by the coupling library
+	#dimensions = interface.get_mesh_dimensions("OpenFOAM-Mesh")
+	dimensions=3 # overruling that #    bounding_box : array_like
 
 	isSurfLoaded=0	# initializing this
 	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
@@ -98,7 +103,22 @@ if __name__ == '__main__':# and rank==0:
 			isSurfLoaded=0
 	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
 		print('@ line'+str(90),file=f)	
-	#################################################################################################		  
+    
+	#   Axis aligned bounding box. Example for 3D the format: [x_min, x_max, y_min, y_max, z_min, z_max]
+	#interface.set_mesh_access_region("OpenFOAM-Mesh",[-1e10,1e10,-1e10,1e10,-1e10,1e10])
+        
+	# preCICE action - returns locations to mesh nodes (currently not working - need to figure out a way to pass the openfoam mesh through precice to python before initialize is called
+	# such that the array returned from openfoam can be used to initialize the coupling points for the coupling data projection mesh
+	# Branches=interface.get_mesh_vertex_ids_and_coordinates("OpenFOAM-Mesh")[1]
+
+
+	vertexIDsDisplacement = interface.set_mesh_vertices("Coupling-Data-Projection-Mesh", Branches)
+                
+	# force and displacement are currently applied and calculated at the face centers of the OpenFOAM patch cells
+	vertexIDsForce = vertexIDsDisplacement
+
+
+    #################################################################################################		  
 	# using SciPy to calculate the K-means clustering  
 		#   .... from scipy.spatial import KDTree
 	Tree=KDTree(FOAMySees.nodeLocs)
@@ -167,26 +187,9 @@ if __name__ == '__main__':# and rank==0:
 		print("FOAMySees Coupling Driver: Initializing Coupling with preCICE",file=f)
 
 	# preCICE action - returns ID of mesh 
-	meshID = interface.get_mesh_id("Coupling-Data-Projection-Mesh")
+	# deprecated in precice v3
+	# meshID = interface.get_mesh_id("Coupling-Data-Projection-Mesh")
 
-	# preCICE action - assigns locations to mesh nodes
-	vertexIDsDisplacement = interface.set_mesh_vertices(meshID, verticesDisplacement)
-
-	# preCICE action - returns ID of data array
-	displacementID = interface.get_data_id("Displacement", meshID)
-
-	# force and displacement are currently applied and calculated at the face centers of the OpenFOAM patch cells
-	vertexIDsForce = vertexIDsDisplacement
-	
-
-	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
-		print('@ line'+str(180),file=f)	
-
-	# preCICE action - returns ID of data array
-	forceID = interface.get_data_id("Force", meshID)
-
-	# preCICE action - gives initial coupling timestep, initializes coupling
-	precice_dt = interface.initialize()
 
 	#################################################################################################
 
@@ -195,40 +198,7 @@ if __name__ == '__main__':# and rank==0:
 		print('OpenSeesPy (FOAMySees Projected) Initial Displacements (from preliminary analysis)',Displacement,file=f)
 
 	
-	#################################################################################################
-	# preCICE action
-	if interface.is_action_required(action_write_initial_data()):
-		with open('FOAMySeesCouplingDriver.log', 'a+') as f:
-			print('Initial Displacement',Displacement,file=f)
-		interface.write_block_vector_data(displacementID, vertexIDsDisplacement, Displacement)
-		interface.mark_action_fulfilled(action_write_initial_data())
-
-	#################################################################################################
-	# preCICE action
-	interface.initialize_data()
 	
-	#################################################################################################	
-	# Cleaning up and making storage directories for OpenSees
-	Popen('rm -rf SeesCheckpoints', shell=True, stdout=DEVNULL).wait()
-	Popen('mkdir SeesCheckpoints', shell=True, stdout=DEVNULL).wait()
-	Popen('mkdir SeesCheckpoints/checkpoints/', shell=True, stdout=DEVNULL).wait()
-	
-	
-	#################################################################################################	
-	# preCICE action	
-	if interface.is_read_data_available():
-		force = interface.read_block_vector_data(forceID, vertexIDsForce)
-
-	#################################################################################################
-	# preCICE action	
-	if interface.is_action_required(action_write_iteration_checkpoint()):
-		ops.database('File',"SeesCheckpoints/checkpoint")
-		ops.save(0)
-		interface.mark_action_fulfilled(action_write_iteration_checkpoint())
-		thisTime=copy.deepcopy(ops.getTime())
-		with open('What is Happening With OpenSees.log', 'a+') as f:
-			print('Wrote a checkpoint at opensees time = ',thisTime,file=f)		
-		
 	#################################################################################################	
 	# creating a PVD file for the initial state of the OpenSees model
 	FOAMySees.createRecorders.createPVDRecorder(FOAMySees)
@@ -245,6 +215,13 @@ if __name__ == '__main__':# and rank==0:
 	#################################################################################################	
 	# intializing some things
 	stepOut=1
+	oneWay=1
+	oneWayD=1
+	if FOAMySees.config.oneWay==1:
+	    oneWay*=0
+	if FOAMySees.config.oneWay==2:
+	    oneWayD*=0
+	
 	FOAMySees.lastForces=copy.deepcopy(FOAMySees.force)
 	FOAMySees.lastMoments=copy.deepcopy(FOAMySees.moment)
 	observe_node_num=1
@@ -263,19 +240,51 @@ if __name__ == '__main__':# and rank==0:
 	#################################################################################################	
 	# defining the number of OpenSees substeps
 	FOAMySees.CurrSteps=1
+    #################################################################################################
+	# preCICE action
+	if interface.requires_initial_data():
+		with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+			print('Initial Displacement',Displacement,file=f)
+		interface.write_block_vector_data(displacementID, vertexIDsDisplacement, Displacement)
 
+	#################################################################################################
+
+	# preCICE action - gives initial coupling timestep, initializes DATA and pointers between solvers
+	precice_dt = interface.initialize()
+
+
+	#################################################################################################
+	# preCICE action	
+	if interface.requires_writing_checkpoint ():
+		ops.database('File',"SeesCheckpoints/checkpoint")
+		ops.save(0)
+		thisTime=copy.deepcopy(ops.getTime())
+		with open('What is Happening With OpenSees.log', 'a+') as f:
+			print('Wrote a checkpoint at opensees time = ',thisTime,file=f)		
+		
+	
+	#################################################################################################	
+	# Cleaning up and making storage directories for OpenSees
+	Popen('rm -rf SeesCheckpoints', shell=True, stdout=DEVNULL).wait()
+	Popen('mkdir SeesCheckpoints', shell=True, stdout=DEVNULL).wait()
+	Popen('mkdir SeesCheckpoints/checkpoints/', shell=True, stdout=DEVNULL).wait()
+	
+	
+	#################################################################################################	
+	# preCICE action	
+	force = oneWayD*interface.read_data("Coupling-Data-Projection-Mesh","Force", vertexIDsForce,0)
+	
+	DT=float(FOAMySees.config.SolutionDT)
+	
 	#################################################################################################
 	# preCICE action - entering the coupling loop
 	while interface.is_coupling_ongoing():
 		#################################################################################################
 		# preCICE action - checking if a database needs to be written (implicit only)
-		if (interface.is_action_required(precice.action_write_iteration_checkpoint())) or newStep==1:
+		if (interface.requires_writing_checkpoint()) or newStep==1:
 
 			# summons database save in OpenSees
 			FOAMySees.writeCheckpoint(stepOut)
-
-			# telling preCICE we are done restoring the checkpoint
-			interface.mark_action_fulfilled(precice.action_write_iteration_checkpoint())
 
 		#################################################################################################		
 		# creating OpenSees recorders for the timestep				
@@ -284,7 +293,7 @@ if __name__ == '__main__':# and rank==0:
 
 		#################################################################################################
 		# gathering forces from preCICE
-		Forces=interface.read_block_vector_data(forceID, vertexIDsForce)
+		Forces=oneWayD*interface.read_data("Coupling-Data-Projection-Mesh","Force", vertexIDsForce,0)
 	
 		for substep in range(1,noOpenSeessubsteps+1):						
 			currForces=(copy.deepcopy(Forces)-LastForces)*(substep/noOpenSeessubsteps) + LastForces
@@ -318,15 +327,12 @@ if __name__ == '__main__':# and rank==0:
 		# projecting the displacement field from OpenSees to the coupling data projection mesh				
 		Displacement=FOAMySees.projectDisplacements(Displacement)
 		
-		
-		
 		#################################################################################################			
 		# calculating the Work
 				
 		FOAMySees.WorkIn=np.sum(FOAMySees.forceandmoment*(FOAMySees.displacement-FOAMySees.lastDisplacements))
 		FOAMySees.WorkOut=0
-		
-		
+
 		for substep in range(1,noOpenFOAMsubsteps+1):
 			FOAMySees.WorkOut+=np.sum((Forces)*(Displacement-LastDisplacement)*(1/noOpenFOAMsubsteps))
 			with open('FOAMySeesCouplingDriver.log', 'a+') as f:
@@ -334,26 +340,25 @@ if __name__ == '__main__':# and rank==0:
 		
 			#################################################################################################
 			# sending the projected displacements to preCICE to be mapped to OpenFOAM during the next iteration or timestep
-			interface.write_block_vector_data(displacementID, vertexIDsDisplacement, LastDisplacement+(Displacement-LastDisplacement)*(substep/noOpenFOAMsubsteps))
+			interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, oneWay*(LastDisplacement+(Displacement-LastDisplacement)*(substep/noOpenFOAMsubsteps)))
 			#################################################################################################		
 			# Advancing the coupling scheme -
 #				precice_dt=interface.advance(precice_dt)			
-			precice_dt_return=interface.advance(precice_dt/noOpenFOAMsubsteps)
+			precice_dt_return=interface.advance(DT/noOpenFOAMsubsteps)
 			with open('FOAMySeesCouplingDriver.log', 'a+') as f:
-				print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(substep-1)*precice_dt/noOpenFOAMsubsteps ,file=f)
+				print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(substep-1)*DT/noOpenFOAMsubsteps ,file=f)
 		
 		#  checking if residuals<tolerances & performing accleration (implicit), no accel/iter (explicit)	
 		#################################################################################################		
 		# checking with preCICE to see if we have converged, or if we need to try the timestep again with new coupling data
-		if interface.is_action_required(precice.action_read_iteration_checkpoint()):
+		if interface.requires_reading_checkpoint():
 			#FOAMySees.CurrSteps+=1				
 			FOAMySees.readCheckpoint(stepOut)
 			# reading the previously saved database
 			StepCheck=0
 			# adding one to the iteration counter
 			iteration+=1
-			# letting preCICE know we are finished going back in time
-			interface.mark_action_fulfilled(precice.action_read_iteration_checkpoint())		 			
+			# letting preCICE know we are finished going back in time			
 		else:
 			with open('FOAMySeesCouplingDriver.log', 'a+') as f:
 				print(' Time: ',ops.getTime(),'Work In/Out -- error (%)',(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' In/Out (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', Work In (Joules): ',FOAMySees.WorkIn,', Work Out (Joules): ',FOAMySees.WorkOut,file=f)
@@ -378,7 +383,7 @@ if __name__ == '__main__':# and rank==0:
 			# doing some house keeping
 			Popen("ls -t SeesCheckpoints/checkpoints/*| tail -n +100 | xargs -d '\n' rm", shell=True, stdin=None, stdout=None, stderr=None,)
 			newStep=1
-			tOUT+= precice_dt
+			tOUT += DT
 			FOAMySees.CurrSteps=1
 			stepOut+=1
 			FOAMySees.StepsPerFluidStep=1
