@@ -85,7 +85,7 @@ cmake .. -Darith=d
 cmake --build . --config Release --parallel 4
 cd ../..
 
-# Install OpenSees from source and make sure MPI is not linked in OpenSeesPy makefile, otherwise you might be sad
+**Install OpenSees from source, or....**
 git clone https://github.com/OpenSees/OpenSees.git
 cd OpenSees
 rm -rf build
@@ -96,10 +96,13 @@ $HOME/.local/bin/conan install .. --build missing
 cmake .. -DMUMPS_DIR=$PWD/../../mumps/build
 cmake --build .. --target OpenSees -j8
 cmake --build .. --target OpenSeesPy -j8
-# at this point in the installation of opensees, i had some trouble with conan. might not be worth installing from source.
-# you could probably get by with using pip to install openseespy /and/or/ openseespylinux
-mv ./lib/OpenSeesPy.so ./opensees.so
+**at this point in the installation of opensees, i had some trouble with conan. might not be worth installing from source for this purpose, since we are just using it to build openseespy anyway. The intent of attempting this would be to allow for MPI communication between the Python initialized OpenSeesPy model and the preCICE coupling library. Would be worth it, if you had a million degrees of freedom to couple! 
+
+**mv ./lib/OpenSeesPy.so ./opensees.so
 cd ../..
+
+**you could probably just use pip**
+pip install openseespy
 
 # Install OpenFOAM from source ( you will need the header files to install the OpenFOAM preCICE adapter)
 git clone https://develop.openfoam.com/Development/openfoam.git
