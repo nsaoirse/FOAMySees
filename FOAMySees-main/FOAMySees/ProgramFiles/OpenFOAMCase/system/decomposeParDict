@@ -1,0 +1,33 @@
+/*---------------------------------------------------------------------------*| =========				 |												 |
+| \	  /  F ield		 | OpenFOAM: The Open Source CFD Toolbox		   |
+|  \	/   O peration	 | Version:  7.0								   |
+|   \  /	A nd		   | Web:	  http://www.openfoam.org			   |
+|	\/	 M anipulation  |												 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+	version		 2.0;
+	format		  ascii;
+	location		"system";
+	class		   dictionary;
+	object		  decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+numberOfSubdomains   40;
+method			   scotch;
+ constraints
+{
+   patches
+	{
+		type	preservePatches;
+		patches (interface);
+		enabled true;
+	}
+}
+	distributed false;
+	roots
+	(
+	);
+
+
+// ************************************************************************* //

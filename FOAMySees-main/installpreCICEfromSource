@@ -1,0 +1,23 @@
+# Source: 
+
+sudo apt update
+
+sudo apt install build-essential
+
+sudo apt-get update
+
+sudo apt-get install cmake
+
+sudo apt-get install pkg-config
+
+sudo apt-get install libxml2-dev
+
+sudo apt-get install libeigen3-dev
+
+git clone --branch release-v2.5.0 https://github.com/precice/precice.git
+
+cd precice 
+
+cmake . 
+
+sudo make install -j 12
