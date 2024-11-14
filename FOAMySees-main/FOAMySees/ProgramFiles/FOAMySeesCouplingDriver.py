@@ -204,7 +204,6 @@ if __name__ == '__main__':# and rank==0:
 		print('OpenSeesPy (FOAMySees Projected) Initial Displacements (from preliminary analysis)',Displacement,file=f)
 
 	
-	
 	#################################################################################################	
 	# creating a PVD file for the initial state of the OpenSees model
 	FOAMySees.createRecorders.createPVDRecorder(FOAMySees)
