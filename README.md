@@ -1,12 +1,20 @@
 # FOAMySees development Version
 This version uses preCICE v3 for additional functionality and stability.
+
 Code changes include 
+
 -port from preCICE v2 to v3. 
+
 -improved code compactness and functionality
+
 -minor bug fixes in coupling driver.
+
 -additional logging of solution status and progress
+
 -fixed broken preprocessing scripts
+
 Tested on Ubuntu 24.04.1 LTS 
+
 In this branch, I used precice-3.1.2, OpenFOAM v2406, and Python 3.12, along with a pip-installed version of openseespy and the python precice bindings
 
 The best approach I have found to compile all the dependencies is to use something like Spack as a package manager, or to install
