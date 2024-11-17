@@ -42,7 +42,7 @@ def writeControlDict(OpenFOAMSolver,startOFSimAt,endTime,SolutionDT,writeDT,writ
 
 	deltaT		  {};'''.format(SolutionDT),'''
 
-	writeControl	adjustable;
+	writeControl	runTime;
 
 	writeInterval   {};'''.format(writeDT),'''
 

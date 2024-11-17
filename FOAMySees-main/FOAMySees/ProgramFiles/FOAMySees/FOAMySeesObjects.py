@@ -177,8 +177,8 @@ class FOAMySeesInstance():
 		ops.system(self.config.OpenSeesSystem)	
 		ops.test(self.config.Test[0],self.config.Test[1],self.config.Test[2])
 		ops.algorithm(self.config.Algorithm)
-		ops.integrator('Newmark', 0.5, 0.25)
-		ops.analysis('VariableTransient')
+		ops.integrator(self.config.Integration[0],self.config.Integration[1],self.config.Integration[2])
+		ops.analysis(self.config.Analysis[0])
 		#ops.analysis('Transient')
 
 	def stepForward(self,stepDT):

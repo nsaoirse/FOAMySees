@@ -289,7 +289,7 @@ if __name__ == '__main__':# and rank==0:
 	#################################################################################################
 	# preCICE action - entering the coupling loop
 	while interface.is_coupling_ongoing():
-		if tOUT<FOAMySees.config.couplingStartTime:					
+		if FOAMySees.thisTime<FOAMySees.config.couplingStartTime:					
 			interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, LastDisplacement)
 			interface.requires_reading_checkpoint()
 			FOAMySees.stepForward(DT)			
@@ -305,6 +305,11 @@ if __name__ == '__main__':# and rank==0:
 
 				# summons database save in OpenSees
 				FOAMySees.writeCheckpoint(stepOut)
+
+			if (interface.requires_reading_checkpoint()) or newStep==1:
+
+				# summons database save in OpenSees
+				FOAMySees.readCheckpoint(stepOut)
 
 			#################################################################################################		
 			# creating OpenSees recorders for the timestep				
