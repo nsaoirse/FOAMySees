@@ -306,7 +306,7 @@ if __name__ == '__main__':# and rank==0:
 				# summons database save in OpenSees
 				FOAMySees.writeCheckpoint(stepOut)
 
-			if (interface.requires_reading_checkpoint()) or newStep==1:
+			if (interface.requires_reading_checkpoint()):
 
 				# summons database save in OpenSees
 				FOAMySees.readCheckpoint(stepOut)
