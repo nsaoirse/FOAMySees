@@ -18,14 +18,16 @@ import time
 # Thank you to UW HYAK and to the support staff of the UW HPC resources for their maintenance of the supercomputer cluster and for offering a stable platform for HPC development 
 # and computation, as well as for all of the great support over the last few years.  
 
+fys_couplingdriver_log_location='fys_logs/FOAMySeesCouplingDriver.log'
+work_log_location='fys_logs/WorkInAndOut.log'
+branch_log='fys_logs/BranchesLOCS.log'
+opensees_log_location='fys_logs/What is Happening With OpenSees.log'
 
 
 sys.path.insert(0, './FOAMySees')
-
-
 #########################################################################################
 OpenSees_dt=config.SolutionDT
-with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+with open(fys_couplingdriver_log_location, 'a+') as f:
 	print('OpenSees Solution Maximum dT=',config.SolutionDT,file=f)
 	print("Initializing FOAMySees Coupling Driver",file=f)
 
@@ -38,7 +40,7 @@ parser.add_argument("CouplingDataProjectionMesh", help="Name of the file to load
 try:
 	args = parser.parse_args()
 except SystemExit:
-	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+	with open(fys_couplingdriver_log_location, 'a+') as f:
 		print("Something is wrong! Exiting. The argument parser is telling you that you need to include something...",file=f)
 	exit
 
@@ -48,7 +50,7 @@ FOAMySees=FOAMySeesInstance(OpenSees_dt,config)
 
 noOpenSeessubsteps=FOAMySees.config.numOpenSeesStepsPerCouplingTimestep
 noOpenFOAMsubsteps=FOAMySees.config.numOpenFOAMStepsPerCouplingTimestep
-with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+with open(fys_couplingdriver_log_location, 'a+') as f:
 	print(noOpenSeessubsteps,noOpenFOAMsubsteps,"noOpenSeessubsteps,noOpenFOAMsubsteps",file=f)
 
 
@@ -57,7 +59,7 @@ configFileName = args.configurationFileName
 
 CouplingDataProjectionMesh = args.CouplingDataProjectionMesh
 
-with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+with open(fys_couplingdriver_log_location, 'a+') as f:
 	print('configFileName',configFileName, 'CouplingDataProjectionMesh',CouplingDataProjectionMesh, file=f)
 #################################################################################################
 if __name__ == '__main__':# and rank==0:
@@ -67,17 +69,17 @@ if __name__ == '__main__':# and rank==0:
 	# measuring the length of the coupled nodes list 
 	N = len(FOAMySees.coupledNodes) # number of coupled ops.nodes
 	# reporting
-	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+	with open(fys_couplingdriver_log_location, 'a+') as f:
 		print("Number of Coupled OpenSees Nodes: " + str(N),file=f)
 	#################################################################################################
 	# reporting
-	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+	with open(fys_couplingdriver_log_location, 'a+') as f:
 		print("Configuring preCICE library",file=f)
 		# precice v2
 	# interface = precice.Interface(solverName, configFileName, 0, 1)
 		# precice v3
 	interface = precice.Participant(solverName, configFileName, 0, 1)
-	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+	with open(fys_couplingdriver_log_location, 'a+') as f:
 		print("preCICE successfully configured",file=f)
 	#################################################################################################
 
@@ -128,8 +130,8 @@ if __name__ == '__main__':# and rank==0:
                                                 pt=np.array(pt,dtype=float)
                                                 branch+=pt
                                                 ptfacet+=1
-                                with open('FOAMySeesCouplingDriver.log', 'a+') as f:
-                                        print(branch,file=f)
+                                with open(fys_couplingdriver_log_location, 'a+') as f:
+                                        print(branch/ptfacet,file=f)
                                 Branches.append(branch[0]/ptfacet)
 
 	Branches=np.array(Branches)					   
@@ -177,7 +179,7 @@ if __name__ == '__main__':# and rank==0:
 	FOAMySees.NodeToCellFaceCenterRelationships=NodeToCellFaceCenterRelationships		
 	#################################################################################################	
 	# reporting to file
-	with open('BranchesLOCS.log', 'a+') as f:
+	with open(branch_log, 'a+') as f:
 		f.seek(0)
 		f.truncate()
 		print(NodeToBranchNodeRelationships,file=f)
@@ -189,7 +191,7 @@ if __name__ == '__main__':# and rank==0:
 	
 	
 	#################################################################################################		
-	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+	with open(fys_couplingdriver_log_location, 'a+') as f:
 		print("FOAMySees Coupling Driver: Initializing Coupling with preCICE",file=f)
 
 	# preCICE action - returns ID of mesh 
@@ -200,7 +202,7 @@ if __name__ == '__main__':# and rank==0:
 	#################################################################################################
 
 	# reporting
-	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+	with open(fys_couplingdriver_log_location, 'a+') as f:
 		print('OpenSeesPy (FOAMySees Projected) Initial Displacements (from preliminary analysis)',Displacement,file=f)
 
 	
@@ -223,7 +225,7 @@ if __name__ == '__main__':# and rank==0:
 	oneWay=1
 	oneWayD=1
 	onewaystatus="this is a fully-coupled simulation: if work errors occur, adjust (1) timestep, (2) coupling settings, and/or (3) spatial discretization at the interface"
-	with open('WorkInAndOut.log', 'a+') as f:
+	with open(work_log_location, 'a+') as f:
 				print(FOAMySees.config.oneWay,onewaystatus,file=f)
 	if FOAMySees.config.oneWay==1:
 		oneWay*=0
@@ -253,7 +255,7 @@ if __name__ == '__main__':# and rank==0:
 	#################################################################################################
 	# preCICE action
 	if interface.requires_initial_data():
-		#with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+		#with open(fys_couplingdriver_log_location, 'a+') as f:
 		#	print('Initial Displacement',Displacement,file=f)
 		interface.write_block_vector_data(displacementID, vertexIDsDisplacement, Displacement)
 
@@ -269,7 +271,7 @@ if __name__ == '__main__':# and rank==0:
 		ops.database('File',"SeesCheckpoints/checkpoint")
 		ops.save(0)
 		thisTime=copy.deepcopy(ops.getTime())
-		with open('What is Happening With OpenSees.log', 'a+') as f:
+		with open(opensees_log_location, 'a+') as f:
 			print('Wrote a checkpoint at opensees time = ',thisTime,file=f)		
 		
 	
@@ -338,13 +340,13 @@ if __name__ == '__main__':# and rank==0:
 
 				#################################################################################################		
 				# reporting
-				with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+				with open(fys_couplingdriver_log_location, 'a+') as f:
 					print(ops.getTime(),' = OpenSees time\n', substep,'/',noOpenSeessubsteps, ' = substep/noOpenSeessubsteps',file=f)
 
 				#################################################################################################
 				# did the step converge?
 				if (StepCheck!=0):
-					with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+					with open(fys_couplingdriver_log_location, 'a+') as f:
 						print(' OpenSeesPy Step did not converge :(',FOAMySees.thisTime,file=f)
 					
 			#################################################################################################			
@@ -356,11 +358,11 @@ if __name__ == '__main__':# and rank==0:
 					
 			FOAMySees.WorkIn=np.sum(FOAMySees.forceandmoment*(FOAMySees.displacement-FOAMySees.lastDisplacements))
 			FOAMySees.WorkOut=0
-			with open('WorkInAndOut.log', 'a+') as f:
+			with open(work_log_location, 'a+') as f:
 							print(FOAMySees.config.oneWay,onewaystatus,file=f)
 			for substep in range(1,noOpenFOAMsubsteps+1):
 				FOAMySees.WorkOut+=np.sum((Forces)*(Displacement-LastDisplacement)*(1/noOpenFOAMsubsteps))
-				with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+				with open(fys_couplingdriver_log_location, 'a+') as f:
 					print('iteration:',iteration,', Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f)  (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
 			
 				#################################################################################################
@@ -370,7 +372,7 @@ if __name__ == '__main__':# and rank==0:
 				# Advancing the coupling scheme -
                                 # precice_dt=interface.advance(precice_dt)			
 				precice_dt_return=interface.advance(DT/noOpenFOAMsubsteps)
-				with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+				with open(fys_couplingdriver_log_location, 'a+') as f:
 					print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(substep-1)*DT/noOpenFOAMsubsteps ,file=f)
 			
 			#  checking if residuals<tolerances & performing accleration (implicit), no accel/iter (explicit)	
@@ -385,12 +387,6 @@ if __name__ == '__main__':# and rank==0:
 				iteration+=1
 				# letting preCICE know we are finished going back in time			
 			else:
-				with open('FOAMySeesCouplingDriver.log', 'a+') as f:
-					print(' Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f) (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
-				with open('WorkInAndOut.log', 'a+') as f:
-					print(' Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f) (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
-				with open('WorkInAndArray.log', 'a+') as f:
-					print(ops.getTime(),100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,FOAMySees.WorkIn/FOAMySees.WorkOut,FOAMySees.WorkIn,FOAMySees.WorkOut,file=f)	
 				LastForces=copy.deepcopy(Forces)
 				LastDisplacement=copy.deepcopy(Displacement)
 				FOAMySees.StepsPerFluidStep=1
@@ -417,13 +413,14 @@ if __name__ == '__main__':# and rank==0:
 			#ops.wipe()
 			# calling all the recorders made
 			ops.record()
+			FOAMySees.writeLogs()
 			FOAMySees.createRecorders.appendRecords(FOAMySees,FOAMySees.nodeRecInfoList)		
 			if tOUT>=FOAMySees.config.SeesVTKOUTRate:
 				tOUT=0
 				FOAMySees.createRecorders.createPVDRecorder(FOAMySees)
 
 			#################################################################################################
-	with open('FOAMySeesCouplingDriver.log', 'a+') as f:
+	with open(fys_couplingdriver_log_location, 'a+') as f:
 		print("Exiting FOAMySees Coupling Driver",file=f)
 
 	interface.finalize()

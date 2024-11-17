@@ -56,14 +56,18 @@ class FOAMySeesInstance():
 		self.whatTimeIsIt=0
 		self.config=config
 		
+		self.fys_couplingdriver_log_location='fys_logs/FOAMySeesCouplingDriver.log'
+		self.work_log_location='fys_logs/WorkInAndOut.log'
+		self.work_array_location='fys_logs/WorkInAndOutArray.log'
+		self.branch_log='fys_logs/BranchesLOCS.log'
+		self.opensees_log_location='fys_logs/What is Happening With OpenSees.log'
+
 		self.createRecorders=createRecorders
-		
 		self.prelimAnalysis=prelimAnalysis
 		
 		self.OmegaDamp=1
 		Popen('rm -rf SeesCheckpoints', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
 		Popen('mkdir SeesCheckpoints', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
-
 		Popen('rm -rf SeesOutput', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
 		Popen('mkdir SeesOutput', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
 		Popen('touch SeesOutput.pvd', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
@@ -112,7 +116,7 @@ class FOAMySeesInstance():
 		#ops.wipeAnalysis()
 		ops.restore(stepOut)
 		
-		with open('What is Happening With OpenSees.log', 'a+') as f:
+		with open(self.opensees_log_location, 'a+') as f:
 			print('read a checkpoint from opensees time = ',self.thisTime,file=f)
 		ops.setTime(self.thisTime)	
 		
@@ -121,7 +125,7 @@ class FOAMySeesInstance():
 		ops.save(stepOut)
 		newStep=0
 		self.thisTime=copy.deepcopy(ops.getTime())
-		with open('What is Happening With OpenSees.log', 'a+') as f:
+		with open(self.opensees_log_location, 'a+') as f:
 
 			print('Wrote a checkpoint at opensees time = ',self.thisTime,file=f)	
 
@@ -264,5 +268,15 @@ class FOAMySeesInstance():
 		rotMat[2,:]=[-sb, sa*cb, ca*cb]
 		vec2=np.dot(rotMat,np.transpose(vec))
 		return np.transpose(vec2)
+
+	def writeLogs(self):
+		with open(self.fys_couplingdriver_log_location, 'a+') as f:
+			print(' Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(self.WorkIn-self.WorkOut)/self.WorkIn,' W(f->s)/W(s->f) (Ratio)',self.WorkIn/self.WorkOut,', W(f->s) (Joules): ',self.WorkIn,', W(s->f) (Joules): ',self.WorkOut,file=f)
+		with open(self.work_log_location, 'a+') as f:
+			print(' Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(self.WorkIn-self.WorkOut)/self.WorkIn,' W(f->s)/W(s->f) (Ratio)',self.WorkIn/self.WorkOut,', W(f->s) (Joules): ',self.WorkIn,', W(s->f) (Joules): ',self.WorkOut,file=f)
+		with open(self.work_array_location, 'a+') as f:
+			print(ops.getTime(),100*(self.WorkIn-self.WorkOut)/self.WorkIn,self.WorkIn/self.WorkOut,self.WorkIn,self.WorkOut,file=f)
+		
+
 		
 	

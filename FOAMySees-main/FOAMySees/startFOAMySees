@@ -147,7 +147,7 @@ echo "FYS_nameOfCoupledPatchOrSurfaceFile ${FYS_nameOfCoupledPatchOrSurfaceFile}
 ###########################################################################################################################
 ###########################################################################################################################
 
-python3 $FOAMySeesSrcDir/ProgramFiles/configureCoupledCase.py  ${FYS_nameOfCoupledPatchOrSurfaceFile} ${FYS_CouplingDataProjectionMesh} ${FYS_makeCouplingDataProjectionMesh} ${FYS_OpenSeesPyModelFile} ${FYS_OpenFOAMCaseFolder} ${FYS_OpenFOAMSolver} ${FYS_Nprocessors} ${FYS_OpenFOAMFileHandler} ${FYS_useExistingOpenFOAMCaseFolder} ${FYS_ExistingOpenFOAMCase} ${FYS_numOpenSeesSubSteps} ${FYS_numOpenFOAMSubSteps} ${FYS_isPartOfHydro} ${FYS_HydrojsonFile} ${FYS_shmLocX} ${FYS_shmLocY} ${FYS_shmLocZ}
+python3 $FOAMySeesSrcDir/ProgramFiles/configureCoupledCase.py  ${FYS_nameOfCoupledPatchOrSurfaceFile} ${FYS_CouplingDataProjectionMesh} ${FYS_makeCouplingDataProjectionMesh} ${FYS_OpenSeesPyModelFile} ${FYS_OpenFOAMCaseFolder} ${FYS_OpenFOAMSolver} ${FYS_Nprocessors} ${FYS_OpenFOAMFileHandler} ${FYS_useExistingOpenFOAMCaseFolder} ${FYS_ExistingOpenFOAMCase} ${FYS_numOpenSeesSubSteps} ${FYS_numOpenFOAMSubSteps} ${FYS_isPartOfHydro} ${FYS_HydrojsonFile} ${FYS_shmLocX} ${FYS_shmLocY} ${FYS_shmLocZ} 
 
 ########################################################################################################
 ########################################################################################################
@@ -159,7 +159,7 @@ python3 $FOAMySeesSrcDir/ProgramFiles/configureCoupledCase.py  ${FYS_nameOfCoupl
 
 # starting the OpenSees model preliminary analysis and waiting for coupling to initialize
 echo "Starting FOAMySeesCouplingDriver..."
-mpirun -np 1 python3 $FOAMySeesSrcDir/ProgramFiles/FOAMySeesCouplingDriver.py ${solverroot}${configfile} ${CouplingDataProjectionMesh} > ${Participant2}.log & 
+mpirun -np 1 python3 $FOAMySeesSrcDir/ProgramFiles/FOAMySeesCouplingDriver.py ${solverroot}${configfile} ${CouplingDataProjectionMesh} > fys_logs/FOAMySeesCouplingDriver.log & 
 PIDParticipant2=$!        
 
 # starting the OpenFOAM model
@@ -169,15 +169,15 @@ cd ${FYS_OpenFOAMCaseFolder}
         Solver1=$(getApplication)    # solver
 cd ..
 
-surfaceMeshExtract -case ${FYS_OpenFOAMCaseFolder} -patches ${FYS_nameOfCoupledPatchOrSurfaceFile} -latestTime ../${FYS_CouplingDataProjectionMesh}
+surfaceMeshExtract -case ${FYS_OpenFOAMCaseFolder} -patches ${FYS_nameOfCoupledPatchOrSurfaceFile} -latestTime ../${FYS_CouplingDataProjectionMesh} > OpenFOAM_logs/surfaceFeatureExtract.log 2>&1
 cp ${FYS_OpenFOAMCaseFolder}/${FYS_CouplingDataProjectionMesh} .
-decomposePar -force -fileHandler ${FYS_OpenFOAMFileHandler} -case ${FYS_OpenFOAMCaseFolder} > decomposePar.log 2>&1
+decomposePar -force -fileHandler ${FYS_OpenFOAMFileHandler} -case ${FYS_OpenFOAMCaseFolder} > OpenFOAM_logs/decomposePar.log 2>&1
 
 
 if [ ${nproc} -ne 1 ]; then
-	mpirun -np ${nproc} ${Solver1} -parallel -case ${FYS_OpenFOAMCaseFolder} > ${Participant1}.log &
+	mpirun -np ${nproc} ${Solver1} -parallel -case ${FYS_OpenFOAMCaseFolder} > OpenFOAM_logs/${Participant1}.log &
 else
-	mpirun -np 1 ${Solver1} -case ${FYS_OpenFOAMCaseFolder} > ${Participant1}.log & 
+	mpirun -np 1 ${Solver1} -case ${FYS_OpenFOAMCaseFolder} > OpenFOAM_logs/${Participant1}.log & 
 fi
 PIDParticipant1=$!
 
@@ -190,9 +190,8 @@ echo starting coupled analysis
 
 echo "">WorkInAndOut.log
 # tailing the OpenSees output (OpenFOAM is verbose)
-tail -f ${Participant2}.log &
-#tail -f ${Participant1}.log &
-tail -f WorkInAndOut.log
+tail -f fys_logs/FOAMySeesCouplingDriver.log &
+tail -f fys_logs/WorkInAndOut.log
 echo analysis logs tailed
 # waiting for input to cancel
 while [ -e /proc/${PIDParticipant1} ]; do
@@ -216,10 +215,10 @@ else # nothing went wrong, but double check to make sure
     echo "The simulation seems to be complete, but make sure by looking at the log files and output!"
     if [ $parallel -eq 1 ]; then
         echo "Reconstructing fields..."
-        reconstructPar -case ${Participant1} > ${Participant1}_reconstructPar.log 2>&1 & 
+        reconstructPar -case ${Participant1} >  OpenFOAM_logs/${Participant1}_reconstructPar.log 2>&1 & 
     fi
         wait 
-        foamToVTK -case ${PIDParticipant1}
+        foamToVTK -case ${PIDParticipant1} >  OpenFOAM_logs/${Participant1}_foamToVTK.log 2>&1 & 
         wait
         
         python3 FSIPVD.py

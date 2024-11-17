@@ -3,7 +3,7 @@ import sys
 import json
 import numpy as np
 import json
-from subprocess import Popen, DEVNULL
+from subprocess import Popen, DEVNULL, STDOUT
 FOAMySeesSrcDir = os.environ.get("FOAMySeesSrcDir")
 cwdd=os.getcwd()
 caseFolder = os.environ.get("whereWasScriptExecutedFrom")
@@ -13,7 +13,16 @@ syspath = os.environ.get("PATH")
 os.environ["PATH"] = syspath+":"+FOAMySeesSrcDir+"/config_helpers"+":"+FOAMySeesSrcDir+"/FOAMySees"+":"+cwdd+"/OpenSeesSettings"+":"+cwdd+":"+caseFolder
 os.environ.get("PATH")
 print(os.environ.get("PATH"))
+try:
+        os.mkdir('OpenFOAM_logs')
+except:
+        pass
 
+
+
+Popen('mkdir fys_logs', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
+
+fys_log_location='fys_logs/FOAMySees.log'
 import argparse
 import pickle
 
@@ -27,10 +36,10 @@ try:
 		# Call load method to deserialze 
 		args = pickle.load(file) 
 		print(args) 
-	with open('FOAMySees.log', 'a+') as f:
+	with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:
 			print('loaded input arguments from a pickle file',file=f)	
 except:
-	with open('FOAMySees.log', 'a+') as f:
+	with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:
 		print('nothing saved yet;',file=f)
 		
 writeOpenSeesHere='./'	
@@ -114,51 +123,51 @@ with open('FOAMySeesSavefile.pkl', 'wb') as file:
 	  
 	# A new file will be created 
 	pickle.dump(args, file) 
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('saved input arguments to a pickle file',file=f)	
 
 ## load the arguments into strings like so
 CouplingDataProjectionMesh = args.CouplingDataProjectionMesh
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('CouplingDataProjectionMesh', args.CouplingDataProjectionMesh,file=f)	
 OpenFOAMFileHandler=args.OpenFOAMFileHandler
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('OpenFOAMFileHandler',args.OpenFOAMFileHandler,file=f)	
 makeCouplingDataProjectionMesh=args.makeCouplingDataProjectionMesh
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('makeCouplingDataProjectionMesh',args.makeCouplingDataProjectionMesh,file=f)	
 nameOfCoupledPatchOrSurfaceFile=args.nameOfCoupledPatchOrSurfaceFile
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('nameOfCoupledPatchOrSurfaceFile',args.nameOfCoupledPatchOrSurfaceFile,file=f)	
 writeOpenFOAMHere=args.OpenFOAMCaseFolder
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('writeOpenFOAMHere',args.OpenFOAMCaseFolder,file=f)	
 readOpenFOAMFromHere=args.OpenFOAMCaseFolder
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('readOpenFOAMFromHere',args.OpenFOAMCaseFolder,file=f)	
 NPROCRUN=args.NPROC
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('NPROCRUN',args.NPROC,file=f)	
 
 openSeesPyScript= args.OpenSeesPyFile
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('OpenSees Python Input Script: ', args.OpenSeesPyFile,file=f)	
 
 OFCaseExists=args.useExistingOpenFOAMCaseFolder
 
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('OFCaseExists',args.useExistingOpenFOAMCaseFolder,file=f)	
 
 OpenFOAMSolver=args.OpenFOAMSolver
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('OpenFOAMSolver',args.OpenFOAMSolver,file=f)	
 
 numOpenFOAMStepsPerCouplingTimestep=args.numOpenFOAMStepsPerCouplingTimestep
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('number of OpenFOAM Steps Per Coupling Timestep: ',args.numOpenFOAMStepsPerCouplingTimestep,file=f)	
 
 numOpenSeesStepsPerCouplingTimestep=args.numOpenSeesStepsPerCouplingTimestep
-with open('FOAMySees.log', 'a+') as f:	
+with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('number of OpenSees Steps Per Coupling Timestep: ',args.numOpenSeesStepsPerCouplingTimestep,file=f)	
 
 jsonfile=args.HydroUQInputs	
@@ -169,7 +178,7 @@ runPreliminaryAnalysis="No"
 bathExists=0
 
 if isPartOfHydro=="Yes":
-	with open('FOAMySees.log', 'a+') as f:	
+	with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print("THIS CASE IS RUN FROM HYDROUQ",file=f)	
 	# Loads all the json variables from HydroUQ Digital Twin Output
 	f = open(jsonfile)
@@ -589,43 +598,43 @@ if __name__=="__main__":
 	if (runSnappyHexMesh=="Yes") or (doSnappyHexMesh[0]==1):
 		ifsnappy='''
 		echo surfaceFeatureExtract extracting...
-		surfaceFeatureExtract > log.surfFeatExt
+		surfaceFeatureExtract > ../OpenFOAM_logs/log.surfFeatExt
 		echo doing snappyHexMesh 
-		snappyHexMesh -overwrite -fileHandler uncollated > log.sHM
+		snappyHexMesh -overwrite -fileHandler uncollated > ../OpenFOAM_logs/log.sHM
 		#echo decomposePar setting up parallel case...
-		#decomposePar -force -fileHandler uncollated -copyZero > log.decomp_sHM
+		#decomposePar -force -fileHandler uncollated -copyZero > ../OpenFOAM_logs/log.decomp_sHM
 
 		#echo snappyHex meshing flume floor and/or structure planes...
-		#mpirun -np $NPROC snappyHexMesh -parallel -overwrite -fileHandler uncollated > log.sHM
+		#mpirun -np $NPROC snappyHexMesh -parallel -overwrite -fileHandler uncollated > ../OpenFOAM_logs/log.sHM
 
 		#echo checking mesh quality...
-		#mpirun -np $NPROC checkMesh -parallel > log.checkMesh
+		#mpirun -np $NPROC checkMesh -parallel > ../OpenFOAM_logs/OpenFOAM_logs/log.checkMesh
 
 		#echo reconstructParMesh rebuilding mesh...
-		#reconstructParMesh -constant -mergeTol 1e-06 > log.reconMesh_sHM
+		#reconstructParMesh -constant -mergeTol 1e-06 > ../OpenFOAM_logs/log.reconMesh_sHM
 
 		#echo reconstructPar rebuilding fields...
-		#reconstructPar > log.recon_sHM
+		#reconstructPar > ../OpenFOAM_logs/log.recon_sHM
 
 		#echo eliminate meshing time step and processor directories...
 		#rm -r processor*
 		'''
-	with open('FOAMySees.log', 'a+') as f:	
+	with open('fys_logs/FOAMySeesInitalizeVariables.log', 'a+') as f:	
 		print('Building OpenFOAM Case',file=f)	   
 	Popen('''
 		cd '''+writeOpenFOAMHere+''' 
 		echo blockMesh meshing...
-		blockMesh > log.blockMesh   
+		blockMesh > ../OpenFOAM_logs/log.blockMesh   
 		
 		''', shell=True).wait()
-	with open('FOAMySees.log', 'a+') as f:	
+	with open(fys_log_location, 'a+') as f:	
 		print('Base of CFD mesh built')
 	if bathExists==1:
-		with open('FOAMySees.log', 'a+') as f:	
+		with open(fys_log_location, 'a+') as f:	
 			print('Building bathymetry',file=f)	
 		buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesBathymetry(bathExists,writeOpenFOAMHere,shmLoc)
 		Popen('''cd '''+writeOpenFOAMHere+ifsnappy, shell=True).wait()
-		with open('FOAMySees.log', 'a+') as f:	
+		with open(fys_log_location, 'a+') as f:	
 			print('Bathymetry Built',file=f)	
 
 	if Turbulence=="No":
@@ -637,7 +646,7 @@ if __name__=="__main__":
 	else:
 		ifnotTurbulence=''' '''
 	
-	with open('FOAMySees.log', 'a+') as f:	
+	with open(fys_log_location, 'a+') as f:	
 		print('Preparing the 0 time folder, Meshing the structure, Setting Fields',file=f)	
  
 	buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesStructure(nameOfCoupledPatchOrSurfaceFile,writeOpenFOAMHere,shmLoc)
@@ -653,13 +662,13 @@ if __name__=="__main__":
 
 		'''+ifsnappy+'''
 		echo Setting the fields...
-		setFields > log.setFields
+		setFields > ../OpenFOAM_logs/log.setFields
 		echo decomposePar setting up parallel case...
 		echo Mesh built, ICs set
 cd ..
-setFields -case '''+writeOpenFOAMHere+''' > setFields.log 2>&1 &
+setFields -case '''+writeOpenFOAMHere+''' > ../OpenFOAM_logs/setFields.log 2>&1 &
 ''', shell=True).wait()  
-	with open('FOAMySees.log', 'a+') as f:	
+	with open(fys_log_location, 'a+') as f:	
 		print('Structure Meshed, writing OpenFOAM Case Settings and functionObjects',file=f)	
 	resultantForceCenterOfRotation=findResultantCenterOfRotation(OFCaseExists,nameOfCoupledPatchOrSurfaceFile,CouplingDataProjectionMesh,makeCouplingDataProjectionMesh,bestGuess,writeOpenFOAMHere)
 	if isPartOfHydro=="Yes":	
@@ -671,5 +680,5 @@ setFields -case '''+writeOpenFOAMHere+''' > setFields.log 2>&1 &
 
 	writeControlDict(OpenFOAMSolver,startOFSimAt,endTime,SolutionDT,writeDT,writeOpenFOAMHere,allFunctionObjects,AdjustTimeStep,OpenFOAMFileHandler)
 	
-	with open('FOAMySees.log', 'a+') as f:	
+	with open(fys_log_location, 'a+') as f:	
 		print('				   %%%%%%%%%%%%% <<<<<<<<<<<<<<<<<<FOAMySEES CONFIGURED>>>>>>>>>>>>>>>>>> %%%%%%%%%%%%%				   ',file=f)	
