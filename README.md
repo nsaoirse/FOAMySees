@@ -3,6 +3,16 @@ This version uses preCICE v3 for additional functionality and stability.
 
 Code changes include 
 
+-addition of a primitive GUI (still in development, but can be used to plot various results)
+
+**to run the GUI, navigate to the same directory you would run 'startFOAMySees' in for a case, and instead run 'FOAMySeesGUI & startFOAMysees'.**
+
+This should start up the GUI application as a background process in your environment and will run the case in the 'RunCase' directory which is generated.
+The GUI application reads logfiles from RunCase/fys_logs, to visualize the work transfer between the fluid simulation and the stucture simulation.
+
+As .vtu files and .vtp files are created by OpenFOAM and OpenSees, the GUI will retrieve these files and assemble them into .pvd files to be plotted with an interactive PyVista application. Additional features are on the way!
+
+
 -port from preCICE v2 to v3. 
 
 -improved code compactness and functionality
