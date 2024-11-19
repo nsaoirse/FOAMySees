@@ -1,13 +1,14 @@
-unzip FOAMySees.zip 
-unzip FOAMySeesExampleCases.zip 
+
 cd FOAMySees
 FOAMySeesSrcDir=(`pwd`)
-
-echo "export FOAMySeesSrcDir=$FOAMySeesSrcDir">>~/.bashrc
-
 chmod u+x startFOAMySees 
 chmod u+x createFOAMySeesInputFiles
 chmod u+x ProgramFiles/FOAMySeesCouplingDriver.py
-echo "alias startFOAMySees=$FOAMySeesSrcDir/startFOAMySees">>~/.bashrc
 
-bash
+echo "# FOAMySees Environment">>~/.bashrc
+echo "export FOAMySeesSrcDir=$FOAMySeesSrcDir">>~/.bashrc
+echo "export PATH=$PATH:$FOAMySeesSrcDir:$FOAMySeesSrcDir/ProgramFiles">>~/.bashrc
+echo 'alias FOAMySeesGUI="python3 ${FOAMySeesSrcDir}/FOAMySeesGUI.py"'>>~/.bashrc
+echo "alias startFOAMySees=$FOAMySeesSrcDir/startFOAMySees">>~/.bashrc
+echo 'alias cleanFYS="rm -rf RunCase CouplingDataProjectionMesh.obj  __pycache__ fys_logs OpenFOAM_logs FOAMySeesLog *.pvd"'>>~/.bashrc
+

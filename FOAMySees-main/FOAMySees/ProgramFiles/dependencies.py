@@ -32,16 +32,18 @@ import openseespy.opensees as ops
 FOAMySeesSrcDir = os.environ.get("FOAMySeesSrcDir")
 cwdd=os.getcwd()
 caseFolder = os.environ.get("whereWasScriptExecutedFrom")
+if caseFolder is None:
+    caseFolder='.'
 sys.path.append(caseFolder)
 sys.path.append(caseFolder+"/RunCase")
 sys.path.append(FOAMySeesSrcDir+"/ProgramFiles/config_helpers")
 sys.path.append(FOAMySeesSrcDir+"/ProgramFiles/FOAMySees")
-syspath = os.environ.get("PATH")
-os.environ["PATH"] = syspath+":"+FOAMySeesSrcDir+"/ProgramFiles/config_helpers"+":"+FOAMySeesSrcDir+"/FOAMySees"+":"+cwdd+"/OpenSeesSettings"+":"+cwdd+":"+caseFolder
-os.environ.get("PATH")
-print(os.environ.get("PATH"))
+
 import configureCoupledCase as config
-import buildOpenSeesModelInThisFile as userModel
+try:
+    import buildOpenSeesModelInThisFile as userModel
+except:
+    pass
 from FOAMySeesObjects import *
 
 ## precice

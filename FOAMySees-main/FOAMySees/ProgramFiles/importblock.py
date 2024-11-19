@@ -22,3 +22,17 @@ from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas)
     
 
+import logging
+### FOAMySees
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./.."))
+from dependencies import *
+import pickle 
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./GUI_helpers"))
+import GUI_helpers as GUI_helpers
+# import libraries
+
+from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout,\
+    QMainWindow, QStatusBar, QFileDialog, QRadioButton,QTextBrowser, QScrollBar
+from PyQt5.QtGui import QPixmap
+import os.path as osp

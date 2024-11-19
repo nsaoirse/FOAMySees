@@ -20,9 +20,15 @@ sys.path.insert(0, '../fromUser')
 
 import configureCoupledCase as config
 
-import buildOpenSeesModelInThisFile as userModel
+try:
+    import buildOpenSeesModelInThisFile as userModel
+except:
+    pass
 
-import userLoadRoutines as userLoadRoutines
+try:
+    import userLoadRoutines as userLoadRoutines
+except:
+    pass
 
 import math as m
 
@@ -36,8 +42,12 @@ import meshio
 # from openseespy.postprocessing.Get_Rendering import * 
 from openseespy.opensees import *
 import openseespy.opensees as ops
-		
-import preliminaryAnalysis as prelimAnalysis
+
+
+try:
+    import preliminaryAnalysis as prelimAnalysis
+except:
+    pass
 
 import createRecorders as createRecorders
 
@@ -275,7 +285,7 @@ class FOAMySeesInstance():
 		with open(self.work_log_location, 'a+') as f:
 			print(' Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(self.WorkIn-self.WorkOut)/self.WorkIn,' W(f->s)/W(s->f) (Ratio)',self.WorkIn/self.WorkOut,', W(f->s) (Joules): ',self.WorkIn,', W(s->f) (Joules): ',self.WorkOut,file=f)
 		with open(self.work_array_location, 'a+') as f:
-			print(ops.getTime(),100*(self.WorkIn-self.WorkOut)/self.WorkIn,self.WorkIn/self.WorkOut,self.WorkIn,self.WorkOut,file=f)
+			print(self.stepNumber,self.iteration, ops.getTime(),100*(self.WorkIn-self.WorkOut)/self.WorkIn,self.WorkIn/self.WorkOut,self.WorkIn,self.WorkOut,file=f)
 		
 
 		

@@ -1,14 +1,5 @@
-
-# import additional libraries
-import sys
-sys.path.insert(0, './ProgramFiles/FOAMySees')
-sys.path.insert(0, './ProgramFiles/FOAMySees/FOAMySeesFiles')
-sys.path.insert(0, './ProgramFiles/FOAMySees/FOAMySeesFiles/OpenSeesSettings')
-sys.path.insert(0, './ProgramFiles/FOAMySees/FOAMySeesFiles/FOAMySees')
-sys.path.insert(0, './ProgramFiles/FOAMySees/FOAMySeesFiles/fromUserDefaults')
-
-sys.path.insert(0, './ProgramFiles/GUIFiles')
-
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./ProgramFiles"))
 from pyFOAMySeesGUI import *
 
 if __name__ == "__main__":

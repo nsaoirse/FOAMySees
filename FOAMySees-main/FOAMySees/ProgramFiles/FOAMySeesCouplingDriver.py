@@ -4,7 +4,7 @@ import time
 
 #	 /*--------------------------------*- C++ -*----------------------------------*\
 # | =========						    ____/_________\____	 _.*_*.		       |
-# | \\	    /	F ield	        |   |  S tructural	    ||__|/\|___|/\|__||	  \ \ \\.	       |
+# | \\	    /	F ield		|   |  S tructural	    ||__|/\|___|/\|__||	  \ \ \\.	       |
 # |  \\	   /	O peration	|___|  E ngineering &       ||__|/\|___|/\|__||	   | | | \._	       |
 # |   \\  /	A nd		    |  E arthquake	    ||__|/\|___|/\|__||	  _/_/_/ | .\.__...    |
 # |    \\/      M anipulation	|___|  S imulation	    ||__|/\|___|/\|__||   __/, / _ \___...     |
@@ -102,37 +102,37 @@ if __name__ == '__main__':# and rank==0:
 	Branches=[]
 	# for obj
 	if '.obj' in CouplingDataProjectionMesh:
-                for line in lines:
-                        #print(line[:])
-                        if '#' in str(line[:]):
-                                pass
-                        elif 'g' in line:
-                                pass
-                        elif 'v' in line:
-                                points.append(line.strip('v ').split(' '))
-                        elif 'f' in line:
-                                facets.append(line.strip('f ').split(' '))
-                #print(points)
-                #print(facets)
-                for facet in facets:
-                        if ('#' in facet) or ('g' in facet) or ('o' in facet):
-                                pass
-                        else:
-                                branch=np.zeros([1,3],dtype=float)
-                                ptfacet=0
-                                for i in facet:
-                                        if i=='':
-                                                pass
-                                        else:
-                                                pt=points[int(i)-1]
-                                                for iin in pt:
-                                                        iin=float(iin)
-                                                pt=np.array(pt,dtype=float)
-                                                branch+=pt
-                                                ptfacet+=1
-                                with open(fys_couplingdriver_log_location, 'a+') as f:
-                                        print(branch/ptfacet,file=f)
-                                Branches.append(branch[0]/ptfacet)
+		for line in lines:
+			#print(line[:])
+			if '#' in str(line[:]):
+				pass
+			elif 'g' in line:
+				pass
+			elif 'v' in line:
+				points.append(line.strip('v ').split(' '))
+			elif 'f' in line:
+				facets.append(line.strip('f ').split(' '))
+		#print(points)
+		#print(facets)
+		for facet in facets:
+			if ('#' in facet) or ('g' in facet) or ('o' in facet):
+				pass
+			else:
+				branch=np.zeros([1,3],dtype=float)
+				ptfacet=0
+				for i in facet:
+					if i=='':
+						pass
+					else:
+						pt=points[int(i)-1]
+						for iin in pt:
+							iin=float(iin)
+						pt=np.array(pt,dtype=float)
+						branch+=pt
+						ptfacet+=1
+				with open(fys_couplingdriver_log_location, 'a+') as f:
+					print(branch/ptfacet,file=f)
+				Branches.append(branch[0]/ptfacet)
 
 	Branches=np.array(Branches)					   
 
@@ -288,6 +288,8 @@ if __name__ == '__main__':# and rank==0:
 	
 	DT=float(FOAMySees.config.SolutionDT)
 	FOAMySees.thisTime=0
+	FOAMySees.stepNumber=1
+	FOAMySees.iteration=0
 	#################################################################################################
 	# preCICE action - entering the coupling loop
 	while interface.is_coupling_ongoing():
@@ -370,7 +372,7 @@ if __name__ == '__main__':# and rank==0:
 				interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, oneWay*(LastDisplacement+(Displacement-LastDisplacement)*(substep/noOpenFOAMsubsteps)))
 				#################################################################################################		
 				# Advancing the coupling scheme -
-                                # precice_dt=interface.advance(precice_dt)			
+				# precice_dt=interface.advance(precice_dt)			
 				precice_dt_return=interface.advance(DT/noOpenFOAMsubsteps)
 				with open(fys_couplingdriver_log_location, 'a+') as f:
 					print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(substep-1)*DT/noOpenFOAMsubsteps ,file=f)
@@ -385,6 +387,7 @@ if __name__ == '__main__':# and rank==0:
 				StepCheck=0
 				# adding one to the iteration counter
 				iteration+=1
+				FOAMySees.iteration=iteration
 				# letting preCICE know we are finished going back in time			
 			else:
 				LastForces=copy.deepcopy(Forces)
@@ -413,7 +416,9 @@ if __name__ == '__main__':# and rank==0:
 			#ops.wipe()
 			# calling all the recorders made
 			ops.record()
+			
 			FOAMySees.writeLogs()
+			FOAMySees.stepNumber+=1
 			FOAMySees.createRecorders.appendRecords(FOAMySees,FOAMySees.nodeRecInfoList)		
 			if tOUT>=FOAMySees.config.SeesVTKOUTRate:
 				tOUT=0
