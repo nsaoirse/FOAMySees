@@ -16,14 +16,16 @@ import logging
 ### FOAMySees
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./.."))
 from dependencies import *
-import pickle 
+import pickle
+
+import coupledAnalysisSettings as config
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./GUI_helpers"))
 import GUI_helpers as GUI_helpers
 # import libraries
 
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout,\
-    QMainWindow, QStatusBar, QFileDialog, QRadioButton,QTextBrowser, QScrollBar
+    QMainWindow, QStatusBar, QFileDialog, QRadioButton,QTextBrowser, QScrollBar, QCheckBox
 from PyQt5.QtGui import QPixmap
 import os.path as osp
 #| ===============================================  ____/__\___/__\____     _.*_*.             |
@@ -785,26 +787,11 @@ class pyFOAMySeesGUI(QMainWindow):
         return widget
     
     def makeActors(self,readers):
-        
-        reader=readers[0]
-        reader2=readers[1]
-        reader3=readers[2]
-        
-        [plotOpenSeesModel,plotOpenFOAMFreeSurface,plotXSec]=["yes","yes","yes"]
-        if plotXSec=="yes":
-            OpenFOAMXSecmesh=reader.read()[0]
-            #warped=OpenFOAMXSecmesh.warp_by_vector('pointDisplacement')
-            dargs = dict(
-        #   scalars="p",
-                cmap="rainbow",
-                show_scalar_bar=True,
-            )
-
-            actor3=self.FYSplotter.add_mesh(OpenFOAMXSecmesh, **dargs)
-                    
-        if plotOpenSeesModel=="yes":
-        #   reader.active_time_value
-        #   print(reader.datasets)
+        actors=[]
+        if self.checkboxPlotOS.isChecked():
+            reader=readers[0]
+            #   reader.active_time_value
+            #   print(reader.datasets)
             OpenSeesmesh=reader.read()[0]
             warped=OpenSeesmesh.warp_by_vector('Displacement')
             dargs = dict(
@@ -813,58 +800,78 @@ class pyFOAMySeesGUI(QMainWindow):
                 show_scalar_bar=False,
             )
             actor1=self.FYSplotter.add_mesh(warped, **dargs)
-                    
-        #		pl.add_mesh(mesh.copy(), component=0, **dargs)
-        #		actor1=plotter.add_mesh(warped, lighting=False, show_edges=False,vectors='Displacement')
-                
-        if plotOpenFOAMFreeSurface=="yes":
+            actors.append(actor1)
+            
+        if self.checkboxPlotFreeSurf.isChecked():
+            if not self.checkboxPlotOS.isChecked():
+                reader2=readers[0]
+            else:
+                reader2=readers[1]
         #   reader2.active_time_value
         #   print(reader2.datasets)
             FreeSurf=reader2.read()[0]
             actor2=self.FYSplotter.add_mesh(FreeSurf, lighting=False, show_edges=False)
-        return [actor1,actor2,actor3]
+            actors.append(actor2)
+        if self.checkboxPlotxSec.isChecked():
+            if self.checkboxPlotOS.isChecked():
+                if self.checkboxPlotFreeSurf.isChecked():
+                    reader3=readers[2]
+                else:
+                    reader3=readers[1]
+            else:
+                if self.checkboxPlotFreeSurf.isChecked():
+                    reader3=readers[1]
+                else:
+                    reader3=readers[0]
+
+            OpenFOAMXSecmesh=reader3.read()[0]
+            #warped=OpenFOAMXSecmesh.warp_by_vector('pointDisplacement')
+            dargs = dict(
+        #   scalars="p",
+                cmap="rainbow",
+                show_scalar_bar=True,
+            )
+
+            actor3=self.FYSplotter.add_mesh(OpenFOAMXSecmesh, **dargs)
+            actors.append(actor3)
+        return actors
 
     def update_time_window(self,value):
         """Callback to set the time."""
         timeWindow = round(value)
         self.FYSplotter.remove_actor(x for x in self.FYSplotter.activeactors)
-        self.set_time(timeWindow,self.FYSplotter.readers,self.FYSplotter.activeactors)
+        self.set_time(timeWindow)
 
-    def set_time(self,point,readers,AllActiveActorsNotSlider):
+    def set_time(self,value):
+        self.FYSplotter.activeactors=[x for x in self.makeActors(self.FYSplotter.readers)]
 
-        AllActiveActorsNotSlider.append(x for x in self.makeActors(readers))
+        for readerCurr in self.FYSplotter.readers:
+            readerCurr.set_active_time_point(value)
 
-        self.updateReaders(point,readers)
+        #pl.camera.roll += 10
+        #self.FYSplotter.add_text('Time: '+str(point)+' s')
+
+        minlen=np.min(self.lens)
+        
+          
+        self.textEdit.append('Time: '+str(value))
+        self.FYSplotter.update()
+        
+        
+        self.FYSplotter.render()
 
         self.FYSplotter.camera.up = (0.0, 0.0, 1.0)
         self.FYSplotter.camera_position = 'xy'
-        #pl.camera.roll += 10
-
-        self.FYSplotter.update()
-        self.FYSplotter.render()
-
-        print('Time Window: ', point)
-
-
-    def updateReaders(self,point,readers):
-
-        reader=readers[0]
-        reader2=readers[1]
-        reader3=readers[2]
         
-        reader.set_active_time_point(point)
-        reader2.set_active_time_point(point)
-        
-        reader3.set_active_time_point(point)
-    
     def handlePlotFOAMySeesModel(self):
         
+        self.FYSplotter.clear()
+     
         F=glob.glob("RunCase/SeesOutput/*")
         P0Exists=0
         P1Exists=0
         P2Exists=0
         P3Exists=0
-
 
         F= [i.replace('RunCase/SeesOutput/SeesOutput_T','') for i in F]
 
@@ -886,7 +893,7 @@ class pyFOAMySeesGUI(QMainWindow):
         F=set(F)
 
         print(F)
-
+        self.ospvdtimes=list(F)
         VTKFILE=['''<?xml version="1.0"?>
         <VTKFile type="Collection" compressor="vtkZLibDataCompressor" >
           <Collection>
@@ -921,31 +928,38 @@ class pyFOAMySeesGUI(QMainWindow):
                     f.truncate()
 
         I=glob.glob("RunCase/OpenFOAMCase/postProcessing/XSec1/*")
-
         I= [i.replace('RunCase/OpenFOAMCase/VTK/','') for i in I]
         I= [i.replace('RunCase/OpenFOAMCase_','') for i in I]
-
         I= [i.replace('RunCase/OpenFOAMCaseBoundary_','') for i in I]
         I= [i.replace('RunCase/OpenFOAMCase_Boundary_','') for i in I]
         I= [i.replace('RunCase/OpenFOAMCase_Boundary','') for i in I]
-
         I= [i.replace('Boundary','') for i in I]
-
-
         I= [i.replace('RunCase/OpenFOAMCase','') for i in I]
-
         I= [i.replace('/postProcessing/XSec1/','') for i in I]
-
-        I= [i.replace('yCut.vtp','') for i in I]
+        I= [i.replace('interpolatedSurface.vtp','') for i in I]
 
         I=set(I)
         print(I)
 
+        II=[]
+        tol=1e-4
+        # remove the times which are 'near' the output increment
+        for ii in I:
+            print(float(ii),config.writeDT,float(ii)%config.writeDT)
+            if float(ii)%config.writeDT<tol:
+                II.append(ii)
+            elif float(ii)%config.writeDT+tol>config.writeDT:
+                II.append(ii)
+            else:
+                pass
+            
+        self.xsectimes=list(II)
+        
         VTKFILE=['''<?xml version="1.0"?>
         <VTKFile type="Collection" compressor="vtkZLibDataCompressor" >
           <Collection>''']
 
-        for ff in I:
+        for ff in II:
             VTKFILE.append('''
             <DataSet timestep="'''+str(float(ff))+'''"  file="OpenFOAMCase/postProcessing/XSec1/'''+str(ff)+'''/interpolatedSurface.vtp"/>''')
             
@@ -961,36 +975,42 @@ class pyFOAMySeesGUI(QMainWindow):
                     f.truncate()
 
         G=glob.glob("RunCase/OpenFOAMCase/postProcessing/freeSurfaceVTK/*")
-
         G= [i.replace('RunCase/OpenFOAMCase/VTK/','') for i in G]
         G= [i.replace('RunCase/OpenFOAMCase_','') for i in G]
-
         G= [i.replace('RunCase/OpenFOAMCaseBoundary_','') for i in G]
         G= [i.replace('RunCase/OpenFOAMCase_Boundary_','') for i in G]
         G= [i.replace('RunCase/OpenFOAMCase_Boundary','') for i in G]
         G= [i.replace('Boundary','') for i in G]
-
-
         G= [i.replace('RunCase/OpenFOAMCase','') for i in G]
-
         G= [i.replace('/postProcessing/freeSurfaceVTK/','') for i in G]
-
         G= [i.replace('yCut.vtp','') for i in G]
-
 
         G=set(G)
         print(G)
 
+
+        II=[]
+        tol=1e-4
+        # remove the times which are 'near' the output increment
+        for ii in I:
+            print(float(ii),config.writeDT,float(ii)%config.writeDT)
+            if float(ii)%config.writeDT<tol:
+                II.append(ii)
+            elif float(ii)%config.writeDT+tol>config.writeDT:
+                II.append(ii)
+            else:
+                pass
+            
+        
+        self.ofpvdtimes=list(II)
         VTKFILE=['''<?xml version="1.0"?>
         <VTKFile type="Collection" compressor="vtkZLibDataCompressor" >
           <Collection>''']
 
-        for ff in G:
+        for ff in II:
             VTKFILE.append('''
             <DataSet timestep="'''+str(float(ff))+'''"  file="OpenFOAMCase/postProcessing/freeSurfaceVTK/'''+str(ff)+'''/freeSurface.vtp"/>''')
-            
-            
-            
+
         VTKFILE.append('''
           </Collection>
         </VTKFile>''')
@@ -1001,71 +1021,69 @@ class pyFOAMySeesGUI(QMainWindow):
                     f.write(line)
                     f.truncate()
         point=0
-
+        readers=[]
+        self.lens=[]
         
-
-        point=0
-
-        [plotOpenSeesModel,plotOpenFOAMFreeSurface,plotXSec]=["yes","yes","yes"]
-                
-
-        if plotXSec=="yes":
-                reader3=pv.get_reader('RunCase/InterpSurface.pvd')
-                reader3.time_values
-                reader3.set_active_time_point(0)
-                reader3.active_time_value
-                print(reader3.datasets, 'OpenFOAM Data Sets')
-
-                        
-        if plotOpenSeesModel=="yes":
+        if self.checkboxPlotOS.isChecked():
 
                 reader=pv.get_reader('RunCase/OpenSeesOutput.pvd')
-                print('OpenSees, times:', reader.time_values)
                 reader.set_active_time_point(0)
                 reader.active_time_value
-                print(reader.datasets, 'OpenSees Data Sets')
-
-        if plotOpenFOAMFreeSurface=="yes":
+                readers.append(reader)
+                #self.textEdit.append('OpenSees Data Sets')
+                #for ds in reader.datasets:
+                #    self.textEdit.append(str(ds))
+                self.lens.append(len(reader.time_values))
+        if self.checkboxPlotFreeSurf.isChecked():
 
                 reader2=pv.get_reader('RunCase/FreeSurface.pvd')
                 reader2.time_values
                 reader2.set_active_time_point(0)
                 reader2.active_time_value
-                print(reader2.datasets, 'OpenFOAM Data Sets')
+                readers.append(reader2)
+                #self.textEdit.append('OpenFOAM Data Sets')
+                #for ds in reader2.datasets:
+                #    self.textEdit.append(str(ds))
+                self.lens.append(len(reader2.time_values))
+        if self.checkboxPlotxSec.isChecked():
+                reader3=pv.get_reader('RunCase/InterpSurface.pvd')
+                reader3.time_values
+                reader3.set_active_time_point(0)
+                reader3.active_time_value
+                readers.append(reader3)
+                self.lens.append(len(reader3.time_values))
+                #self.textEdit.append('OpenFOAM Data Sets')
+                #for ds in reader3.datasets:
+                #    self.textEdit.append(str(ds))
+        
                 
-        readers=[reader,reader2,reader3]
-
-        AllActiveActorsNotSlider=[]	
-        AllActiveActorsNotSlider=self.makeActors(readers)
 
         self.FYSplotter.readers=readers
-        self.FYSplotter.activeactors=AllActiveActorsNotSlider
+        self.FYSplotter.activeactors=self.makeActors(readers)
         
-        len1=len(reader.time_values)
-        len2=len(reader2.time_values)
-        len3=len(reader3.time_values)
-
-        minlen=np.min([len1,len2,len3])
-
-
+        
+        minlen=np.min(self.lens)
+        for time in [self.xsectimes[:],self.ofpvdtimes[:],self.ospvdtimes[:]]:
+        
+            self.textEdit.append(str(time))
+      
         for u in range(0,minlen):
-            self.set_time(u,readers,AllActiveActorsNotSlider)
-            self.FYSplotter.clear()
-
-        self.FYSplotter.view_isometric()
-
-
-        [plotOpenSeesModel,plotOpenFOAMFreeSurface,plotXSec]=["yes","yes","yes"]
-                    
-        #plotter.add_mesh(algo, color='red')
-
-        self.FYSplotter.add_slider_widget(self.update_time_window, [0, minlen], title='Time Window') #,pass_widget=True)
-
-        self.FYSplotter.show()
-
+            self.set_time(u)
+            self.FYSplotter.show()
+            self.FYSplotter.update()
+            self.FYSplotter.render()   
+            self.FYSplotter.show()
 
     ##########################################################################################################
     def mainWidgetVisualize(self):
+        self.checkboxPlotOS = QCheckBox('Plot OpenSees Model', self)
+        self.checkboxPlotFreeSurf = QCheckBox('Plot Free Surface', self)
+        self.checkboxPlotxSec = QCheckBox('Plot OpenFOAM Cross-Section', self)
+        
+        self.checkboxPlotOS.setChecked(True)
+        self.checkboxPlotFreeSurf.setChecked(True)
+        self.checkboxPlotxSec.setChecked(True)
+        
         # Vertical Layouts
         self.Canvas1 = QVBoxLayout()  # Initializing the main vertical box layout for the System Figure
         self.Canvas2 = QVBoxLayout()  # Initializing the main vertical box layout for Results Figure
@@ -1090,7 +1108,9 @@ class pyFOAMySeesGUI(QMainWindow):
         #buttonPlotCouplingDataProjectionMesh = QPushButton('Plot Coupling Data Projection Mesh')
         
         Hbtnlyt.addWidget(buttonPlotFOAMySees)
-        #Hbtnlyt.addWidget(buttonPlotOpenFOAM)
+        Hbtnlyt.addWidget(self.checkboxPlotOS)
+        Hbtnlyt.addWidget(self.checkboxPlotFreeSurf)
+        Hbtnlyt.addWidget(self.checkboxPlotxSec)
         #Hbtnlyt.addWidget(buttonPlotCouplingDataProjectionMesh)
         
         mainHolder.addLayout(Hbtnlyt)
@@ -1103,8 +1123,6 @@ class pyFOAMySeesGUI(QMainWindow):
         self.FYSplotter.show()
         
         Hlyt1.addLayout(mainHolder)
-
-
 
         # Creating a vertical layout within which layouts 1-4 will reside
         layout = QVBoxLayout()  # Initializing the vertical layout
