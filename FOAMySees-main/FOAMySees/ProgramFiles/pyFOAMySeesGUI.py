@@ -162,7 +162,10 @@ class pyFOAMySeesGUI(QMainWindow):
         tabs.addTab(tab2, "Setup OpenSees")         
         tabs.addTab(tab1, "Setup OpenFOAM") 
         tabs.addTab(tab4, "Plot Solution")
-        tabs.addTab(tab0, "Plot Residuals") 
+        tabs.addTab(tab0, "Plot Residuals")
+
+        
+        
         layoutwrapper.addWidget(tabs)
 
         textBrowser=QWidget()
@@ -315,97 +318,180 @@ class pyFOAMySeesGUI(QMainWindow):
         return widget
 
     def updateWorkPlot(self):
-        self.getResidualsAndWork()
+        try:
+            self.getResidualsAndWork()
 
-        self.workTime=self.ResidualArray[:,2]
-        self.workError=self.ResidualArray[:,3]
-        # Update the plot
-        self.workplot.setData(self.workTime, self.workError)
-        self.plotWorkWidget.setTitle("Work Transfer Error vs Time (%)")
+            self.workTime=self.ResidualArray[:,2]
+            self.workError=self.ResidualArray[:,3]
+            # Update the plot
+            self.workplot.setData(self.workTime, self.workError)
+            self.plotWorkWidget.setTitle("Work Transfer Error vs Time (%)")
 
-        # Set axis labels
-        self.plotWorkWidget.setLabel('left', 'Work Transfer Error (%)')
-        self.plotWorkWidget.setLabel('bottom', 'Time (s)')
+            # Set axis labels
+            self.plotWorkWidget.setLabel('left', 'Work Transfer Error (%)')
+            self.plotWorkWidget.setLabel('bottom', 'Time (s)')
+        except:
+            print('Nothing to plot yet. Moving on.')
         
     def updateResidualPlot(self):
-        self.getResidualsAndWork()
+        try:
+            self.getResidualsAndWork()
 
-        self.resTime=self.ResidualArray[:,2]
-        self.res1=self.ResidualArray[:,4]
-        
-        # Update the plot
-        self.residualplot.setData(self.resTime, self.res1)
-        self.plotResidualWidget.setTitle("Work Ratio (Fluid to Structure) vs Time")
+            self.resTime=self.ResidualArray[:,2]
+            self.res1=self.ResidualArray[:,4]
+            
+            # Update the plot
+            self.residualplot.setData(self.resTime, self.res1)
+            self.plotResidualWidget.setTitle("Work Ratio (Fluid to Structure) vs Time")
 
-        # Set axis labels
-        self.plotResidualWidget.setLabel('left', 'Work Ratio')
-        self.plotResidualWidget.setLabel('bottom', 'Time (s)')
-        
+            # Set axis labels
+            self.plotResidualWidget.setLabel('left', 'Work Ratio')
+            self.plotResidualWidget.setLabel('bottom', 'Time (s)')
+        except:
+            print('Nothing to plot yet. Moving on.')        
         
     def updateTotalWorkWidget(self):
-        self.getResidualsAndWork()
+        try:
+            self.getResidualsAndWork()
 
-        self.resTime=self.ResidualArray[:,2]
-        self.WFtS=self.ResidualArray[:,5]
-        self.WStF=self.ResidualArray[:,6]
-        
-        # Update the plot
-        self.totalworkplotFtS.setData(self.resTime, self.WFtS)
-        
-        self.totalworkplotStF.setData(self.resTime, self.WStF)
-        
-        # Update the plot
-        self.plotTotalWorkWidget.setTitle("Work vs Time [F->S = green], [S->F = red]")
+            self.resTime=self.ResidualArray[:,2]
+            self.WFtS=self.ResidualArray[:,5]
+            self.WStF=self.ResidualArray[:,6]
+            
+            # Update the plot
+            self.totalworkplotFtS.setData(self.resTime, self.WFtS)
+            
+            self.totalworkplotStF.setData(self.resTime, self.WStF)
+            
+            # Update the plot
+            self.plotTotalWorkWidget.setTitle("Work vs Time [F->S = green], [S->F = red]")
 
-        # Set axis labels
-        self.plotTotalWorkWidget.setLabel('left', 'Work')
-        self.plotTotalWorkWidget.setLabel('bottom', 'Time (s)')
-        self.plotTotalWorkWidget.addLegend(offset=(0, 30))
-
+            # Set axis labels
+            self.plotTotalWorkWidget.setLabel('left', 'Work')
+            self.plotTotalWorkWidget.setLabel('bottom', 'Time (s)')
+            self.plotTotalWorkWidget.addLegend(offset=(0, 30))
+        except:
+            print('Nothing to plot yet. Moving on.')
 
     def updateCumulativeWorkWidget(self):
-        self.getResidualsAndWork()
-        
-        self.resTime=self.ResidualArray[:,2]
-        
-        last_indices = {}
-        
-        for i, value in enumerate(self.resTime):
-            last_indices[value] = i
-        uniq=list(last_indices.values())
-
-        resTime=self.resTime[uniq]
-
-        WFtS=self.ResidualArray[uniq,5]
-
-        WStF=self.ResidualArray[uniq,6]
-
-        WFtScumul=[]
-        WStFcumul=[]
-        for StF, FtS in zip(WStF, WFtS):
-            smWStF=sum(WStFcumul)+StF
-            WStFcumul.append(smWStF)
+        try:
+            self.getResidualsAndWork()
             
-        for FtS in WFtS:
-            smWFtS=sum(WFtScumul)+FtS
-            WFtScumul.append(smWFtS)
+            self.resTime=self.ResidualArray[:,2]
             
-        WFtScumul/=WStFcumul[-1]
-        
-        WStFcumul/=WStFcumul[-1]
-        
-        # Update the plot
-        self.cumulativeworkplotFtS.setData(resTime, WFtScumul)
-        
-        self.cumulativeworkplotStF.setData(resTime, WStFcumul)
-        
-        # Update the plot
-        self.plotCumulativeWorkWidget.setTitle("Cumulative Work Ratio vs Time [F->S = green], [S->F = red]")
+            last_indices = {}
+            
+            for i, value in enumerate(self.resTime):
+                last_indices[value] = i
+            uniq=list(last_indices.values())
 
-        # Set axis labels
-        self.plotCumulativeWorkWidget.setLabel('left', 'Cumulative Work')
-        self.plotCumulativeWorkWidget.setLabel('bottom', 'Time (s)')
-        self.plotCumulativeWorkWidget.addLegend(offset=(0, 30))
+            resTime=self.resTime[uniq]
+
+            WFtS=self.ResidualArray[uniq,5]
+
+            WStF=self.ResidualArray[uniq,6]
+
+            WFtScumul=[]
+            WStFcumul=[]
+            for StF, FtS in zip(WStF, WFtS):
+                smWStF=sum(WStFcumul)+StF
+                WStFcumul.append(smWStF)
+                
+            for FtS in WFtS:
+                smWFtS=sum(WFtScumul)+FtS
+                WFtScumul.append(smWFtS)
+                
+            WFtScumul/=WStFcumul[-1]
+            
+            WStFcumul/=WStFcumul[-1]
+            
+            # Update the plot
+            self.cumulativeworkplotFtS.setData(resTime, WFtScumul)
+            
+            self.cumulativeworkplotStF.setData(resTime, WStFcumul)
+            
+            # Update the plot
+            self.plotCumulativeWorkWidget.setTitle("Cumulative Work Ratio vs Time [F->S = green], [S->F = red]")
+
+            # Set axis labels
+            self.plotCumulativeWorkWidget.setLabel('left', 'Cumulative Work')
+            self.plotCumulativeWorkWidget.setLabel('bottom', 'Time (s)')
+            self.plotCumulativeWorkWidget.addLegend(offset=(0, 30))
+        except:
+            pass
+
+    def updateCouplingDataProjectionMeshPlot(self):
+        
+        doesMeshExist=0
+        while doesMeshExist==0:
+            try:
+                # Load the OBJ file
+                mesh = pv.read('./RunCase/CouplingDataProjectionMesh.obj')
+                
+                # Add the mesh to the view
+                self.CouplingMeshView.addItem(mesh)
+                doesMeshExist=1
+            except:
+                print('No surface file available to plot. Trying again.')
+
+
+    def updateForcePlots(self):
+
+        #self.updateCouplingDataProjectionMeshPlot()
+                
+        try:
+            self.getInterfaceForce()
+            
+            self.forceTime=self.ForceArray[:,0]
+        
+            last_indices = {}
+            
+            for i, value in enumerate(self.forceTime):
+                last_indices[value] = i
+                
+            uniq=list(last_indices.values())
+
+            forceTime=self.forceTime[uniq]
+
+            totFX=self.ForceArray[uniq,1]
+            totFY=self.ForceArray[uniq,2]
+            totFZ=self.ForceArray[uniq,3]
+            
+            preFX=self.ForceArray[uniq,4]
+            preFY=self.ForceArray[uniq,5]
+            preFZ=self.ForceArray[uniq,6]
+            
+            visFX=self.ForceArray[uniq,7]
+            visFY=self.ForceArray[uniq,8]
+            visFZ=self.ForceArray[uniq,9]
+            
+            # Update the plot
+            self.totalFXplot.setData(forceTime, totFX)
+            self.pressureFXplot.setData(forceTime, preFX)
+            self.viscousFXplot.setData(forceTime, visFX)
+            self.totalFYplot.setData(forceTime, totFY)
+            self.pressureFYplot.setData(forceTime, preFY)
+            self.viscousFYplot.setData(forceTime, visFY)
+            self.totalFZplot.setData(forceTime, totFZ)
+            self.pressureFZplot.setData(forceTime, preFZ)
+            self.viscousFZplot.setData(forceTime, visFZ)
+            
+            
+            # Update the plot
+            self.plotCumulativeWorkWidget.setTitle("Cumulative Work Ratio vs Time [F->S = green], [S->F = red]")
+
+            # Set axis labels
+            self.plotCumulativeWorkWidget.setLabel('left', 'Cumulative Work')
+            self.plotCumulativeWorkWidget.setLabel('bottom', 'Time (s)')
+            self.plotCumulativeWorkWidget.addLegend(offset=(0, 30))
+
+        except:
+            pass    
+
+    def getInterfaceForce(self):
+
+        self.ForceArray=np.loadtxt('./RunCase/OpenFOAMCase/postProcessing/interface/0/force.dat', dtype='float', skiprows=4)
+    
         
     def handleButtonPlotResiduals(self):
         pass
@@ -707,9 +793,7 @@ class pyFOAMySeesGUI(QMainWindow):
         widget = QWidget()  # Creating a widget to store layouts in
         # Assigning layout to a dummy widget which will be assigned to be the Central Widget of the QMainWindow window
         widget.setLayout(layout)  # Setting layout of the widget
-
-        self.SetFigureOpenSees()
-
+                # FIGURE 1
         # Connections
         buttonOpenSeesRunPreliminaryOpenSeesAnalysis.clicked.connect(self.handleOpenSeesRunPreliminaryOpenSeesAnalysis)
         buttonOpenSeesRunPreliminaryOpenSeesGravityAnalysis.clicked.connect(self.handleOpenSeesRunPreliminaryOpenSeesGravityAnalysis)
@@ -721,15 +805,24 @@ class pyFOAMySeesGUI(QMainWindow):
         return widget    
 
     def SetFigureOpenSees(self,w=5, h=3.5):
+        self.OpenSeesreader.set_active_time_point(reader.time_values[-1])
+        self.OpenSeesreader.active_time_value        
+
+
+    def SetFigureOpenFOAM(self,w=5, h=3.5):
         # FIGURE 1
-        sysplotOpenSees = Figure(figsize=(5, 4), linewidth=1.0, frameon=True, tight_layout=True)
+        reader=pv.get_reader('./RunCase/CouplingDataProjectionMesh.obj')
+        CouplingMeshViewReader=reader.read()
 
-        sysplotaxOS = sysplotOpenSees.add_subplot()
-        F1OS = FigureCanvas(sysplotOpenSees)
-        self.Canvas3.addWidget(F1OS)
+        self.CouplingMeshView.add_mesh(CouplingMeshViewReader)
+        # self.CouplingMeshView.add_axes_at_origin()
+        self.CouplingMeshView.show_axes()
+        #self.CouplingMeshView.clear()
+        self.CouplingMeshView.show()
+        #self.CouplingMeshView.update()
+        #self.CouplingMeshView.render()
 
-        F1OS.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        #
+
     def mainWidgetOpenFOAM(self):
         # Vertical Layouts
         self.Canvas4 = QVBoxLayout()  # Initializing the main vertical box layout for the System Figure
@@ -743,39 +836,48 @@ class pyFOAMySeesGUI(QMainWindow):
         Hlyt3 = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
         Hbtnlyt = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
 
-
         buttonOpenFOAMPlotOpenFOAM = QPushButton('Plot OpenFOAM Model')
         buttonOpenFOAMPlotOpenFOAMFields = QPushButton('Plot OpenFOAM Model Fields')
         buttonOpenFOAMRunPreliminaryOpenFOAMAnalysis = QPushButton('Run OpenFOAM ONLY Analysis')
         buttonOpenFOAMRunPreliminaryOpenFOAMGravityAnalysis = QPushButton('Run potentialFoam to Initialize Fields')
-        
 
         Vbtnlyt = QVBoxLayout()  # Initializing the main horizontal box layout for various buttons
         Vbtnlyt.addWidget(buttonOpenFOAMRunPreliminaryOpenFOAMAnalysis)
         Vbtnlyt.addWidget(buttonOpenFOAMRunPreliminaryOpenFOAMGravityAnalysis)
 
-
         Hbtnlyt.addLayout(Vbtnlyt)
         Hbtnlyt.addWidget(buttonOpenFOAMPlotOpenFOAM)
         Hbtnlyt.addWidget(buttonOpenFOAMPlotOpenFOAMFields)
-
 
         mainHolder.addLayout(Hbtnlyt)
         mainHolder.addLayout(self.Canvas4)
         Hlyt1.addLayout(mainHolder)
 
-     
         # Creating a vertical layout within which layouts 1-4 will reside
         layout = QVBoxLayout()  # Initializing the vertical layout
         layout.addLayout(Hlyt1)  # Adding layouts to the vertical layout
         layout.addLayout(Hlyt2)  # .
         layout.addLayout(Hlyt3)  # .
 
+        layout2= QHBoxLayout()  # Initializing the horizontal layout
+
+        layout2.addLayout(layout)
+        
         widget = QWidget()  # Creating a widget to store layouts in
         # Assigning layout to a dummy widget which will be assigned to be the Central Widget of the QMainWindow window
-        widget.setLayout(layout)  # Setting layout of the widget
 
-        self.SetFigureOpenFOAM()
+        # Create a 3D view window for the coupling data projection mesh...
+        
+        self.CouplingMeshView = pvqt.QtInteractor()
+        
+        layout2.addWidget(self.CouplingMeshView)
+        
+        widget.setLayout(layout2)  # Setting layout of the widget
+
+
+        self.ofplottimer = pg.QtCore.QTimer()
+        self.ofplottimer.timeout.connect(self.SetFigureOpenFOAM)
+        self.ofplottimer.start(500)  # Update every 100ms
 
         # Connections
         buttonOpenFOAMRunPreliminaryOpenFOAMAnalysis.clicked.connect(self.handleOpenFOAMRunPreliminaryOpenFOAMAnalysis)
@@ -783,6 +885,92 @@ class pyFOAMySeesGUI(QMainWindow):
 
         buttonOpenFOAMPlotOpenFOAM.clicked.connect(self.handleOpenFOAMButtonOpenFOAM)
         buttonOpenFOAMPlotOpenFOAMFields.clicked.connect(self.handleOpenFOAMButtonOpenFOAMFields)
+        
+        self.Canvas1 = QVBoxLayout()  # Initializing the main vertical box layout for the System Figure
+        self.Canvas2 = QVBoxLayout()  # Initializing the main vertical box layout for Results Figure
+        mainHolder = QVBoxLayout()  # Initializing the vertical box layout for the slider for load scaling
+        ScaleSliderHolder = QVBoxLayout()  # Initializing the vertical box layout for the slider for results scaling
+
+        # Horizontal Layouts
+        Hlyt1 = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
+        Hlyt2 = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
+        Hlyt3 = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
+        Hbtnlyt = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
+
+        emp = QLabel('')
+        Empty = QVBoxLayout(emp)
+        fig_force = QVBoxLayout()
+        
+        # Start updating the plot in a separate thread
+        self.forceplottimer = pg.QtCore.QTimer()
+        self.worktimer.timeout.connect(self.updateForcePlots)
+        self.worktimer.start(100)  # Update every 100ms
+
+
+        # Create a PlotWidget for the graph
+        self.plotForceXWidget = pg.PlotWidget()
+        self.plotForceXWidget.setTitle("X Force vs Time (g=total, b=pressure, r=viscous)")
+        # Set axis labels
+        self.plotForceXWidget.setLabel('left', 'Force')
+        self.plotForceXWidget.setLabel('bottom', 'Time (s)')
+
+        
+        self.plotForceYWidget = pg.PlotWidget()
+        self.plotForceYWidget.setTitle("Y Force vs Time (g=total, b=pressure, r=viscous)")
+        # Set axis labels
+        self.plotForceYWidget.setLabel('left', 'Force')
+        self.plotForceYWidget.setLabel('bottom', 'Time (s)')
+
+
+        self.plotForceZWidget = pg.PlotWidget()
+        self.plotForceZWidget.setTitle("Z Force vs Time (g=total, b=pressure, r=viscous)")
+        # Set axis labels
+        self.plotForceZWidget.setLabel('left', 'Force')
+        self.plotForceZWidget.setLabel('bottom', 'Time (s)')
+        
+        # Set up the plot pen='g',name="Fluid to Structure"
+
+        # Set up the plot
+        self.totalFXplot = self.plotForceXWidget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+
+        self.totalFYplot = self.plotForceYWidget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+                
+        self.totalFZplot = self.plotForceZWidget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+
+        self.pressureFXplot = self.plotForceXWidget.plot([0], [0],pen='b',name="Pressure")  # Initialize with a single point
+
+        self.pressureFYplot = self.plotForceYWidget.plot([0], [0],pen='b',name="Pressure")  # Initialize with a single point
+                
+        self.pressureFZplot = self.plotForceZWidget.plot([0], [0],pen='b',name="Pressure")  # Initialize with a single point
+
+        self.viscousFXplot = self.plotForceXWidget.plot([0], [0],pen='r',name="Viscous")  # Initialize with a single point
+
+        self.viscousFYplot = self.plotForceYWidget.plot([0], [0],pen='r',name="Viscous")  # Initialize with a single point
+                
+        self.viscousFZplot = self.plotForceZWidget.plot([0], [0],pen='r',name="Viscous")  # Initialize with a single point
+        
+        fig_force.addWidget(self.plotForceXWidget)
+        fig_force.addWidget(self.plotForceYWidget)
+        fig_force.addWidget(self.plotForceZWidget)
+        
+        layout.addLayout(fig_force)        
+
+                
+        # Connections
+        #buttonPlotResiduals = QPushButton('Plot Coupling Residuals')
+        
+        #buttonPlotWork = QPushButton('Plot Work In and Out')
+
+        #buttonPlotCouplingDataProjectionMeshErrors = QPushButton('Plot Work Error by Node')
+        
+        #Hbtnlyt.addWidget(buttonPlotResiduals)
+        #Hbtnlyt.addWidget(buttonPlotWork)
+        #Hbtnlyt.addWidget(buttonPlotCouplingDataProjectionMeshErrors)
+        
+        #mainHolder.addLayout(Hbtnlyt)
+
+        #buttonPlotResiduals.clicked.connect(self.handleButtonPlotResiduals)
+        #buttonPlotCouplingDataProjectionMeshErrors.clicked.connect(self.buttonPlotCouplingDataProjectionMeshErrors)
 
         return widget
     
@@ -866,7 +1054,13 @@ class pyFOAMySeesGUI(QMainWindow):
     def handlePlotFOAMySeesModel(self):
         
         self.FYSplotter.clear()
-     
+
+        self.parseOpenSeesOutput()
+        self.parseOpenFOAMXsecOutput()
+        self.parseOpenFOAMFSOutput()
+        self.createFOAMySeesFigure()
+        
+    def parseOpenSeesOutput(self):    
         F=glob.glob("RunCase/SeesOutput/*")
         P0Exists=0
         P1Exists=0
@@ -894,6 +1088,8 @@ class pyFOAMySeesGUI(QMainWindow):
 
         print(F)
         self.ospvdtimes=list(F)
+
+   
         VTKFILE=['''<?xml version="1.0"?>
         <VTKFile type="Collection" compressor="vtkZLibDataCompressor" >
           <Collection>
@@ -927,6 +1123,8 @@ class pyFOAMySeesGUI(QMainWindow):
                     f.write(line)
                     f.truncate()
 
+    def parseOpenFOAMXsecOutput(self):
+        
         I=glob.glob("RunCase/OpenFOAMCase/postProcessing/XSec1/*")
         I= [i.replace('RunCase/OpenFOAMCase/VTK/','') for i in I]
         I= [i.replace('RunCase/OpenFOAMCase_','') for i in I]
@@ -974,6 +1172,8 @@ class pyFOAMySeesGUI(QMainWindow):
                     f.write(line)
                     f.truncate()
 
+    def parseOpenFOAMFSOutput(self): 
+
         G=glob.glob("RunCase/OpenFOAMCase/postProcessing/freeSurfaceVTK/*")
         G= [i.replace('RunCase/OpenFOAMCase/VTK/','') for i in G]
         G= [i.replace('RunCase/OpenFOAMCase_','') for i in G]
@@ -985,8 +1185,8 @@ class pyFOAMySeesGUI(QMainWindow):
         G= [i.replace('/postProcessing/freeSurfaceVTK/','') for i in G]
         G= [i.replace('yCut.vtp','') for i in G]
 
-        G=set(G)
-        print(G)
+        I=set(G)
+        print(I)
 
 
         II=[]
@@ -1020,6 +1220,10 @@ class pyFOAMySeesGUI(QMainWindow):
                 for line in x:
                     f.write(line)
                     f.truncate()
+
+
+    def createFOAMySeesFigure(self):
+
         point=0
         readers=[]
         self.lens=[]
@@ -1034,6 +1238,7 @@ class pyFOAMySeesGUI(QMainWindow):
                 #for ds in reader.datasets:
                 #    self.textEdit.append(str(ds))
                 self.lens.append(len(reader.time_values))
+                
         if self.checkboxPlotFreeSurf.isChecked():
 
                 reader2=pv.get_reader('RunCase/FreeSurface.pvd')
@@ -1045,6 +1250,7 @@ class pyFOAMySeesGUI(QMainWindow):
                 #for ds in reader2.datasets:
                 #    self.textEdit.append(str(ds))
                 self.lens.append(len(reader2.time_values))
+                
         if self.checkboxPlotxSec.isChecked():
                 reader3=pv.get_reader('RunCase/InterpSurface.pvd')
                 reader3.time_values
@@ -1056,11 +1262,8 @@ class pyFOAMySeesGUI(QMainWindow):
                 #for ds in reader3.datasets:
                 #    self.textEdit.append(str(ds))
         
-                
-
         self.FYSplotter.readers=readers
         self.FYSplotter.activeactors=self.makeActors(readers)
-        
         
         minlen=np.min(self.lens)
         for time in [self.xsectimes[:],self.ofpvdtimes[:],self.ospvdtimes[:]]:
@@ -1068,6 +1271,8 @@ class pyFOAMySeesGUI(QMainWindow):
             self.textEdit.append(str(time))
       
         for u in range(0,minlen):
+            if self.checkboxPlotClear.isChecked():
+                self.FYSplotter.clear()
             self.set_time(u)
             self.FYSplotter.show()
             self.FYSplotter.update()
@@ -1079,11 +1284,13 @@ class pyFOAMySeesGUI(QMainWindow):
         self.checkboxPlotOS = QCheckBox('Plot OpenSees Model', self)
         self.checkboxPlotFreeSurf = QCheckBox('Plot Free Surface', self)
         self.checkboxPlotxSec = QCheckBox('Plot OpenFOAM Cross-Section', self)
+        self.checkboxPlotClear = QCheckBox('Clear Previous Timesteps', self)
         
         self.checkboxPlotOS.setChecked(True)
         self.checkboxPlotFreeSurf.setChecked(True)
-        self.checkboxPlotxSec.setChecked(True)
+        self.checkboxPlotxSec.setChecked(False)
         
+        self.checkboxPlotClear.setChecked(True)
         # Vertical Layouts
         self.Canvas1 = QVBoxLayout()  # Initializing the main vertical box layout for the System Figure
         self.Canvas2 = QVBoxLayout()  # Initializing the main vertical box layout for Results Figure
@@ -1111,6 +1318,7 @@ class pyFOAMySeesGUI(QMainWindow):
         Hbtnlyt.addWidget(self.checkboxPlotOS)
         Hbtnlyt.addWidget(self.checkboxPlotFreeSurf)
         Hbtnlyt.addWidget(self.checkboxPlotxSec)
+        Hbtnlyt.addWidget(self.checkboxPlotClear)
         #Hbtnlyt.addWidget(buttonPlotCouplingDataProjectionMesh)
         
         mainHolder.addLayout(Hbtnlyt)
@@ -1352,16 +1560,9 @@ class pyFOAMySeesGUI(QMainWindow):
         self.setWindowTitle(connstr)
 
         self.JSONConnect(filename[0])
-    def SetFigureOpenFOAM(self,w=5, h=3.5):
-        # FIGURE 1
-        self.sysplotOpenFOAM = Figure(figsize=(5, 4), linewidth=1.0, frameon=True, tight_layout=True)
-
-        sysplotaxOF = self.sysplotOpenFOAM.add_subplot()
-        F1OF = FigureCanvas(self.sysplotOpenFOAM)
-        self.Canvas4.addWidget(F1OF)
+        
 
 
-        F1OF.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         #
 
         #
@@ -1394,20 +1595,8 @@ class pyFOAMySeesGUI(QMainWindow):
     def branchVis(self):
         LogFile="FOAMySeesGUILog"
         try:
-                with open(LogFile) as f:
-                        print('Making Case Setup Directory', file=f)
-                Popen('mkdir CaseSetup').wait()
-                Popen('cd CaseSetup').wait()
-                rank=0
-
-                OpenSees_dt=1e-3
-                pid= rank 
                 
-                Sees=FOAMySeesInstance(OpenSees_dt,config)
-
-
-
-
+                Sees=FOAMySeesInstance(1,config)
 
                 N = len(Sees.coupledNodes) # number of ops.nodes
                 with open(LogFile) as f:        
@@ -1468,18 +1657,12 @@ class pyFOAMySeesGUI(QMainWindow):
 
                 Branches=np.array(Branches)					   
 
-
-                vertexIDsDisplacement = interface.set_mesh_vertices("Coupling-Data-Projection-Mesh", Branches)
                 # print(Branches)                      
                 Tree=KDTree(Sees.nodeLocs)
                 BranchToNodeRelationships=Tree.query(Branches)[1]
-
                 vertices=Branches
-                # print(BranchToNodeRelationships[1],np.shape(BranchToNodeRelationships[1]))
                 NodeToBranchNodeRelationships=[]
-                # with open('BranchesLOCS.log', 'a+') as f:
-                # for vertex in verticesBranchesDB:
-                    # print(vertex,file=f)       
+     
                 for n in range(len(Sees.nodeLocs)):
 
                         NodeToBranchNodeRelationships.append([n])
@@ -1499,115 +1682,7 @@ class pyFOAMySeesGUI(QMainWindow):
 
                 Sees.NodeToBranchNodeRelationships=NodeToBranchNodeRelationships
 
-                Force = np.zeros(np.shape(vertices))
-                Displacement = np.zeros(np.shape(vertices))
-                BranchTransform=np.zeros(np.shape(vertices))
-                Sees.moment=np.zeros(np.shape(vertices))
-                    
-                ncc=10000000
-                BNOD=[]
-                for nodeC in vertices:
 
-                    
-                    ops.node(10000000+ncc,float(nodeC[0]),float(nodeC[1]),float(nodeC[2]))
-
-                    BNOD.append(10000000+ncc)
-                    ncc+=1
-                    
-                A=0.84*0.00064516
-                Iz=0.486*0.00064516*0.00064516        
-                Iy=0.486*0.00064516*0.00064516        
-                Jxx=0.796*0.00064516*0.00064516
-                E_mod=29000*6895000 #ksi*conversion
-                G_mod=E_mod/(2*(1.3))
-                secTag=15000
-                ops.section('Elastic', secTag, E_mod, A, Iz, Iy, G_mod, Jxx)
-
-                ops.beamIntegration('Lobatto', 15000, secTag, 2)
-
-
-                matTag=601
-                beamNormal=[1,1,1]
-                for Relationship in Sees.NodeToBranchNodeRelationships:
-                    print(Relationship)
-                    fN=Sees.nodeList[Relationship[0]]
-                    oN=Relationship[1:]
-                    for oNC in oN:
-                        #ops.geomTransf('PDelta', ncc, beamNormal[0],beamNormal[1],beamNormal[2])
-                        #ops.element('forceBeamColumn', ncc, *[fN, BNOD[oNC]], ncc, 15000) 
-                        #print(ncc)
-
-
-                        ops.rigidLink('beam', fN, BNOD[oNC])
-                        ops.element('Truss', ncc, *[fN, BNOD[oNC]], 1, matTag)
-                        ncc+=1
-                    
-                    
-                    
-                    
-                ops.wipeAnalysis()
-
-                res=['disp','vel','accel','incrDisp','reaction','pressure','unbalancedLoad','mass']
-                # fibre_stressStrain = op.eleResponse(eleTag,               # element tag
-                                                # 'section', secTag,    # section tag
-                                                # fibre_coords,         # fibre y- and z-coordinates
-                                                # responseType)         # response type
-                #recorder('Element', '-ele', 1, 'section', str(1), 'fiber', str(y), str(z), 'stress')
-                #ops.recorder('Node', '-file', 'DFree.out','-time', '-node', 11, '-dof', 1,2,3, 'disp')
-
-                os.system('rm -rf BranchVisualization')
-                os.system('mkdir BranchVisualization')
-                os.system('touch BranchVisualization.pvd')
-                recorder('PVD', 'BranchVisualization', '-precision', 4, '-dT', 0.001, *res)
-
-
-                IDloadTag = 400            # load tag
-                dt = 0.001            # time step for input ground motion
-                GMfact = 386           # data in input file is in g Unifts -- ACCELERATION TH
-                maxNumIter = 10
-
-                Tol=1e-3
-
-
-
-
-                ops.timeSeries('Constant', 1, '-factor',1)
-
-                ops.pattern('Plain', 1, 1)
-
-
-                FX=Sees.config.g[0]
-                FY=Sees.config.g[1]
-                FZ=Sees.config.g[2]   
-                for node_num in range(0,len(Sees.nodeList)):
-                    NM=ops.nodeMass(Sees.nodeList[node_num], 1)    
-                    if Sees.config.SeesModelType=="solid":
-                        ops.load(Sees.nodeList[node_num], NM*FX, NM*FY, NM*FZ)
-                    else:
-                        ops.load(Sees.nodeList[node_num], NM*FX, NM*FY, NM*FZ, 0.0, 0., 0.0) 
-
-
-
-
-                ops.constraints('Transformation')
-                ops.numberer('Plain')
-                ops.system('BandGeneral')
-                ops.test('EnergyIncr', Tol, maxNumIter)
-                ops.algorithm('ModifiedNewton')
-                NewmarkGamma = 0.666
-                NewmarkBeta = 0.333
-                ops.integrator('Newmark', NewmarkGamma, NewmarkBeta)
-                ops.analysis('VariableTransient')
-                DtAnalysis = 0.001
-                TmaxAnalysis = 0.001
-                Nsteps =  int(TmaxAnalysis/ DtAnalysis)
-                ok=1
-                # for i in test:
-                ops.algorithm('KrylovNewton')
-
-
-
-                ok = ops.analyze(Nsteps, DtAnalysis,DtAnalysis/10,100)   
         except:
                 with open(LogFile,'a') as f:
                     print('The Coupling Data Projection Mesh or the OpenSees Model does not exist. Make sure everything else is set up',file=f)

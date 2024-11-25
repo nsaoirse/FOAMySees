@@ -13,7 +13,7 @@ print(os.environ.get("PATH"))
 
 from buildBathymetry import *
 from buildBlockMesh import *
-
+from writeOpenFOAMpreCICEDictSinglePhase import *
 from buildInitialConditions import *
 from buildInletProperties import *
 from buildOpenSeesModelFile import *

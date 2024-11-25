@@ -73,8 +73,12 @@ class FOAMySeesInstance():
 		self.opensees_log_location='fys_logs/What is Happening With OpenSees.log'
 
 		self.createRecorders=createRecorders
-		self.prelimAnalysis=prelimAnalysis
-		
+		try:
+                    
+                    self.prelimAnalysis=prelimAnalysis
+		except:
+                    pass
+                
 		self.OmegaDamp=1
 		Popen('rm -rf SeesCheckpoints', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
 		Popen('mkdir SeesCheckpoints', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()

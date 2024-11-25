@@ -1,3 +1,5 @@
+
+
 if ! test -f ./caseSetup.sh; then
   echo "ERROR: FOAMySees Case files do not exist in the current working directory."
   echo "Please ensure you are in the proper folder before executing the 'startFOAMySees' command"
@@ -14,12 +16,11 @@ fi
 ###########################################################################################################################
 ###########################################################################################################################
 					# BEGIN PROGRAM SETTINGS
-###########################################################################################################################
-###########################################################################################################################
-###########################################################################################################################
+#################################
+# program defaults...
 export FYS_inputFilesLocation="fromUser"
 export FYS_OpenSeesPyModelFile="OpenSeesModel.py"
-export FYS_Nprocessors=4
+export FYS_Nprocessors=1
 export FYS_OpenFOAMSolver="interFoam"
 export FYS_isPartOfHydro="No"
 export FYS_nameOfCoupledPatchOrSurfaceFile="interface"
@@ -28,10 +29,12 @@ export FYS_ExistingOpenFOAMCase="Fluid"
 export FYS_HydrojsonFile="none"
 export FYS_numOpenSeesSubSteps=1
 export FYS_numOpenFOAMSubSteps=1
+export FYS_singlePhase="0"
+export FYS_singlePhaseDensity="1.225"
+export FYS_singlePhaseKinematicViscosity="1.48e-05"
 export FYS_shmLocX="0.1"
 export FYS_shmLocY="0.1"
 export FYS_shmLocZ="0.1"
-
 
 # you can change this
 caseFolder="RunCase"
@@ -142,12 +145,12 @@ cp -r ${whereWasScriptExecutedFrom}/${FYS_ExistingOpenFOAMCase}/* ${FYS_OpenFOAM
 
 # configuring the case
 echo these are the inputs to the configuration file
-echo "FYS_nameOfCoupledPatchOrSurfaceFile ${FYS_nameOfCoupledPatchOrSurfaceFile} \n FYS_CouplingDataProjectionMesh ${FYS_CouplingDataProjectionMesh} \n FYS_makeCouplingDataProjectionMesh ${FYS_makeCouplingDataProjectionMesh} \n FYS_OpenSeesPyModelFile ${FYS_OpenSeesPyModelFile} \n FYS_OpenFOAMCaseFolder ${FYS_OpenFOAMCaseFolder} \n FYS_OpenFOAMSolver ${FYS_OpenFOAMSolver} \n FYS_Nprocessors ${FYS_Nprocessors} \n FYS_OpenFOAMFileHandler ${FYS_OpenFOAMFileHandler} \n FYS_useExistingOpenFOAMCaseFolder ${FYS_useExistingOpenFOAMCaseFolder} \n FYS_ExistingOpenFOAMCase ${FYS_ExistingOpenFOAMCase} \n FYS_numOpenSeesSubSteps ${FYS_numOpenSeesSubSteps} \n FYS_numOpenFOAMSubSteps ${FYS_numOpenFOAMSubSteps} \n FYS_isPartOfHydro ${FYS_isPartOfHydro} \n FYS_HydrojsonFile ${FYS_HydrojsonFile} \n FYS_shmLoc ${FYS_shmLocX} ${FYS_shmLocY} ${FYS_shmLocZ}"
+echo "FYS_nameOfCoupledPatchOrSurfaceFile ${FYS_nameOfCoupledPatchOrSurfaceFile} \n FYS_CouplingDataProjectionMesh ${FYS_CouplingDataProjectionMesh} \n FYS_makeCouplingDataProjectionMesh ${FYS_makeCouplingDataProjectionMesh} \n FYS_OpenSeesPyModelFile ${FYS_OpenSeesPyModelFile} \n FYS_OpenFOAMCaseFolder ${FYS_OpenFOAMCaseFolder} \n FYS_OpenFOAMSolver ${FYS_OpenFOAMSolver} \n FYS_Nprocessors ${FYS_Nprocessors} \n FYS_OpenFOAMFileHandler ${FYS_OpenFOAMFileHandler} \n FYS_useExistingOpenFOAMCaseFolder ${FYS_useExistingOpenFOAMCaseFolder} \n FYS_ExistingOpenFOAMCase ${FYS_ExistingOpenFOAMCase} \n FYS_numOpenSeesSubSteps ${FYS_numOpenSeesSubSteps} \n FYS_numOpenFOAMSubSteps ${FYS_numOpenFOAMSubSteps} \n FYS_isPartOfHydro ${FYS_isPartOfHydro} \n FYS_HydrojsonFile ${FYS_HydrojsonFile} \n FYS_shmLoc ${FYS_shmLocX} ${FYS_shmLocY} ${FYS_shmLocZ} \n single phase fluid simulation  ${FYS_singlePhase}"
 
 ###########################################################################################################################
 ###########################################################################################################################
 
-python3 $FOAMySeesSrcDir/ProgramFiles/configureCoupledCase.py  ${FYS_nameOfCoupledPatchOrSurfaceFile} ${FYS_CouplingDataProjectionMesh} ${FYS_makeCouplingDataProjectionMesh} ${FYS_OpenSeesPyModelFile} ${FYS_OpenFOAMCaseFolder} ${FYS_OpenFOAMSolver} ${FYS_Nprocessors} ${FYS_OpenFOAMFileHandler} ${FYS_useExistingOpenFOAMCaseFolder} ${FYS_ExistingOpenFOAMCase} ${FYS_numOpenSeesSubSteps} ${FYS_numOpenFOAMSubSteps} ${FYS_isPartOfHydro} ${FYS_HydrojsonFile} ${FYS_shmLocX} ${FYS_shmLocY} ${FYS_shmLocZ} 
+python3 $FOAMySeesSrcDir/ProgramFiles/configureCoupledCase.py  ${FYS_nameOfCoupledPatchOrSurfaceFile} ${FYS_CouplingDataProjectionMesh} ${FYS_makeCouplingDataProjectionMesh} ${FYS_OpenSeesPyModelFile} ${FYS_OpenFOAMCaseFolder} ${FYS_OpenFOAMSolver} ${FYS_Nprocessors} ${FYS_OpenFOAMFileHandler} ${FYS_useExistingOpenFOAMCaseFolder} ${FYS_ExistingOpenFOAMCase} ${FYS_numOpenSeesSubSteps} ${FYS_numOpenFOAMSubSteps} ${FYS_isPartOfHydro} ${FYS_HydrojsonFile} ${FYS_shmLocX} ${FYS_shmLocY} ${FYS_shmLocZ} ${FYS_singlePhase} ${FYS_singlePhaseDensity} ${FYS_singlePhaseKinematicViscosity}
 
 ########################################################################################################
 ########################################################################################################

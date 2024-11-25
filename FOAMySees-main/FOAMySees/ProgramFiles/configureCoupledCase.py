@@ -120,6 +120,17 @@ if __name__=="__main__":
 						default="1")
 	parser.add_argument("SnappyHexMeshPointInMeshZ", help="specify point in mesh to keep", type=str,
 						default="1")
+
+	parser.add_argument("singlePhaseSimulation", help="is fluid model single phase?", type=str,
+						default="0")
+	
+	parser.add_argument("singlePhaseDensity", help="single phase density", type=str,
+						default="1000")
+	
+	parser.add_argument("singlePhaseKinViscosity", help="single phase kinematic viscosity", type=str,
+						default="1e-06")
+    
+	
 	args = parser.parse_args()
 
 	# Open a file and use dump() 
@@ -174,6 +185,11 @@ if __name__=="__main__":
 	with open('fys_logs/FOAMySeesInitializeVariables.log', 'a+') as f:	
 			print('number of OpenSees Steps Per Coupling Timestep: ',args.numOpenSeesStepsPerCouplingTimestep,file=f)	
 
+	# single phase fluid options
+	isFluidSinglePhase=args.singlePhaseSimulation
+	fluidRho=args.singlePhaseDensity
+	fluidNu=args.singlePhaseKinViscosity
+	
 	jsonfile=args.HydroUQInputs	
 	isPartOfHydro=args.useHydroUQInputs
 
@@ -503,13 +519,11 @@ if __name__=="__main__":
 
 		# run configuration file subfunctions
 		writeOpenFOAMDecomposition(DomainDecomposition,writeOpenFOAMHere)
-		
-		writeOpenFOAMpreCICEDict(nameOfCoupledPatchOrSurfaceFile,writeOpenFOAMHere)
-		preliminaryAnalysis=[]
-		preliminaryAnalysis.append(prelimAnalysisExists)
-		if prelimAnalysisExists==1:
-			preliminaryAnalysis.append(preliminaryAnalysisFile)
-		buildOpenSeesPreliminaryAnalysisFile(preliminaryAnalysis,writeOpenSeesHere,copyCaseFilesTo)
+		if isFluidSinglePhase==1:
+		    writeOpenFOAMpreCICEDictSinglePhase(nameOfCoupledPatchOrSurfaceFile,writeOpenFOAMHere,fluidRho,fluidNu)
+		else:
+		    writeOpenFOAMpreCICEDict(nameOfCoupledPatchOrSurfaceFile,writeOpenFOAMHere)
+
 		buildOpenSeesModelFile(openSeesPyScript,writeOpenSeesHere,copyCaseFilesTo)
 
 		# CONFIGURE PRECICE 
