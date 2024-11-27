@@ -35,7 +35,58 @@ variable to be defined to locate the .H files required to compile shared objects
 
 **Examples can be found at** https://github.com/nsaoirse/FOAMySees-Examples
 
+---------------------------------------
 
+# Running the Code
+
+**Examples**
+
+Some example cases are provided. 
+
+One could modify these cases to perform various types of analysis. 
+
+Running the command 'startFOAMySees' will initialize the cases within the provided Examples folder.
+
+Navigate to the case directory and submit 'startFOAMySees' into the terminal
+(e.g. 
+cd FOAMySeesExampleCases/FixedFixedBeam
+startFOAMySees
+)
+
+If the required files are not in the folder, FOAMySees will tell you that it cannot be run
+
+______________________________________
+**Making your own case**
+
+Navigate to your analysis directory
+In order to run a case, you will need an OpenFOAM case folder, and an OpenSees model
+
+_**OpenFOAM Case Folder**_
+
+If you haven't done so, create an OpenFOAM model, or find a model with which to couple a structure. There are plenty in the OpenFOAM tutorials directory which could be modified!
+The boundary conditions of the OpenFOAM will need to be modified manually, within the 0.org folder of the OpenFOAM case with which you would like to run a case. 
+Configure your OpenFOAM case according to the preCICE guidelines.   https://precice.org/adapter-openfoam-config.html#fsi 
+The controlDict, preciceDict, and precice-config.xml files will be automatically generated for your case depending on the settings you have chosen by the FOAMySees code.
+
+_**OpenSees Model**_
+
+Construct an OpenSees model geometrically near, or within the volume of, the coupled surface of the OpenFOAM model.
+
+_**Running a Coupled Case**_
+
+Put the OpenFOAM Case folder and OpenSees Model into a new folder alone, and run 'createFOAMySeesInputFiles' within that folder. Two files should be generated,
+
+These files are:
+**caseSetup.sh**
+and
+**coupledAnalysisSettings.py**
+______________
+
+Currently, the inputs to an analysis are managed through these two additional files placed in a folder along with the case files.
+
+Modify the settings in both files, caseSetup.sh, and coupledAnalysisSettings.py
+______
+Run 'startFOAMySees'
 
 
 # Dependencies
@@ -54,7 +105,9 @@ Don't worry about these. Follow the instructions below and everything _should_ i
 
 # Installation Instructions
 
-**USE DOCKER IMAGE FOR EASIEST APPROACH**
+_Appoaches: (1) use docker (2) install everything from source (3) [find a suitable virtual machine from preCICE](https://precice.org/installation-vm.html#connecting-to-the-vm-via-ssh)
+
+** (1) USE DOCKER IMAGE FOR EASIEST APPROACH**
 
 _**First, install docker and docker desktop.**_
 
@@ -89,7 +142,7 @@ olaFlow (https://github.com/phicau/olaFlow)
 swak4Foam (https://openfoamwiki.net/index.php/Contrib/swak4Foam)
 
 
-_**Installing all FOAMySees Dependencies from source.... not recommended for new users**_
+_** (2) Installing all FOAMySees Dependencies from source.... not recommended for new users**_
 
 Download the Github repository to somewhere you'd like it to stay. 
 The files within the repository are largely Python and bash files which will construct a coupled analysis case, depending on the inputs to the program provided. (the files are needed for case setup, and this directory is added to your user .bashrc profile, as well as a few aliases)
@@ -251,58 +304,7 @@ cd ..
 
 pip install pyprecice --break-system-packages
 
----------------------------------------
 
-# Running the Code
-
-**Examples**
-
-Some example cases are provided. 
-
-One could modify these cases to perform various types of analysis. 
-
-Running the command 'startFOAMySees' will initialize the cases within the provided Examples folder.
-
-Navigate to the case directory and submit 'startFOAMySees' into the terminal
-(e.g. 
-cd FOAMySeesExampleCases/FixedFixedBeam
-startFOAMySees
-)
-
-If the required files are not in the folder, FOAMySees will tell you that it cannot be run
-
-______________________________________
-**Making your own case**
-
-Navigate to your analysis directory
-In order to run a case, you will need an OpenFOAM case folder, and an OpenSees model
-
-_**OpenFOAM Case Folder**_
-
-If you haven't done so, create an OpenFOAM model, or find a model with which to couple a structure. There are plenty in the OpenFOAM tutorials directory which could be modified!
-The boundary conditions of the OpenFOAM will need to be modified manually, within the 0.org folder of the OpenFOAM case with which you would like to run a case. 
-Configure your OpenFOAM case according to the preCICE guidelines.   https://precice.org/adapter-openfoam-config.html#fsi 
-The controlDict, preciceDict, and precice-config.xml files will be automatically generated for your case depending on the settings you have chosen by the FOAMySees code.
-
-_**OpenSees Model**_
-
-Construct an OpenSees model geometrically near, or within the volume of, the coupled surface of the OpenFOAM model.
-
-_**Running a Coupled Case**_
-
-Put the OpenFOAM Case folder and OpenSees Model into a new folder alone, and run 'createFOAMySeesInputFiles' within that folder. Two files should be generated,
-
-These files are:
-**caseSetup.sh**
-and
-**coupledAnalysisSettings.py**
-______________
-
-Currently, the inputs to an analysis are managed through these two additional files placed in a folder along with the case files.
-
-Modify the settings in both files, caseSetup.sh, and coupledAnalysisSettings.py
-______
-Run 'startFOAMySees'
 
 
 ---------------------------------------
