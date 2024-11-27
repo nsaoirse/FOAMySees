@@ -35,6 +35,9 @@ variable to be defined to locate the .H files required to compile shared objects
 
 **Examples can be found at** https://github.com/nsaoirse/FOAMySees-Examples
 
+
+
+
 # Dependencies
 Python 3 (3.6 or higher, likely. I used 3.12)
 
@@ -50,6 +53,44 @@ Don't worry about these. Follow the instructions below and everything _should_ i
 
 
 # Installation Instructions
+
+**USE DOCKER IMAGE FOR EASIEST APPROACH**
+
+_**First, install docker and docker desktop.**_
+
+_in the terminal_
+
+docker pull nicoletteslewis/foamysees:latest
+
+docker run -i -t -u FOAMySees nicoletteslewis/foamysees:latest
+
+docker container create --name analysis_run nicoletteslewis/foamysees:latest
+
+docker container start analysis_run
+
+**_the container should now be running._**
+
+This image holds the libraries necessary to run FOAMySees, as well as some extra libraries which will assist in future development of example cases.
+
+On the image, along with many dependencies:
+
+Python 3.12
+
+OpenSeesPy (https://openseespydoc.readthedocs.io/en/latest/)
+
+OpenFOAMv2406 (https://www.openfoam.com/news/main-news/openfoam-v2406)
+
+preCICE v3 (https://github.com/precice)
+
+precice Python Language Bindings (https://precice.org/installation-bindings-python)
+
+olaFlow (https://github.com/phicau/olaFlow)
+
+swak4Foam (https://openfoamwiki.net/index.php/Contrib/swak4Foam)
+
+
+_**Installing all FOAMySees Dependencies from source.... not recommended for new users**_
+
 Download the Github repository to somewhere you'd like it to stay. 
 The files within the repository are largely Python and bash files which will construct a coupled analysis case, depending on the inputs to the program provided. (the files are needed for case setup, and this directory is added to your user .bashrc profile, as well as a few aliases)
 
