@@ -63,8 +63,11 @@ class FOAMySeesInstance():
 		self.dt = dt
 		self.time=[0]
 		self.step=0
+		
 		self.whatTimeIsIt=0
 		self.config=config
+
+		self.totalSteps=self.config.endTime/self.dt
 		
 		self.fys_couplingdriver_log_location='fys_logs/FOAMySeesCouplingDriver.log'
 		self.work_log_location='fys_logs/WorkInAndOut.log'
@@ -74,11 +77,11 @@ class FOAMySeesInstance():
 
 		self.createRecorders=createRecorders
 		try:
-                    
-                    self.prelimAnalysis=prelimAnalysis
+		    
+		    self.prelimAnalysis=prelimAnalysis
 		except:
-                    pass
-                
+		    pass
+		
 		self.OmegaDamp=1
 		Popen('rm -rf SeesCheckpoints', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
 		Popen('mkdir SeesCheckpoints', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
@@ -284,6 +287,8 @@ class FOAMySeesInstance():
 		return np.transpose(vec2)
 
 	def writeLogs(self):
+		with open('./fys_logs/tlog', 'a+') as f:
+			print("{} {} {} {}".format(ops.getTime(),self.stepNumber,self.totalSteps,self.iteration),file=f)
 		with open(self.fys_couplingdriver_log_location, 'a+') as f:
 			print(' Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(self.WorkIn-self.WorkOut)/self.WorkIn,' W(f->s)/W(s->f) (Ratio)',self.WorkIn/self.WorkOut,', W(f->s) (Joules): ',self.WorkIn,', W(s->f) (Joules): ',self.WorkOut,file=f)
 		with open(self.work_log_location, 'a+') as f:

@@ -2,14 +2,12 @@ from dependencies import *
 import os.path
 import time
 
-#	 /*--------------------------------*- C++ -*----------------------------------*\
-# | =========						    ____/_________\____	 _.*_*.		       |
-# | \\	    /	F ield		|   |  S tructural	    ||__|/\|___|/\|__||	  \ \ \\.	       |
-# |  \\	   /	O peration	|___|  E ngineering &       ||__|/\|___|/\|__||	   | | | \._	       |
-# |   \\  /	A nd		    |  E arthquake	    ||__|/\|___|/\|__||	  _/_/_/ | .\.__...    |
-# |    \\/      M anipulation	|___|  S imulation	    ||__|/\|___|/\|__||   __/, / _ \___...     |
-# |_________________________________________________________||  |/\| | |/\|  ||__/,_/__,_____/...______|
-	# \*---------------------------------------------------------------------------*/
+#| ============================================== ____/__\___/__\____	 _.*_*.	             |
+#|	F ield		|   |  S tructural	  ||__|/\|___|/\|__||	  \ \ \ \.	     |
+#|      O peration	|___|  E ngineering &     ||__|/\|___|/\|__||	   | | |  \._ CESG   |  
+#|	A nd		    |  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW    |
+#|	M anipulation	|___|  S imulation	  ||__|/\|___|/\|__||   __/, / _ \___.. 2023 |
+#| ==============================================_||  |/\| | |/\|  ||__/,_/__,_____/..__ nsl_|
 
 # The work within this thesis was funded by the National Science Foundation (NSF) and Joy Pauschke (program manager) through Grants CMMI-1726326, CMMI-1933184, and CMMI-2131111. 
 # Thank you to NHERI Computational Modeling and Simulation Center (SimCenter), as well as their developers, funding sources, and staff for their continued support. 
@@ -288,8 +286,9 @@ if __name__ == '__main__':# and rank==0:
 	
 	DT=float(FOAMySees.config.SolutionDT)
 	FOAMySees.thisTime=0
-	FOAMySees.stepNumber=1
+	FOAMySees.stepNumber=0
 	FOAMySees.iteration=0
+	
 	#################################################################################################
 	# preCICE action - entering the coupling loop
 	while interface.is_coupling_ongoing():
@@ -301,6 +300,7 @@ if __name__ == '__main__':# and rank==0:
 			FOAMySees.thisTime+=DT
 			print("Uncoupled Simulation Time: {}s, {}% to coupling start time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.couplingStartTime,FOAMySees.config.couplingStartTime))
 			interface.requires_writing_checkpoint()
+			FOAMySees.step+=1
 		else:
 			print("Coupled Simulation Time: {}s, {}% to termination time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.endTime,FOAMySees.config.endTime))
 			#################################################################################################
@@ -386,8 +386,8 @@ if __name__ == '__main__':# and rank==0:
 				# reading the previously saved database
 				StepCheck=0
 				# adding one to the iteration counter
-				iteration+=1
-				FOAMySees.iteration=iteration
+				FOAMySees.iteration+=1
+				
 				# letting preCICE know we are finished going back in time			
 			else:
 				LastForces=copy.deepcopy(Forces)
@@ -400,8 +400,9 @@ if __name__ == '__main__':# and rank==0:
 				FOAMySees.lastForceandmoment=copy.deepcopy(FOAMySees.forceandmoment)
 				FOAMySees.lastForces=copy.deepcopy(FOAMySees.force)
 				FOAMySees.lastDisplacements=copy.deepcopy(FOAMySees.displacement)	
+				FOAMySees.stepNumber+=1
+				FOAMySees.iteration=1
 				
-				iteration=1
 				# we are converged, or have given up!
 				#################################################################################################			
 				# doing some house keeping
@@ -415,10 +416,11 @@ if __name__ == '__main__':# and rank==0:
 			#################################################################################################
 			#ops.wipe()
 			# calling all the recorders made
+
 			ops.record()
 			
 			FOAMySees.writeLogs()
-			FOAMySees.stepNumber+=1
+			
 			FOAMySees.createRecorders.appendRecords(FOAMySees,FOAMySees.nodeRecInfoList)		
 			if tOUT>=FOAMySees.config.SeesVTKOUTRate:
 				tOUT=0

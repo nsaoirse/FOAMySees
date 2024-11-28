@@ -1,4 +1,4 @@
-def configurePrecice(implicitOrExplicit,outputDataFromCouplingIterations,couplingIterationOutputDataFrequency,couplingConvergenceTol,initialRelaxationFactor,couplingDataAccelerationMethod,mapType,SolutionDT,endTime,maximumCouplingIterations,timeWindowsReused,iterationsReused):
+def configurePrecice(implicitOrExplicit,outputDataFromCouplingIterations,couplingIterationOutputDataFrequency,couplingConvergenceTol,initialRelaxationFactor,couplingDataAccelerationMethod,mapType,SolutionDT,endTime,maximumCouplingIterations,timeWindowsReused,iterationsReused,acceldat='both'):
 	print('Configuring preCICE')
 	print("implicitOrExplicit,outputDataFromCouplingIterations,couplingIterationOutputDataFrequency,couplingConvergenceTol,initialRelaxationFactor,couplingDataAccelerationMethod,mapType,SolutionDT,endTime,maximumCouplingIterations")
 	print(implicitOrExplicit,outputDataFromCouplingIterations,couplingIterationOutputDataFrequency,couplingConvergenceTol,initialRelaxationFactor,couplingDataAccelerationMethod,mapType,SolutionDT,endTime,maximumCouplingIterations)
@@ -18,12 +18,23 @@ def configurePrecice(implicitOrExplicit,outputDataFromCouplingIterations,couplin
 			<exchange data="Force" mesh="Coupling-Data-Projection-Mesh" from="OpenFOAMCase" to="FOAMySeesCouplingDriver" />
 			<exchange data="Displacement" mesh="Coupling-Data-Projection-Mesh" from="FOAMySeesCouplingDriver" to="OpenFOAMCase" />
 				'''
+		# <data name="Force" mesh="Coupling-Data-Projection-Mesh" />
+	accelWhatData=''' '''
 
-	accelWhatData='''
+	if acceldat=='both':
+			accelWhatData+='''
+			<data name="Force" mesh="Coupling-Data-Projection-Mesh" />
 			<data name="Displacement" mesh="Coupling-Data-Projection-Mesh" />
+				'''
+	elif acceldat=='force':		
+			accelWhatData+='''
 			<data name="Force" mesh="Coupling-Data-Projection-Mesh" />
 				'''
-
+	elif acceldat=='disp':
+			accelWhatData+='''
+                        <data name="Displacement" mesh="Coupling-Data-Projection-Mesh" />
+				'''
+				
 	relConvMeasures=''' />
 	 		<relative-convergence-measure limit="{}" data="Displacement" mesh="Coupling-Data-Projection-Mesh" />
 	 		<relative-convergence-measure limit="{}" data="Force" mesh="Coupling-Data-Projection-Mesh" />'''.format(couplingConvergenceTol,couplingConvergenceTol)
@@ -80,9 +91,10 @@ def configurePrecice(implicitOrExplicit,outputDataFromCouplingIterations,couplin
 			
 	preCICEdict=['''<?xml version="1.0" encoding="UTF-8" ?>
 <precice-configuration>
-	<log>
+  <log enabled="true">
 
-	</log>
+  </log>
+
 	<data:vector name="Force" />
 	<data:vector name="Displacement" />
 
@@ -123,10 +135,10 @@ def configurePrecice(implicitOrExplicit,outputDataFromCouplingIterations,couplin
 	</participant>
 	<m2n:sockets acceptor="OpenFOAMCase" connector="FOAMySeesCouplingDriver" exchange-directory="."/>
 				''']
-        # <m2n:mpi acceptor="OpenFOAMCase" connector="FOAMySeesCouplingDriver"/>
-        # <m2n:sockets port="10101" acceptor="OpenFOAMCase" connector="FOAMySeesCouplingDriver" exchange-directory=".." enforce-gather-scatter="1"/>
+		# <m2n:mpi acceptor="OpenFOAMCase" connector="FOAMySeesCouplingDriver"/>
+		# <m2n:sockets port="10101" acceptor="OpenFOAMCase" connector="FOAMySeesCouplingDriver" exchange-directory=".." enforce-gather-scatter="1"/>
 	
-        # <mapping:{}'''.format(mapType),'''
+		# <mapping:{}'''.format(mapType),'''
 			# direction="read"
 			# from="Coupling-Data-Projection-Mesh"
 			# to="OpenFOAM-Mesh"

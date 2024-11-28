@@ -20,6 +20,7 @@ try:
 except:
 	pass
 
+accelerateWhatData='both' # this will be overwritten below if that variable is defined in the configuration file
 
 
 Popen('mkdir fys_logs', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
@@ -527,7 +528,7 @@ if __name__=="__main__":
 		buildOpenSeesModelFile(openSeesPyScript,writeOpenSeesHere,copyCaseFilesTo)
 
 		# CONFIGURE PRECICE 
-		configurePrecice(CouplingScheme,outputDataFromCouplingIterations,couplingIterationOutputDataFrequency,couplingConvergenceTol,initialRelaxationFactor,couplingDataAccelerationMethod,mapType,SolutionDT,endTime,maximumCouplingIterations,timeWindowsReused,iterationsReused)
+		configurePrecice(CouplingScheme,outputDataFromCouplingIterations,couplingIterationOutputDataFrequency,couplingConvergenceTol,initialRelaxationFactor,couplingDataAccelerationMethod,mapType,SolutionDT,endTime,maximumCouplingIterations,timeWindowsReused,iterationsReused,accelerateWhatData)
 			
 		# Moving the analysis files to the run directory
 		Popen('echo " Moving the analysis files to the run directory"', shell=True, stdout=DEVNULL).wait()
