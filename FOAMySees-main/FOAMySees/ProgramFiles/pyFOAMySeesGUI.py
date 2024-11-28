@@ -984,8 +984,7 @@ class pyFOAMySeesGUI(QMainWindow):
             warped=OpenSeesmesh.warp_by_vector('Displacement')
             dargs = dict(
                 scalars="Displacement",
-                cmap="jet",
-                show_scalar_bar=False,
+                show_scalar_bar=True,
             )
             actor1=self.FYSplotter.add_mesh(warped, **dargs)
             actors.append(actor1)
@@ -1000,6 +999,7 @@ class pyFOAMySeesGUI(QMainWindow):
             FreeSurf=reader2.read()[0]
             actor2=self.FYSplotter.add_mesh(FreeSurf, lighting=False, show_edges=False)
             actors.append(actor2)
+            
         if self.checkboxPlotxSec.isChecked():
             if self.checkboxPlotOS.isChecked():
                 if self.checkboxPlotFreeSurf.isChecked():
@@ -1015,9 +1015,11 @@ class pyFOAMySeesGUI(QMainWindow):
             OpenFOAMXSecmesh=reader3.read()[0]
             #warped=OpenFOAMXSecmesh.warp_by_vector('pointDisplacement')
             dargs = dict(
-        #   scalars="p",
+            scalars="p",
                 cmap="rainbow",
                 show_scalar_bar=True,
+            show_edges=True,
+            opacity=0.5,
             )
 
             actor3=self.FYSplotter.add_mesh(OpenFOAMXSecmesh, **dargs)
