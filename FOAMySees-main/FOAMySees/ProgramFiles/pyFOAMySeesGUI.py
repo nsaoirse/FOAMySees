@@ -266,22 +266,26 @@ class pyFOAMySeesGUI(QMainWindow):
 		# Create a PlotWidget for the graph
 		self.plotCouplingWidget = pg.PlotWidget()
 		# Set up the plot
-		self.CouplingPlot = self.plotCouplingWidget.plot([0], [0],pen='r')  # Initialize with a single point
+		
 		self.CouplingPlotTol = self.plotCouplingWidget.plot([0], [0],pen='g')  # Initialize with a single point
+		self.CouplingPlot = self.plotCouplingWidget.plot([0], [0],pen='r')  # Initialize with a single point
 		# Start updating the plot in a separate thread
 		self.CouplingPlottimer = pg.QtCore.QTimer()
 		self.CouplingPlottimer.timeout.connect(self.updateCouplingPlot)
-		self.CouplingPlottimer.start(100)  # Update every 100ms
-
-		fig_coupling.addWidget(self.plotCouplingWidget)
+		self.CouplingPlottimer.start(10)  # Update every 100ms
 
 				# Create a PlotWidget for the graph
 		self.plotCouplingWidget2 = pg.PlotWidget()
 		# Set up the plot
-		self.CouplingPlot2 = self.plotCouplingWidget2.plot([0], [0],pen='r')  # Initialize with a single point
+		
 		self.CouplingPlotTol2 = self.plotCouplingWidget2.plot([0], [0],pen='g')  # Initialize with a single point
+		self.CouplingPlot2 = self.plotCouplingWidget2.plot([0], [0],pen='r')  # Initialize with a single point
 		self.plotCouplingWidget.plotItem.setLogMode(x=False, y=True)
 		self.plotCouplingWidget2.plotItem.setLogMode(x=False, y=True)
+
+		
+		fig_coupling.addWidget(self.plotCouplingWidget)
+
 		fig_coupling.addWidget(self.plotCouplingWidget2)
 
 		mainHolder.addLayout(fig_coupling)		
@@ -329,23 +333,27 @@ class pyFOAMySeesGUI(QMainWindow):
 		keepAllFloat=[]
 		for line in range(0,len(keepAll)):
 			point=[]
-			for x in keepDispl[line]:
+			for x in " ".join(keepDispl[line]).split(" "):
+
 				if x=='inf':
-					x=1000000.
+					x=float(1e+3.)
 				else:
 					try:
 						x=float(x)
 					except:
-						x=0.
+						x=float(1e+3.)
+				#self.textEdit.append(str(x))
 				point.append(x)
-			for x in keepForce[line]:
+			for x in " ".join(keepForce[line]).split(" "):
+				
 				if x=='inf':
-					x=1000000.
+					x=float(1e+3.)
 				else:
 					try:
 						x=float(x)
 					except:
-						x=0.
+						x=float(1e+3.)
+				#self.textEdit.append(str(x))
 				point.append(x)
 			keepAllFloat.append(point)
 		print(keepAllFloat[0:-1])
@@ -363,9 +371,10 @@ class pyFOAMySeesGUI(QMainWindow):
 		self.getCouplingResiduals()
 
 		self.couplingIteration=range(1,len(self.CouplingArray[:,2])+1)
-		self.couplingError=[float(x) for x in self.CouplingArray[:,0]]
-		self.couplingTol=[float(x) for x in self.CouplingArray[:,1]]
-		
+		self.couplingIteration2=range(1,len(self.CouplingArray[:,2])+1)
+		self.couplingError=self.CouplingArray[:,0]
+		self.couplingTol=self.CouplingArray[:,1]
+		print(self.couplingError)
 		# Update the plot
 		self.CouplingPlot.setData(self.couplingIteration, self.couplingError)
 		self.CouplingPlotTol.setData(self.couplingIteration, self.couplingTol)
@@ -376,13 +385,12 @@ class pyFOAMySeesGUI(QMainWindow):
 		self.plotCouplingWidget.setLabel('left', 'Coupling ')
 		self.plotCouplingWidget.setLabel('bottom', 'Iteration')
 
-		self.couplingError2=[float(x) for x in self.CouplingArray[:,3]]
-		self.couplingTol2=[float(x) for x in self.CouplingArray[:,4]]
-			
+		self.couplingError2=self.CouplingArray[:,3]
+		self.couplingTol2=self.CouplingArray[:,4]			
 
 		# Update the plot
-		self.CouplingPlot2.setData(self.couplingIteration, self.couplingError2)
-		self.CouplingPlotTol2.setData(self.couplingIteration, self.couplingTol2)
+		self.CouplingPlot2.setData(self.couplingIteration2, self.couplingError2)
+		self.CouplingPlotTol2.setData(self.couplingIteration2, self.couplingTol2)
 		self.plotCouplingWidget2.setTitle("Force Coupling Residual vs Tolerance by Iteration")
 			# Set axis labels
 		self.plotCouplingWidget2.setLabel('left', 'Coupling ')
