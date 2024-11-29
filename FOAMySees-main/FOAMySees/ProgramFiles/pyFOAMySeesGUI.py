@@ -1220,16 +1220,28 @@ The work which led to development of this tool was funded by the National Scienc
 
 		self.slider1.sliderMoved.connect(self.on_slider_value_changed)
 		self.slider2.sliderMoved.connect(self.on_slider_value_changed)
+		self.slider1SpinBox=QDoubleSpinBox()
+		self.slider2SpinBox=QDoubleSpinBox()
+	
+		self.slider1SpinBox.setRange(1e-10,1e5)
+		                                         
+		self.slider2SpinBox.setRange(1e-10,1e5)
 
+		self.slider1SpinBox.valueChanged.connect(self.on_spin_value_changed1)
+		self.slider2SpinBox.valueChanged.connect(self.on_spin_value_changed2)
+		self.slider1SpinBox.setValue(1)
+		self.slider2SpinBox.setValue(1)
 		self.slider1ResetBtn=QPushButton('Reset')
 		self.slider1ResetBtn.clicked.connect(self.slider1Reset)
 		self.slider2ResetBtn=QPushButton('Reset')
 		self.slider2ResetBtn.clicked.connect(self.slider2Reset)
 		
 		fig_force_labels.addWidget(self.slider1Name)
+		fig_force_labels.addWidget(self.slider1SpinBox)
 		fig_force_labels.addWidget(self.slider1ResetBtn)
 		
 		fig_force_labels.addWidget(self.slider2Name)
+		fig_force_labels.addWidget(self.slider2SpinBox)
 		fig_force_labels.addWidget(self.slider2ResetBtn)
 		
 		fig_force_sliders.addWidget(self.slider1)
@@ -1242,20 +1254,29 @@ The work which led to development of this tool was funded by the National Scienc
 		layout.addLayout(fig_force)		
 
 		return widget
-
+	def on_spin_value_changed1(self):
+		self.slider1.setValue(int(self.slider1SpinBox.value()))
+		self.on_slider_value_changed()
+		
+	def on_spin_value_changed2(self):
+		self.slider2.setValue(int(self.slider2SpinBox.value()))
+		self.on_slider_value_changed()
+		
 	def slider2Reset(self):
 		self.slider2.setValue(1)
+		self.slider2SpinBox.setValue(1)
 		self.on_slider_value_changed()
 		
 	def slider1Reset(self):
 		self.slider1.setValue(1)
+		self.slider1SpinBox.setValue(1)
 		self.on_slider_value_changed()
 		
 	def on_slider_value_changed(self):
 		self.slider1Name.setText("Displacement Scale: "+str(self.slider1.value()))
-
+		self.slider1SpinBox.setValue(float(self.slider1.value()))
 		self.slider2Name.setText("Force Vector Scale: "+str(self.slider2.value()))
-		
+		self.slider2SpinBox.setValue(float(self.slider2.value()))
 	def makeActors(self,readers):
 		actors=[]
 		if self.checkboxPlotOS.isChecked():
