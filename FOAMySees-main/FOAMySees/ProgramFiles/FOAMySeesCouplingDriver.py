@@ -135,6 +135,8 @@ if __name__ == '__main__':# and rank==0:
 	Branches=np.array(Branches)					   
 
 
+		
+		
 	vertexIDsDisplacement = interface.set_mesh_vertices("Coupling-Data-Projection-Mesh", Branches)
 				
 	# force and displacement are currently applied and calculated at the face centers of the OpenFOAM patch cells
@@ -147,6 +149,16 @@ if __name__ == '__main__':# and rank==0:
 	Tree=KDTree(FOAMySees.nodeLocs)
 	BranchToNodeRelationships=Tree.query(Branches)[1]
 	CellToNodeRelationships=Tree.query(Branches)[1]		
+	with open('./fys_logs/BranchToNodeRelationships.log','w+') as f:
+		for BranchToNodeRelationship in BranchToNodeRelationships:
+			print(BranchToNodeRelationship, file=f)
+	with open('./fys_logs/FOAMySees_node_locations.log','w+') as f:
+		for nodeLoc in FOAMySees.nodeLocs:
+			print("{} {} {}".format(nodeLoc[0],nodeLoc[1],nodeLoc[2]), file=f)
+	with open('./fys_logs/branches_locations.log','w+') as f:
+		for branch in Branches:
+			print("{} {} {}".format(branch[0],branch[1],branch[2]), file=f)
+
 
 	#################################################################################################
 	# initializing a bunch of arrays of the same size
@@ -393,6 +405,10 @@ if __name__ == '__main__':# and rank==0:
 				LastForces=copy.deepcopy(Forces)
 				LastDisplacement=copy.deepcopy(Displacement)
 				FOAMySees.StepsPerFluidStep=1
+
+				with open('./fys_logs/verticesForce.log','w+') as f:
+					for force in verticesForce:
+                                                print("{} {} {}".format(force[0],force[1],force[2]),file=f)
 				
 				
 				#################################################################################################

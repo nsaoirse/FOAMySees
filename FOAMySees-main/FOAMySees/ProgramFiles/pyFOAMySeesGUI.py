@@ -272,7 +272,7 @@ class pyFOAMySeesGUI(QMainWindow):
 		# Start updating the plot in a separate thread
 		self.CouplingPlottimer = pg.QtCore.QTimer()
 		self.CouplingPlottimer.timeout.connect(self.updateCouplingPlot)
-		self.CouplingPlottimer.start(10)  # Update every 100ms
+		self.CouplingPlottimer.start(1000)  # Update every 100ms
 
 				# Create a PlotWidget for the graph
 		self.plotCouplingWidget2 = pg.PlotWidget()
@@ -312,7 +312,7 @@ class pyFOAMySeesGUI(QMainWindow):
 			
 	def getCouplingResiduals(self):
 		DisplacementResids=self.grep_file('./RunCase/fys_logs/FOAMySeesCouplingDriver.log', '"Displacement"')
-		ForceResids=self.grep_file('./RunCase/fys_logs/FOAMySeesCouplingDriver.log', '"Force"')
+		
 
 		keepDispl=[]
 		for line in DisplacementResids:
@@ -321,7 +321,8 @@ class pyFOAMySeesGUI(QMainWindow):
 			for piece in line[0:3]:
 				keep.append("".join("".join(piece).split(' = ')[-1]).strip(' '))
 			keepDispl.append(keep)
-
+		time.sleep(0.32)
+		ForceResids=self.grep_file('./RunCase/fys_logs/FOAMySeesCouplingDriver.log', '"Force"')
 		keepForce=[]
 		for line in ForceResids:
 			keep=[]
@@ -336,23 +337,23 @@ class pyFOAMySeesGUI(QMainWindow):
 			for x in " ".join(keepDispl[line]).split(" "):
 
 				if x=='inf':
-					x=float(1e+3.)
+					x=1000.
 				else:
 					try:
 						x=float(x)
 					except:
-						x=float(1e+3.)
+						x=1000.
 				#self.textEdit.append(str(x))
 				point.append(x)
 			for x in " ".join(keepForce[line]).split(" "):
 				
 				if x=='inf':
-					x=float(1e+3.)
+					x=1000.
 				else:
 					try:
 						x=float(x)
 					except:
-						x=float(1e+3.)
+						x=1000.
 				#self.textEdit.append(str(x))
 				point.append(x)
 			keepAllFloat.append(point)
@@ -376,7 +377,7 @@ class pyFOAMySeesGUI(QMainWindow):
 		self.couplingTol=self.CouplingArray[:,1]
 		print(self.couplingError)
 		# Update the plot
-		self.CouplingPlot.setData(self.couplingIteration, self.couplingError)
+		self.CouplingPlot.setData(self.couplingIteration, self.couplingError+self.couplingTol[-1])
 		self.CouplingPlotTol.setData(self.couplingIteration, self.couplingTol)
 
 		self.plotCouplingWidget.setTitle("Displacement Coupling Residual vs Tolerance by Iteration")
@@ -389,7 +390,7 @@ class pyFOAMySeesGUI(QMainWindow):
 		self.couplingTol2=self.CouplingArray[:,4]			
 
 		# Update the plot
-		self.CouplingPlot2.setData(self.couplingIteration2, self.couplingError2)
+		self.CouplingPlot2.setData(self.couplingIteration2, self.couplingError2+self.couplingTol[-1])
 		self.CouplingPlotTol2.setData(self.couplingIteration2, self.couplingTol2)
 		self.plotCouplingWidget2.setTitle("Force Coupling Residual vs Tolerance by Iteration")
 			# Set axis labels
@@ -993,6 +994,33 @@ class pyFOAMySeesGUI(QMainWindow):
 		CouplingMeshViewReader=reader.read()
 
 		self.CouplingMeshView.add_mesh(CouplingMeshViewReader)
+
+		# use this file to plot the vector forces on the coupling mesh
+		# get dataset where to put glyphs
+		msh=np.loadtxt('./RunCase/fys_logs/branches_locations.log')
+		mesh = pv.PolyData(msh)
+
+		# add random scalars
+		# rng_int = rng.integers(0, N, size=x.size)
+		vectors = np.loadtxt('./RunCase/fys_logs/verticesForce.log')
+		mesh['vectors'] = vectors
+
+
+		arrows = mesh.glyph(
+		  orient='vectors',
+		  scale=True,
+		  factor=.10,
+		)
+
+		self.CouplingMeshView.add_mesh(mesh, color='maroon', point_size=1.0, render_points_as_spheres=True)
+		self.CouplingMeshView.add_mesh(arrows, color='red')
+		# plotter.add_point_labels([point_cloud.center,], ['Center',],
+		#			 point_color='yellow', point_size=20)
+		self.CouplingMeshView.show_grid()
+		#'./RunCase/fys_logs/verticesForce.log'
+
+		#'./RunCase/fys_logs/branches_locations.log'
+		
 		# self.CouplingMeshView.add_axes_at_origin()
 		self.CouplingMeshView.show_axes()
 		#self.CouplingMeshView.clear()
@@ -1764,12 +1792,7 @@ class pyFOAMySeesGUI(QMainWindow):
 		self.setWindowTitle(connstr)
 
 		self.JSONConnect(filename[0])
-		
 
-
-		#
-
-		#
 	def SaveSettingsAction(self):
 		DT=DTSpinBox.value()
 		self.setVars()
@@ -1798,98 +1821,10 @@ class pyFOAMySeesGUI(QMainWindow):
 			
 	def branchVis(self):
 		LogFile="FOAMySeesGUILog"
-		try:
-				
-				Sees=FOAMySeesInstance(1,config)
-
-				N = len(Sees.coupledNodes) # number of ops.nodes
-				with open(LogFile) as f:		
-						print("N: " + str(N), file=f)
-
-				CouplingDataProjectionMesh=Sees.config.CouplingDataProjectionMesh
-
-				solverName = "Solid1"
-
-				dimensions=3
-
-				dimensions=3 # overruling that #	bounding_box : array_like
-				while not os.path.exists(CouplingDataProjectionMesh):
-						time.sleep(1)
-
-				if os.path.isfile(CouplingDataProjectionMesh):
-						with open(CouplingDataProjectionMesh) as f:
-								lines=f.read()
-				else:
-						raise ValueError("%s could not be found" % CouplingDataProjectionMesh)
-				lines=lines.split('\n')
-				points=[]
-				facets=[]
-				Branches=[]
-				# for obj
-				if '.obj' in CouplingDataProjectionMesh:
-						for line in lines:
-								#print(line[:])
-								if '#' in str(line[:]):
-										pass
-								elif 'g' in line:
-										pass
-								elif 'v' in line:
-										points.append(line.strip('v ').split(' '))
-								elif 'f' in line:
-										facets.append(line.strip('f ').split(' '))
-						#print(points)
-						#print(facets)
-						for facet in facets:
-								if ('#' in facet) or ('g' in facet) or ('o' in facet):
-										pass
-								else:
-										branch=np.zeros([1,3],dtype=float)
-										ptfacet=0
-										for i in facet:
-												if i=='':
-														pass
-												else:
-														pt=points[int(i)-1]
-														for iin in pt:
-																iin=float(iin)
-														pt=np.array(pt,dtype=float)
-														branch+=pt
-														ptfacet+=1
-										with open(fys_couplingdriver_log_location, 'a+') as f:
-												print(branch/ptfacet,file=f)
-										Branches.append(branch[0]/ptfacet)
-
-				Branches=np.array(Branches)					   
-
-				# print(Branches)					  
-				Tree=KDTree(Sees.nodeLocs)
-				BranchToNodeRelationships=Tree.query(Branches)[1]
-				vertices=Branches
-				NodeToBranchNodeRelationships=[]
-	 
-				for n in range(len(Sees.nodeLocs)):
-
-						NodeToBranchNodeRelationships.append([n])
-				# vertices=[]
-				nodeCount=0
-				for node in range(len(BranchToNodeRelationships)):
-						NodeToBranchNodeRelationships[BranchToNodeRelationships[node]].append(node)
-				with open(LogFile) as f:
-					print(NodeToBranchNodeRelationships,file=f)
-				vertices=np.array(vertices)
-				with open('BranchesLOCS.log', 'a+') as f:
-						f.seek(0)
-						f.truncate()
-						print(NodeToBranchNodeRelationships,file=f)
-						print(vertices,file=f)
-						print(np.shape(vertices),file=f)
-
-				Sees.NodeToBranchNodeRelationships=NodeToBranchNodeRelationships
-
-
-		except:
-				with open(LogFile,'a') as f:
-					print('The Coupling Data Projection Mesh or the OpenSees Model does not exist. Make sure everything else is set up',file=f)
+		# use these files to make a mesh of the branch connections to visualize
+		#'./fys_logs/FOAMySees_node_locations.log'
+		#'./fys_logs/BranchToNodeRelationships.log'
+		#'./fys_logs/branches_locations.log'
 		self.getLog()
 		
 	def initialValues(self):
