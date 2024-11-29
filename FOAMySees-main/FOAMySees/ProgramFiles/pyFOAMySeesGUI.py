@@ -157,12 +157,12 @@ class pyFOAMySeesGUI(QMainWindow):
 		layoutinner4.addWidget(self.mainWidgetVisualize())
 		tab4.setLayout(layoutinner4)
 		# Add tabs 
-		
-		tabs.addTab(tab3, "Settings")	   
-		tabs.addTab(tab2, "Setup OpenSees")		 
-		tabs.addTab(tab1, "Setup OpenFOAM") 
-		tabs.addTab(tab4, "Plot Solution")
-		tabs.addTab(tab0, "Plot Residuals")
+		 
+		tabs.addTab(tab4, "Plot Solution[dev]")
+		tabs.addTab(tab0, "Plot Residuals[dev]")
+		tabs.addTab(tab1, "Setup OpenFOAM[dev]")
+		tabs.addTab(tab2, "Setup OpenSees[n/a]")
+		tabs.addTab(tab3, "Settings[n/a]")	   
 
 		
 		
@@ -990,40 +990,58 @@ class pyFOAMySeesGUI(QMainWindow):
 
 	def SetFigureOpenFOAM(self,w=5, h=3.5):
 		# FIGURE 1
-		reader=pv.get_reader('./RunCase/CouplingDataProjectionMesh.obj')
-		CouplingMeshViewReader=reader.read()
 
-		self.CouplingMeshView.add_mesh(CouplingMeshViewReader)
+		doesMeshExist=0
+		while doesMeshExist==0:
+			try:
+                         # Load the OBJ file
+				reader = pv.get_reader('./RunCase/CouplingDataProjectionMesh.obj')
 
-		# use this file to plot the vector forces on the coupling mesh
-		# get dataset where to put glyphs
-		msh=np.loadtxt('./RunCase/fys_logs/branches_locations.log')
-		mesh = pv.PolyData(msh)
-
-		# add random scalars
-		# rng_int = rng.integers(0, N, size=x.size)
-		vectors = np.loadtxt('./RunCase/fys_logs/verticesForce.log')
-		mesh['vectors'] = vectors
+				doesMeshExist=1
 
 
-		arrows = mesh.glyph(
-		  orient='vectors',
-		  scale=True,
-		  factor=.10,
-		)
+		
+				reader=pv.get_reader('./RunCase/CouplingDataProjectionMesh.obj')
+				CouplingMeshViewReader=reader.read()
+				self.CouplingMeshView.clear()
+				self.CouplingMeshView.add_mesh(CouplingMeshViewReader)
 
-		self.CouplingMeshView.add_mesh(mesh, color='maroon', point_size=1.0, render_points_as_spheres=True)
-		self.CouplingMeshView.add_mesh(arrows, color='red')
+				# use this file to plot the vector forces on the coupling mesh
+				# get dataset where to put glyphs
+				msh=np.loadtxt('./RunCase/fys_logs/branches_locations.log')
+				mesh = pv.PolyData(msh)
+
+
+				# add random scalars
+				# rng_int = rng.integers(0, N, size=x.size)
+
+
+				vectors = np.loadtxt('./RunCase/fys_logs/verticesDisplacement.log')
+				mesh['displacement'] = vectors
+				warped=mesh.warp_by_vector('displacement')
+				vectors = np.loadtxt('./RunCase/fys_logs/verticesForce.log')
+				warped['force'] = vectors
+                
+				arrows = warped.glyph(
+				 orient='force',
+				 scale=True,
+				 factor=.250,
+				)
+
+				self.CouplingMeshView.add_mesh(warped, color='maroon', point_size=5.0, render_points_as_spheres=True)
+				self.CouplingMeshView.add_mesh(arrows, scalar_bar_args={'title': "Force Magnitude"})
+			except:
+				print('No surface file available to plot. Trying again.')
 		# plotter.add_point_labels([point_cloud.center,], ['Center',],
 		#			 point_color='yellow', point_size=20)
-		self.CouplingMeshView.show_grid()
+		#self.CouplingMeshView.show_grid()
 		#'./RunCase/fys_logs/verticesForce.log'
 
 		#'./RunCase/fys_logs/branches_locations.log'
 		
 		# self.CouplingMeshView.add_axes_at_origin()
 		self.CouplingMeshView.show_axes()
-		#self.CouplingMeshView.clear()
+		4
 		self.CouplingMeshView.show()
 		#self.CouplingMeshView.update()
 		#self.CouplingMeshView.render()
@@ -1047,17 +1065,17 @@ class pyFOAMySeesGUI(QMainWindow):
 		buttonOpenFOAMRunPreliminaryOpenFOAMAnalysis = QPushButton('Run OpenFOAM ONLY Analysis')
 		buttonOpenFOAMRunPreliminaryOpenFOAMGravityAnalysis = QPushButton('Run potentialFoam to Initialize Fields')
 
-		Vbtnlyt = QVBoxLayout()  # Initializing the main horizontal box layout for various buttons
-		Vbtnlyt.addWidget(buttonOpenFOAMRunPreliminaryOpenFOAMAnalysis)
-		Vbtnlyt.addWidget(buttonOpenFOAMRunPreliminaryOpenFOAMGravityAnalysis)
+		#Vbtnlyt = QVBoxLayout()  # Initializing the main horizontal box layout for various buttons
+		#Vbtnlyt.addWidget(buttonOpenFOAMRunPreliminaryOpenFOAMAnalysis)
+		#Vbtnlyt.addWidget(buttonOpenFOAMRunPreliminaryOpenFOAMGravityAnalysis)
 
-		Hbtnlyt.addLayout(Vbtnlyt)
-		Hbtnlyt.addWidget(buttonOpenFOAMPlotOpenFOAM)
-		Hbtnlyt.addWidget(buttonOpenFOAMPlotOpenFOAMFields)
+		#Hbtnlyt.addLayout(Vbtnlyt)
+		#Hbtnlyt.addWidget(buttonOpenFOAMPlotOpenFOAM)
+		#Hbtnlyt.addWidget(buttonOpenFOAMPlotOpenFOAMFields)
 
-		mainHolder.addLayout(Hbtnlyt)
-		mainHolder.addLayout(self.Canvas4)
-		Hlyt1.addLayout(mainHolder)
+		#mainHolder.addLayout(Hbtnlyt)
+		#mainHolder.addLayout(self.Canvas4)
+		#Hlyt1.addLayout(mainHolder)
 
 		# Creating a vertical layout within which layouts 1-4 will reside
 		layout = QVBoxLayout()  # Initializing the vertical layout
@@ -1076,14 +1094,14 @@ class pyFOAMySeesGUI(QMainWindow):
 		
 		self.CouplingMeshView = pvqt.QtInteractor()
 		
-		layout2.addWidget(self.CouplingMeshView)
+
 		
 		widget.setLayout(layout2)  # Setting layout of the widget
 
 
 		self.ofplottimer = pg.QtCore.QTimer()
 		self.ofplottimer.timeout.connect(self.SetFigureOpenFOAM)
-		self.ofplottimer.start(500)  # Update every 100ms
+		self.ofplottimer.start(1000)  # Update every 100ms
 
 		# Connections
 		buttonOpenFOAMRunPreliminaryOpenFOAMAnalysis.clicked.connect(self.handleOpenFOAMRunPreliminaryOpenFOAMAnalysis)
@@ -1112,9 +1130,10 @@ class pyFOAMySeesGUI(QMainWindow):
 		self.worktimer.timeout.connect(self.updateForcePlots)
 		self.worktimer.start(100)  # Update every 100ms
 
-
+		pwx,pwy = 800,140
 		# Create a PlotWidget for the graph
 		self.plotForceXWidget = pg.PlotWidget()
+		self.plotForceXWidget.setFixedSize(pwx,pwy)
 		self.plotForceXWidget.setTitle("X Force vs Time (g=total, b=pressure, r=viscous)")
 		# Set axis labels
 		self.plotForceXWidget.setLabel('left', 'Force')
@@ -1124,6 +1143,7 @@ class pyFOAMySeesGUI(QMainWindow):
 		self.plotForceYWidget = pg.PlotWidget()
 		self.plotForceYWidget.setTitle("Y Force vs Time (g=total, b=pressure, r=viscous)")
 		# Set axis labels
+		self.plotForceYWidget.setFixedSize(pwx,pwy)
 		self.plotForceYWidget.setLabel('left', 'Force')
 		self.plotForceYWidget.setLabel('bottom', 'Time (s)')
 
@@ -1131,6 +1151,7 @@ class pyFOAMySeesGUI(QMainWindow):
 		self.plotForceZWidget = pg.PlotWidget()
 		self.plotForceZWidget.setTitle("Z Force vs Time (g=total, b=pressure, r=viscous)")
 		# Set axis labels
+		self.plotForceZWidget.setFixedSize(pwx,pwy)
 		self.plotForceZWidget.setLabel('left', 'Force')
 		self.plotForceZWidget.setLabel('bottom', 'Time (s)')
 		
@@ -1158,7 +1179,8 @@ class pyFOAMySeesGUI(QMainWindow):
 		fig_force.addWidget(self.plotForceXWidget)
 		fig_force.addWidget(self.plotForceYWidget)
 		fig_force.addWidget(self.plotForceZWidget)
-		
+		fig_force.addWidget(self.CouplingMeshView)		
+		self.SetFigureOpenFOAM()
 		layout.addLayout(fig_force)		
 
 				

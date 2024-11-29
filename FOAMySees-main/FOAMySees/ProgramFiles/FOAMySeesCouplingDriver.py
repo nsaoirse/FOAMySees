@@ -149,9 +149,7 @@ if __name__ == '__main__':# and rank==0:
 	Tree=KDTree(FOAMySees.nodeLocs)
 	BranchToNodeRelationships=Tree.query(Branches)[1]
 	CellToNodeRelationships=Tree.query(Branches)[1]		
-	with open('./fys_logs/BranchToNodeRelationships.log','w+') as f:
-		for BranchToNodeRelationship in BranchToNodeRelationships:
-			print(BranchToNodeRelationship, file=f)
+	
 	with open('./fys_logs/FOAMySees_node_locations.log','w+') as f:
 		for nodeLoc in FOAMySees.nodeLocs:
 			print("{} {} {}".format(nodeLoc[0],nodeLoc[1],nodeLoc[2]), file=f)
@@ -186,6 +184,14 @@ if __name__ == '__main__':# and rank==0:
 	for node in range(len(BranchToNodeRelationships)):
 		NodeToBranchNodeRelationships[BranchToNodeRelationships[node]].append(node)
 	FOAMySees.NodeToBranchNodeRelationships=NodeToBranchNodeRelationships
+
+	with open('./fys_logs/BranchToNodeRelationships.log','w+') as f:
+		for BranchToNodeRelationship in NodeToBranchNodeRelationships:
+			print(BranchToNodeRelationship)
+			if type(branch[1]) is list():
+				for branchnode in branch[1]:
+					print(FOAMySees.nodeLocs[branch[0]],Branches[branchnode], file=f)
+	
 	FOAMySees.NodeToCellFaceCenterRelationships=NodeToCellFaceCenterRelationships		
 	#################################################################################################	
 	# reporting to file
@@ -406,10 +412,12 @@ if __name__ == '__main__':# and rank==0:
 				LastDisplacement=copy.deepcopy(Displacement)
 				FOAMySees.StepsPerFluidStep=1
 
-				with open('./fys_logs/verticesForce.log','w+') as f:
-					for force in verticesForce:
-                                                print("{} {} {}".format(force[0],force[1],force[2]),file=f)
-				
+				with open('./fys_logs/verticesForce.log','w') as f:
+					for force in Forces:
+						print("{} {} {}".format(force[0],force[1],force[2]),file=f)
+				with open('./fys_logs/verticesDisplacement.log','w') as f:
+					for delta in Displacement:
+						print("{} {} {}".format(delta[0],delta[1],delta[2]),file=f)				
 				
 				#################################################################################################
 				# saving these for some sort of surrogate model?
