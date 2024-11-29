@@ -25,16 +25,19 @@ import GUI_helpers as GUI_helpers
 # import libraries
 
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout,\
-	QMainWindow, QStatusBar, QFileDialog, QRadioButton,QTextBrowser, QScrollBar, QCheckBox
+	QMainWindow, QStatusBar, QFileDialog, QRadioButton,QTextBrowser, QScrollBar, QCheckBox, QSlider
 from PyQt5.QtGui import QPixmap
 import os.path as osp
 #| ============================================== ____/__\___/__\____	 _.*_*.				 |
 #|	F ield		|   |  S tructural	  ||__|/\|___|/\|__||	  \ \ \ \.		 |
-#|	  O peration	|___|  E ngineering &	 ||__|/\|___|/\|__||	   | | |  \._ CESG   |  
-#|	A nd			|  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW	|
+#|	O peration	|___|  E ngineering &	  ||__|/\|___|/\|__||	   | | |  \._ CESG   |  
+#|	A nd    .    .  .   |  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW	|
 #|	M anipulation	|___|  S imulation	  ||__|/\|___|/\|__||   __/, / _ \___.. 2023 |
 #| ==============================================_||  |/\| | |/\|  ||__/,_/__,_____/..__ nsl_|
-
+class LogSlider(QSlider):
+	def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.setOrientation(Qt.Horizontal)  # Adjust as needed
 
 class pyFOAMySeesGUI(QMainWindow):
 
@@ -46,17 +49,37 @@ class pyFOAMySeesGUI(QMainWindow):
 		self.couplingIteration=0
 
 		self.initUI()  # Adding some things to the constructor
+		self.ProgramDetails='''
+##
+# Author
+This code was developed by Nicolette S. Lewis, PhD, at the University of Washington, from 2021 to 2023. For specific questions, please email me at nicolette.s.lewis@outlook.com with "FOAMySees" in the subject line. I will respond to messages as I can.  
 
+# Disclaimer
+By using this code, you agree that the author, Nicolette S. Lewis, NHERI, the NHERI SimCenter, the University of Washington, and all others associated with this research assume no responsibility for results obtained with this tool or the applications of such results. 
+
+As always, the person, person(s), or group, otherwise conducting simulations or calculations with this code holds responsibility for ensuring that their solution is physically correct. 
+
+The code as-is was intended to be used specifically for investigating the resilience of civil engineering structures when subject to flows resembling those of natural hazards, such as floods, tsunamis, windstorms, and otherwise. Any use of the code beyond these applications is not verified, and as such caution must be taken when utilizing these procedures in cases not investigated within the doctoral thesis for which the code originally was developed and tested. 
+
+Please do not use this code as the only means of analysis for a given problem. Any design or conclusion originating from analyses conducted with this code should be validated through independent hand calculations, an alternative software (preferably something validated), or should be subject to rigorous investigation by experts of a given problem of interest. Due to the large possibility of errors in modelling complicated coupled systems, it is imperative that independent analyses are conducted to ensure that the results obtained from analyses with the offered code are accurate or reasonable. Any findings or otherwise obtained utilizing this code or one of its derivatives is the sole responsibility of the person who constructed and ran the analysis from which such findings were obtained. 
+
+This code is offered AS-IS. I make no assurances that this code will work for future or past versions of preCICE, OpenSees, or OpenFOAM, but I will try my best to keep the code generally functional for as long as I can/have the energy. Feel free to take this research and do other things with it, including update it for future versions of preCICE, OpenFOAM, or OpenSees.
+
+# Acknowledgments
+The work which led to development of this tool was funded by the National Science Foundation (NSF) and Joy Pauschke (program manager) through Grants CMMI-1726326, CMMI-1933184, and CMMI-2131111. Thank you to NHERI Computational Modeling and Simulation Center (SimCenter), as well as their developers, funding sources, and staff for their continued support. It was a great experience to work with the SimCenter to implement this tool allowing for partitioned coupling of OpenSees and OpenFOAM as part of a digital-twin module within the NHERI SimCenter Hydro-UQ framework. Much of the development work of the research tool presented was conducted using University of Washington's HYAK Supercomputing resources. Thank you to UW HYAK and to the support staff of the UW HPC resources for their maintenance of the supercomputer cluster and for offering a stable platform for HPC development and computation, as well as for all of the great support over the last few years.  
+
+
+'''
 
 	def about(self):
 		QMessageBox.about('''
-#| ===============================================  ____/__\___/__\____	 _.*_*.			 |
-#|		 F ield		   |   |  S tructural	  ||__|/\|___|/\|__||	  \ \ \ \.		  |
-#|		 O peration	   |___|  E ngineering &   ||__|/\|___|/\|__||	   | | |  \._ CESG  | 
-#|		 A nd				 |  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW   |
-#|		 M anipulation	|___|  S imulation	  ||__|/\|___|/\|__||   __/, / _ \___.. 2023 |
-#| =============================================== _||  |/\| | |/\|  ||__/,_/__,_____/..__ nsl_|
-''', ProgramDetails)
+#| ===============================================        ____/__\___/__\____	 _.*_*.		     |
+#|		 F ield		   |   |  S tructural	  ||__|/\|___|/\|__||	  \ \ \ \.           |
+#|		 O peration	   |___|  E ngineering &  ||__|/\|___|/\|__||	   | | |  \._ CESG   | 
+#|		 A nd		       |  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW    |
+#|		 M anipulation	   |___|  S imulation	  ||__|/\|___|/\|__||   __/, / _ \___.. 2023 |
+#| ===============================================       _||  |/\| | |/\|  ||__/,_/__,_____/..__ nsl_|
+''', self.ProgramDetails)
 	
 		
 	def initUI(self):
@@ -994,7 +1017,7 @@ class pyFOAMySeesGUI(QMainWindow):
 		doesMeshExist=0
 		while doesMeshExist==0:
 			try:
-                         # Load the OBJ file
+			 # Load the OBJ file
 				reader = pv.get_reader('./RunCase/CouplingDataProjectionMesh.obj')
 
 				doesMeshExist=1
@@ -1017,15 +1040,15 @@ class pyFOAMySeesGUI(QMainWindow):
 
 
 				vectors = np.loadtxt('./RunCase/fys_logs/verticesDisplacement.log')
-				mesh['displacement'] = vectors
+				mesh['displacement'] = vectors*self.slider1.value()
 				warped=mesh.warp_by_vector('displacement')
 				vectors = np.loadtxt('./RunCase/fys_logs/verticesForce.log')
 				warped['force'] = vectors
-                
+		
 				arrows = warped.glyph(
 				 orient='force',
 				 scale=True,
-				 factor=.250,
+				 factor=self.slider2.value(),
 				)
 
 				self.CouplingMeshView.add_mesh(warped, color='maroon', point_size=5.0, render_points_as_spheres=True)
@@ -1041,9 +1064,9 @@ class pyFOAMySeesGUI(QMainWindow):
 		
 		# self.CouplingMeshView.add_axes_at_origin()
 		self.CouplingMeshView.show_axes()
-		4
-		self.CouplingMeshView.show()
-		#self.CouplingMeshView.update()
+		
+		#self.CouplingMeshView.show()
+		self.CouplingMeshView.update()
 		#self.CouplingMeshView.render()
 
 
@@ -1179,29 +1202,60 @@ class pyFOAMySeesGUI(QMainWindow):
 		fig_force.addWidget(self.plotForceXWidget)
 		fig_force.addWidget(self.plotForceYWidget)
 		fig_force.addWidget(self.plotForceZWidget)
+		self.slider1 = LogSlider()
+		self.slider1.setMinimum(1)  # Minimum logarithmic value
+		self.slider1.setMaximum(10000)  # Maximum logarithmic value
+		self.slider2 = LogSlider()
+		self.slider2.setMinimum(1)  # Minimum logarithmic value
+		self.slider2.setMaximum(10000)  # Maximum logarithmic value
+		self.slider1Name=QLabel()
+		self.slider2Name=QLabel()
+
+		self.slider1Name.setText("Displacement Scale: "+str(self.slider1.value()))
+
+		self.slider2Name.setText("Force Vector Scale: "+str(self.slider2.value()))
+
+		fig_force_sliders=QHBoxLayout()
+		fig_force_labels=QHBoxLayout()
+
+		self.slider1.sliderMoved.connect(self.on_slider_value_changed)
+		self.slider2.sliderMoved.connect(self.on_slider_value_changed)
+
+		self.slider1ResetBtn=QPushButton('Reset')
+		self.slider1ResetBtn.clicked.connect(self.slider1Reset)
+		self.slider2ResetBtn=QPushButton('Reset')
+		self.slider2ResetBtn.clicked.connect(self.slider2Reset)
+		
+		fig_force_labels.addWidget(self.slider1Name)
+		fig_force_labels.addWidget(self.slider1ResetBtn)
+		
+		fig_force_labels.addWidget(self.slider2Name)
+		fig_force_labels.addWidget(self.slider2ResetBtn)
+		
+		fig_force_sliders.addWidget(self.slider1)
+		fig_force_sliders.addWidget(self.slider2)
+		
+		fig_force.addLayout(fig_force_labels)		
+		fig_force.addLayout(fig_force_sliders)		
 		fig_force.addWidget(self.CouplingMeshView)		
 		self.SetFigureOpenFOAM()
 		layout.addLayout(fig_force)		
 
-				
-		# Connections
-		#buttonPlotResiduals = QPushButton('Plot Coupling Residuals')
-		
-		#buttonPlotWork = QPushButton('Plot Work In and Out')
-
-		#buttonPlotCouplingDataProjectionMeshErrors = QPushButton('Plot Work Error by Node')
-		
-		#Hbtnlyt.addWidget(buttonPlotResiduals)
-		#Hbtnlyt.addWidget(buttonPlotWork)
-		#Hbtnlyt.addWidget(buttonPlotCouplingDataProjectionMeshErrors)
-		
-		#mainHolder.addLayout(Hbtnlyt)
-
-		#buttonPlotResiduals.clicked.connect(self.handleButtonPlotResiduals)
-		#buttonPlotCouplingDataProjectionMeshErrors.clicked.connect(self.buttonPlotCouplingDataProjectionMeshErrors)
-
 		return widget
-	
+
+	def slider2Reset(self):
+		self.slider2.setValue(1)
+		self.on_slider_value_changed()
+		
+	def slider1Reset(self):
+		self.slider1.setValue(1)
+		self.on_slider_value_changed()
+		
+	def on_slider_value_changed(self):
+		self.slider1Name.setText("Displacement Scale: "+str(self.slider1.value()))
+
+		self.slider2Name.setText("Force Vector Scale: "+str(self.slider2.value()))
+		
 	def makeActors(self,readers):
 		actors=[]
 		if self.checkboxPlotOS.isChecked():
