@@ -1222,11 +1222,11 @@ The work which led to development of this tool was funded by the National Scienc
 		fig_ctrl_labels=QHBoxLayout()
 		lbl1=QLabel()
 
-		lbl1.setText("|| SF1_d = " )
+		lbl1.setText("|| SF2_d = " )
 		
 		lbl2=QLabel()
 
-		lbl2.setText("|| SF2_d = " )
+		lbl2.setText("|| SF2_f = " )
 		
 		fig_ctrl_labels.addWidget(lbl1)
 		self.slider1.sliderMoved.connect(self.on_slider_value_changed)

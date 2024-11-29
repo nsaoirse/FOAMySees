@@ -311,6 +311,9 @@ if __name__ == '__main__':# and rank==0:
 	# preCICE action - entering the coupling loop
 	while interface.is_coupling_ongoing():
 		if FOAMySees.thisTime<FOAMySees.config.couplingStartTime:					
+			with open('./fys_logs/tlog', 'a+') as f:
+				print("{} {} {} {}".format(ops.getTime(),FOAMySees.stepNumber,FOAMySees.totalSteps,FOAMySees.iteration),file=f)
+
 			interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, LastDisplacement)
 			interface.requires_reading_checkpoint()
 			FOAMySees.stepForward(DT)			
@@ -318,7 +321,8 @@ if __name__ == '__main__':# and rank==0:
 			FOAMySees.thisTime+=DT
 			print("Uncoupled Simulation Time: {}s, {}% to coupling start time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.couplingStartTime,FOAMySees.config.couplingStartTime))
 			interface.requires_writing_checkpoint()
-			FOAMySees.step+=1
+			FOAMySees.stepNumber+=1
+                        
 		else:
 			print("Coupled Simulation Time: {}s, {}% to termination time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.endTime,FOAMySees.config.endTime))
 			#################################################################################################
