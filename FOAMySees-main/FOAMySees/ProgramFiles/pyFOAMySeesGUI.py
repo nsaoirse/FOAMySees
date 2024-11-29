@@ -10,20 +10,22 @@ from threading import Thread
 import pyvista as pv
 import pyvistaqt as pvqt
 import glob
+import logging
+logging.basicConfig(filename='errors.log', level=logging.ERROR)
 
 from importblock import *
-import logging
+
 ### FOAMySees
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./.."))
 from dependencies import *
 import pickle
 
 import coupledAnalysisSettings as config
-
+sys.stderr = open('./error.log', 'w')
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./GUI_helpers"))
 import GUI_helpers as GUI_helpers
 # import libraries
-
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout,\
 	QMainWindow, QStatusBar, QFileDialog, QRadioButton,QTextBrowser, QScrollBar, QCheckBox, QSlider
 from PyQt5.QtGui import QPixmap
@@ -34,10 +36,7 @@ import os.path as osp
 #|	A nd    .    .  .   |  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW	|
 #|	M anipulation	|___|  S imulation	  ||__|/\|___|/\|__||   __/, / _ \___.. 2023 |
 #| ==============================================_||  |/\| | |/\|  ||__/,_/__,_____/..__ nsl_|
-class LogSlider(QSlider):
-	def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self.setOrientation(Qt.Horizontal)  # Adjust as needed
+# Configure the logging module
 
 class pyFOAMySeesGUI(QMainWindow):
 
@@ -1040,7 +1039,7 @@ The work which led to development of this tool was funded by the National Scienc
 
 
 				vectors = np.loadtxt('./RunCase/fys_logs/verticesDisplacement.log')
-				mesh['displacement'] = vectors*self.slider1.value()
+				mesh['displacement'] = vectors*self.slider1SpinBoxIncr.value()*self.slider1SpinBoxDecr.value()
 				warped=mesh.warp_by_vector('displacement')
 				vectors = np.loadtxt('./RunCase/fys_logs/verticesForce.log')
 				warped['force'] = vectors
@@ -1048,7 +1047,7 @@ The work which led to development of this tool was funded by the National Scienc
 				arrows = warped.glyph(
 				 orient='force',
 				 scale=True,
-				 factor=self.slider2.value(),
+				 factor=self.slider2SpinBoxIncr.value()*self.slider2SpinBoxDecr.value(),
 				)
 
 				self.CouplingMeshView.add_mesh(warped, color='maroon', point_size=5.0, render_points_as_spheres=True)
@@ -1202,81 +1201,128 @@ The work which led to development of this tool was funded by the National Scienc
 		fig_force.addWidget(self.plotForceXWidget)
 		fig_force.addWidget(self.plotForceYWidget)
 		fig_force.addWidget(self.plotForceZWidget)
-		self.slider1 = LogSlider()
+		self.slider1 = QSlider(Qt.Horizontal)
 		self.slider1.setMinimum(1)  # Minimum logarithmic value
 		self.slider1.setMaximum(10000)  # Maximum logarithmic value
-		self.slider2 = LogSlider()
+		self.slider1.setSingleStep(1)
+		
+		self.slider2 = QSlider(Qt.Horizontal)
 		self.slider2.setMinimum(1)  # Minimum logarithmic value
 		self.slider2.setMaximum(10000)  # Maximum logarithmic value
+		self.slider2.setSingleStep(1)
 		self.slider1Name=QLabel()
 		self.slider2Name=QLabel()
 
-		self.slider1Name.setText("Displacement Scale: "+str(self.slider1.value()))
+		self.slider1Name.setText("Displacement Scale: "+str(self.slider1.value())+" = SF1_d  * SF2_d  || SF1_d = " )
 
-		self.slider2Name.setText("Force Vector Scale: "+str(self.slider2.value()))
+		self.slider2Name.setText("Force Vector Scale: "+str(self.slider2.value())+" = SF1_f  * SF2_f  || SF1_f = " )
 
 		fig_force_sliders=QHBoxLayout()
 		fig_force_labels=QHBoxLayout()
+		fig_ctrl_labels=QHBoxLayout()
+		lbl1=QLabel()
 
+		lbl1.setText("|| SF1_d = " )
+		
+		lbl2=QLabel()
+
+		lbl2.setText("|| SF2_d = " )
+		
+		fig_ctrl_labels.addWidget(lbl1)
 		self.slider1.sliderMoved.connect(self.on_slider_value_changed)
 		self.slider2.sliderMoved.connect(self.on_slider_value_changed)
-		self.slider1SpinBox=QDoubleSpinBox()
-		self.slider2SpinBox=QDoubleSpinBox()
-	
-		self.slider1SpinBox.setRange(1e-10,1e5)
-		                                         
-		self.slider2SpinBox.setRange(1e-10,1e5)
+		self.slider1SpinBoxIncr=QDoubleSpinBox()
+		self.slider2SpinBoxIncr=QDoubleSpinBox()
 
-		self.slider1SpinBox.valueChanged.connect(self.on_spin_value_changed1)
-		self.slider2SpinBox.valueChanged.connect(self.on_spin_value_changed2)
-		self.slider1SpinBox.setValue(1)
-		self.slider2SpinBox.setValue(1)
+
+		self.slider1SpinBoxDecr=QDoubleSpinBox()
+		self.slider2SpinBoxDecr=QDoubleSpinBox()
+
+		self.slider1SpinBoxIncr.setRange(1e-10,1e5)
+		                                         
+		self.slider2SpinBoxIncr.setRange(1e-10,1e5)
+
+		
+		self.slider1SpinBoxDecr.setSingleStep(1e-1)
+		                                         
+		self.slider2SpinBoxDecr.setSingleStep(1e-1)
+
+		self.slider1SpinBoxIncr.setValue(1)
+		self.slider2SpinBoxIncr.setValue(1)
+
+		self.slider1SpinBoxIncr.valueChanged.connect(self.on_spin_value_changed1)
+		self.slider2SpinBoxIncr.valueChanged.connect(self.on_spin_value_changed2)
+
+
+		self.slider1SpinBoxDecr.setRange(1e-10,1)
+		                                         
+		self.slider2SpinBoxDecr.setRange(1e-10,1)
+		self.slider1SpinBoxDecr.setValue(1)
+		self.slider2SpinBoxDecr.setValue(1)
+		self.slider1SpinBoxDecr.valueChanged.connect(self.on_spin_value_changed1)
+		self.slider2SpinBoxDecr.valueChanged.connect(self.on_spin_value_changed2)
+
+
+		
 		self.slider1ResetBtn=QPushButton('Reset')
 		self.slider1ResetBtn.clicked.connect(self.slider1Reset)
 		self.slider2ResetBtn=QPushButton('Reset')
 		self.slider2ResetBtn.clicked.connect(self.slider2Reset)
 		
 		fig_force_labels.addWidget(self.slider1Name)
-		fig_force_labels.addWidget(self.slider1SpinBox)
+		fig_force_labels.addWidget(self.slider1SpinBoxDecr)
+		
+		fig_force_labels.addWidget(lbl1)
+
+		fig_force_labels.addWidget(self.slider1SpinBoxIncr)
 		fig_force_labels.addWidget(self.slider1ResetBtn)
 		
 		fig_force_labels.addWidget(self.slider2Name)
-		fig_force_labels.addWidget(self.slider2SpinBox)
+		fig_force_labels.addWidget(self.slider2SpinBoxDecr)
+		fig_force_labels.addWidget(lbl2)
+		fig_force_labels.addWidget(self.slider2SpinBoxIncr)
 		fig_force_labels.addWidget(self.slider2ResetBtn)
 		
 		fig_force_sliders.addWidget(self.slider1)
 		fig_force_sliders.addWidget(self.slider2)
 		
 		fig_force.addLayout(fig_force_labels)		
-		fig_force.addLayout(fig_force_sliders)		
+		fig_force.addLayout(fig_force_sliders)
 		fig_force.addWidget(self.CouplingMeshView)		
 		self.SetFigureOpenFOAM()
 		layout.addLayout(fig_force)		
 
 		return widget
 	def on_spin_value_changed1(self):
-		self.slider1.setValue(int(self.slider1SpinBox.value()))
-		self.on_slider_value_changed()
-		
+		#self.slider1.setValue(self.slider1SpinBoxIncr.value()*self.slider1SpinBoxDecr.value())
+		#self.on_slider_value_changed()
+		self.slider1Name.setText("Displacement Scale: "+str(round(self.slider1SpinBoxIncr.value()*self.slider1SpinBoxDecr.value(),3)))
 	def on_spin_value_changed2(self):
-		self.slider2.setValue(int(self.slider2SpinBox.value()))
-		self.on_slider_value_changed()
-		
+		#self.slider2.setValue(self.slider2SpinBoxIncr.value()*self.slider2SpinBoxDecr.value())
+		#self.on_slider_value_changed()
+		self.slider2Name.setText("Force Vector Scale: "+str(round(self.slider2SpinBoxIncr.value()*self.slider2SpinBoxDecr.value(),3)))
 	def slider2Reset(self):
+
+		self.slider2SpinBoxDecr.setValue(1)
+
+
+		self.slider2SpinBoxIncr.setValue(1)
+
 		self.slider2.setValue(1)
-		self.slider2SpinBox.setValue(1)
-		self.on_slider_value_changed()
+		self.slider2Name.setText("Force Vector Scale: "+str(self.slider2.value())+" = SF1_f  * SF2_f  || SF1_f = ")
 		
 	def slider1Reset(self):
 		self.slider1.setValue(1)
-		self.slider1SpinBox.setValue(1)
-		self.on_slider_value_changed()
-		
+		self.slider1SpinBoxDecr.setValue(1)
+		self.slider1SpinBoxIncr.setValue(1)
+		self.slider1Name.setText("Displacement Scale: "+str(self.slider2.value())+" = SF1_d  * SF2_d  || SF1_d = ")		
 	def on_slider_value_changed(self):
-		self.slider1Name.setText("Displacement Scale: "+str(self.slider1.value()))
-		self.slider1SpinBox.setValue(float(self.slider1.value()))
-		self.slider2Name.setText("Force Vector Scale: "+str(self.slider2.value()))
-		self.slider2SpinBox.setValue(float(self.slider2.value()))
+		self.slider1Name.setText("Displacement Scale: "+str(self.slider1.value())+" = SF1_d  * SF2_d  || SF1_d = ")
+		self.slider1SpinBoxIncr.setValue(float(self.slider1.value()))
+                #self.slider2SpinBoxDecr.setValue(float(1))
+		self.slider2Name.setText("Force Vector Scale: "+str(self.slider2.value())+" = SF1_f  * SF2_f  || SF1_f = ")
+		self.slider2SpinBoxIncr.setValue(float(self.slider2.value()))
+		#self.slider2SpinBoxDecr.setValue(float(1))
 	def makeActors(self,readers):
 		actors=[]
 		if self.checkboxPlotOS.isChecked():

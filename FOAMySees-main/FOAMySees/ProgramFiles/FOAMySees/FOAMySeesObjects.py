@@ -6,6 +6,8 @@ import random
 import subprocess
 from subprocess import Popen, DEVNULL, STDOUT
 import time
+import logging
+logging.basicConfig(filename='errors.log', level=logging.ERROR)
 
 import pandas as pd
 import re, csv
@@ -17,7 +19,7 @@ sys.path.insert(0, '../')
 sys.path.insert(0, '.')
 sys.path.insert(0, '../OpenSeesPySettings')
 sys.path.insert(0, '../fromUser')
-
+sys.stderr = open('./error.log', 'w')
 import configureCoupledCase as config
 
 try:
