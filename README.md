@@ -10,11 +10,33 @@ Code changes include
 This should start up the GUI application as a background process in your environment and will run the case in the 'RunCase' directory which is generated.
 The GUI application reads logfiles from RunCase/fys_logs, to visualize the work transfer between the fluid simulation and the stucture simulation.
 
+# GUI 
+**Plots of Work Transfer**
+![image](https://github.com/user-attachments/assets/e3e0c2e6-3d73-4b11-b63b-ea7b34fbbfa5)
+
+**Plots of Coupling Residual, Simulation Progress Bar**
+![image](https://github.com/user-attachments/assets/57dfe14d-ee86-431e-9358-32aafcc3f8c3)
+
+**Simulation Visualizer**
+
+**Free Surface, Structural Deformation**
+![image](https://github.com/user-attachments/assets/522c8a8b-c3d4-4d70-84a4-60fd0cd23938)
+
+**OpenFOAM Mesh (cross section), pressure field**
+![image](https://github.com/user-attachments/assets/99c0c4da-8f55-4f66-aafe-02dec837938f)
+
+**Live Updated Plots of Deformed Coupling Mesh and Applied Forces**
+![image](https://github.com/user-attachments/assets/69c719ba-f3f8-4025-a5f0-9445dc049f61)
+
+
 As .vtu files and .vtp files are created by OpenFOAM and OpenSees, the GUI will retrieve these files and assemble them into .pvd files to be plotted with an interactive PyVista application. Additional features are on the way!
 
-# Fixed Beam Example in GUI (included in experimental branch)
+# Fixed Beam Example (included in experimental branch)
 
 ![image](https://github.com/user-attachments/assets/376f8e35-73b0-4770-aa8b-4a8a8edb59ce)
+
+# Cantilever Beam Example
+![image](https://github.com/user-attachments/assets/068696a5-0054-43b4-988b-2f2b34f1cc77)
 
 
 -port from preCICE v2 to v3. 
@@ -35,7 +57,10 @@ The best approach I have found to compile all the dependencies is to use somethi
 *everything* with sudo/root priveleges. The installation shell scripts for the various dependencies are great,
 but I recommend using something like ccmake and cmake in addition to these to configure your makefiles with some sort of GUI.
 Some of the required packages will be found through pkg-config, some through the PATH variable, and some will need a specific environment
-variable to be defined to locate the .H files required to compile shared objects. Thus, preliminary attempts at constructing a dockerized container of all required libraries are in progress...
+variable to be defined to locate the .H files required to compile shared objects.
+
+**Docker Image** 
+https://hub.docker.com/repository/docker/nicoletteslewis/foamysees/general
 
 **Examples can be found at** https://github.com/nsaoirse/FOAMySees-Examples
 
