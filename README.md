@@ -32,6 +32,7 @@ but I recommend using something like ccmake and cmake in addition to these to co
 Some of the required packages will be found through pkg-config, some through the PATH variable, and some will need a specific environment
 variable to be defined to locate the .H files required to compile shared objects. Thus, preliminary attempts at constructing a dockerized container of all required libraries are in progress...
 
+
 **Examples can be found at** https://github.com/nsaoirse/FOAMySees-Examples
 
 ---------------------------------------
@@ -54,7 +55,6 @@ startFOAMySees
 
 If the required files are not in the folder, FOAMySees will tell you that it cannot be run
 
-![image](https://github.com/user-attachments/assets/376f8e35-73b0-4770-aa8b-4a8a8edb59ce)
 
 ______________________________________
 **Making your own case**
