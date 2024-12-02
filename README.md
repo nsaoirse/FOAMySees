@@ -35,7 +35,10 @@ The best approach I have found to compile all the dependencies is to use somethi
 *everything* with sudo/root priveleges. The installation shell scripts for the various dependencies are great,
 but I recommend using something like ccmake and cmake in addition to these to configure your makefiles with some sort of GUI.
 Some of the required packages will be found through pkg-config, some through the PATH variable, and some will need a specific environment
-variable to be defined to locate the .H files required to compile shared objects. Thus, preliminary attempts at constructing a dockerized container of all required libraries are in progress...
+variable to be defined to locate the .H files required to compile shared objects.
+
+**Docker Image** 
+https://hub.docker.com/repository/docker/nicoletteslewis/foamysees/general
 
 **Examples can be found at** https://github.com/nsaoirse/FOAMySees-Examples
 
