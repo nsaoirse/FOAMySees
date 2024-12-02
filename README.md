@@ -12,7 +12,6 @@ The GUI application reads logfiles from RunCase/fys_logs, to visualize the work 
 
 As .vtu files and .vtp files are created by OpenFOAM and OpenSees, the GUI will retrieve these files and assemble them into .pvd files to be plotted with an interactive PyVista application. Additional features are on the way!
 
-
 -port from preCICE v2 to v3. 
 
 -improved code compactness and functionality
@@ -54,6 +53,8 @@ startFOAMySees
 )
 
 If the required files are not in the folder, FOAMySees will tell you that it cannot be run
+
+![image](https://github.com/user-attachments/assets/376f8e35-73b0-4770-aa8b-4a8a8edb59ce)
 
 ______________________________________
 **Making your own case**
