@@ -34,6 +34,10 @@ variable to be defined to locate the .H files required to compile shared objects
 
 
 **Examples can be found at** https://github.com/nsaoirse/FOAMySees-Examples
+**Getting Started** 
+(1) [use docker](https://hub.docker.com/r/nicoletteslewis/foamysees) 
+(2) install everything from source 
+(3) [find a suitable virtual machine from preCICE, then install other dependencies with pip](https://precice.org/installation-vm.html#connecting-to-the-vm-via-ssh)
 
 ---------------------------------------
 
