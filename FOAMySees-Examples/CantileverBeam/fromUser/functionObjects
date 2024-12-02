@@ -1,0 +1,109 @@
+	freeSurfaceVTK
+   {   
+	   type			surfaces;
+	   functionObjectLibs
+	   (   
+		   "libsampling.so" 
+	   );  
+	   outputControl   outputTime;
+	   outputInterval  1;  
+	   surfaceFormat  vtk;
+	   fields
+	   (   
+		   alpha.water
+	   );  
+	   surfaces
+	   (   
+		   freeSurface
+		   {   
+			   type		isoSurfaceCell;
+			   isoField	alpha.water;
+			   isoValue	0.5;
+			   interpolate false;
+			   regularise  false;
+		   }   
+		   
+	   );  
+	   interpolationScheme cell;
+   }
+   XSec1
+		{   
+		   type			surfaces;
+		   functionObjectLibs
+		   (   
+			   "libsampling.so" 
+		   );  
+		   outputControl   outputTime;
+		   outputInterval  1;  
+		   surfaceFormat  vtk;
+		   fields
+		   (   
+			   p
+				   U
+				   alpha.water
+				   
+		   );  
+		   surfaces
+		   (   
+			interpolatedSurface
+			{
+				// Cutingplane using iso surface
+				type			cuttingPlane;
+				planeType	   pointAndNormal;
+				pointAndNormalDict
+				{
+					basePoint	   (0.1 0.01 0.01);
+					normalVector	(0 0 1);
+					}
+				interpolate	 true;	   
+				}	
+		   );  
+		   interpolationScheme cell;
+	   }
+	   structureInterface
+	{   
+	   type			surfaces;
+	   functionObjectLibs
+	   (   
+		   "libsampling.so" 
+	   );  
+	   outputControl   outputTime;
+	   outputInterval  1;  
+	   surfaceFormat  vtk;
+	   fields
+	   (   
+		   p
+				   U
+				   alpha.water
+				   
+	   );  
+	   surfaces
+	   (   
+		interface
+		{
+			type			patch;
+			patches	   (interface);	
+			}	
+	   );  
+	   interpolationScheme cell;
+   }
+   
+interface
+	{
+	type		  forces;
+	libs		  ("libforces.so");
+	writeControl  outputTime;
+	timeInterval  1;
+	log		   yes;
+	patches	   (interface);
+	rho		   rhoInf;	 // Indicates incompressible
+	log		   true;
+	rhoInf		1000;		  // Redundant for incompressible
+	CofR		  (0.006 0.04 -0);	// Rotation around centroid of group
+	pitchAxis	 (0 1 0);
+	}
+
+	#includeFunc  pressureSamplingPoints 
+	#includeFunc  baseForces 
+	#includeFunc  storyForces 
+
