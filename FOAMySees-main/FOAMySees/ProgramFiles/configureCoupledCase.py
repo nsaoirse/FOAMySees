@@ -35,7 +35,8 @@ except:
 #Program Defaults (will convert to inputs later) 
 timeWindowsReused=3
 iterationsReused=5
-
+TaylorSeriesStabilize='no'
+alphaTS_ForceBackwards=0.5
 try:
 	with open('FOAMySeesSavefile.pkl', 'rb') as file: 
 		# Call load method to deserialze 

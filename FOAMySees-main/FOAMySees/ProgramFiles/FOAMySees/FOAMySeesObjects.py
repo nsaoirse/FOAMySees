@@ -68,6 +68,11 @@ class FOAMySeesInstance():
 		
 		self.whatTimeIsIt=0
 		self.config=config
+		if self.config.TaylorSeriesStabilize=='no':
+			self.ForcePredictionAlpha=0.0
+		else:
+			self.ForcePredictionAlpha=self.config.alphaTS_ForceBackwards
+
 
 		self.totalSteps=self.config.endTime/self.dt
 		
@@ -129,7 +134,38 @@ class FOAMySeesInstance():
 			
 			Displacement[self.NodeToBranchNodeRelationships[node_num][1:]]=rotatedBranchDeltas+self.displacement[node_num,0:3]
 		return Displacement
-	
+
+	def TSExpPredict(self,whattime):
+
+		dt=self.dt
+
+		N=self.ndofs
+
+		ysel=self.Flast5times # this is a Nx5 array with the DOF's last 5 values
+
+		#####
+		# in the solution loop
+
+		t_center=whattime-2*dt
+		xdes=t_center+2*dt
+		dt_t=2*dt
+
+		result=np.array(np.einsum('mnp,mp->mn', self.CinvStar, ysel))
+
+		D1=result[:,0]
+		D2=result[:,1]
+		D3=result[:,2]
+		D4=result[:,3]
+		D5=result[:,4]
+
+		prediction=D1 + D2*dt_t + D3*(dt_t**2)/math.factorial(2) + D4*(dt_t**3)/math.factorial(3) + D5*(dt_t**4)/math.factorial(4) #https://arxiv.org/pdf/2002.11438
+
+		#print('real value', inp[4])
+		#print('prediction', prediction)
+
+		return np.reshape(np.array(prediction),[len(self.coupledNodes),6])
+
+			
 	def readCheckpoint(self,stepOut):
 		ops.database('File',"SeesCheckpoints/checkpoints/"+str(stepOut))
 		#ops.wipeAnalysis()
@@ -160,7 +196,7 @@ class FOAMySeesInstance():
 				fixZ(zLoc,*[1,1,1,1,1,1])
 				
 	def makeDataArrays(self):
-			
+		dt=self.dt	
 		self.time = []
 		try: 	
 			print("trying to find a coupled nodes list...")
@@ -182,7 +218,11 @@ class FOAMySeesInstance():
 		self.NodalReactionForces=np.zeros([len(self.coupledNodes),3])
 		self.lastForces=np.zeros([len(self.coupledNodes),3])
 		self.lastDisplacements=np.zeros([len(self.coupledNodes),6])
+
+		self.ndofs=len(self.coupledNodes)*6
 		
+		self.Flast5times=np.zeros([self.ndofs,5])
+					
 		self.phithetapsi=np.zeros([len(self.coupledNodes),3])
 
 		self.force=np.zeros([len(self.coupledNodes),3])
@@ -191,6 +231,26 @@ class FOAMySeesInstance():
 		self.velocity=np.zeros([len(self.coupledNodes),6])
 		self.acceleration=np.zeros([len(self.coupledNodes),6])
 		self.forceandmoment=np.zeros([len(self.coupledNodes),6])
+
+		###########
+		# in initialization
+
+		C=np.zeros([5,5])
+		C[0,:]=[1, -2*dt,		     2*dt**2, -(8/math.factorial(3))*dt**3, (16/math.factorial(4))*dt**4]
+		C[1,:]=[1,   -dt, (1/math.factorial(2))*dt**2, -(1/math.factorial(3))*dt**3,  (1/math.factorial(4))*dt**4]
+		C[2,:]=[1,     0,			   0,			    0,			    0]
+		C[3,:]=[1,    dt, (1/math.factorial(2))*dt**2,  (1/math.factorial(3))*dt**3,  (1/math.factorial(4))*dt**4]
+		C[4,:]=[1,  2*dt,		     2*dt**2,  (8/math.factorial(3))*dt**3, (16/math.factorial(4))*dt**4]
+
+		Cinv=np.linalg.inv(C)
+		#print(C)
+		#print(Cinv)
+
+		CinvStar=[]
+		for _ in range(0,self.ndofs):
+		    CinvStar.append(np.array(Cinv))
+		    
+		self.CinvStar=np.array(CinvStar)
 
 		print('OpenSees Model Initialized...')
 		
@@ -238,13 +298,17 @@ class FOAMySeesInstance():
 		return StepCheck
 		
 	def iterate(self,CurrSteps,stepDT):
+		
+		ForcePrediction=self.TSExpPredict(ops.getTime()+stepDT)
+
 		for node_num in range(self.NNODES):
-			FX=self.force[node_num][0] 
-			FY=self.force[node_num][1] 
-			FZ=self.force[node_num][2]	   
-			MX=self.moment[node_num][0] 
-			MY=self.moment[node_num][1] 
-			MZ=self.moment[node_num][2]	   
+			FX=self.force[node_num][0]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][0]
+			FY=self.force[node_num][1]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][1] 
+			FZ=self.force[node_num][2]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][2]	   
+			MX=self.moment[node_num][0]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][3] 
+			MY=self.moment[node_num][1]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][4] 
+			MZ=self.moment[node_num][2]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][5]
+			#print( FX, FY, FZ, MX, MY, MZ)
 			ops.load(self.nodeList[node_num], FX, FY, FZ, MX, MY, MZ)
 				
 		Currdt=stepDT/CurrSteps
@@ -260,12 +324,20 @@ class FOAMySeesInstance():
 	def rampIterate(self,increment):
 
 		for node_num in range(self.NNODES):
-			FX=self.force[node_num][0]*increment + self.lastForces[node_num][0]*(1-increment) 
-			FY=self.force[node_num][1]*increment + self.lastForces[node_num][1]*(1-increment) 
-			FZ=self.force[node_num][2]*increment + self.lastForces[node_num][2]*(1-increment)	
-			MX=self.moment[node_num][0]*increment + self.lastMoments[node_num][0]*(1-increment) 
-			MY=self.moment[node_num][1]*increment + self.lastMoments[node_num][1]*(1-increment)  
-			MZ=self.moment[node_num][2]*increment + self.lastMoments[node_num][2]*(1-increment) 	   
+			FX=(self.force[node_num][0]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][0])*increment + self.lastForces[node_num][0]*(1-increment) 
+			FY=(self.force[node_num][1]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][1])*increment + self.lastForces[node_num][1]*(1-increment)
+			#FY=self.force[node_num][1]*increment + self.lastForces[node_num][1]*(1-increment) 
+			FZ=(self.force[node_num][2]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][2])*increment + self.lastForces[node_num][2]*(1-increment)
+			#FZ=self.force[node_num][2]*increment + self.lastForces[node_num][2]*(1-increment)
+			#*increment 
+			MX=(self.moment[node_num][0]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][3])*increment + self.lastMoments[node_num][0]*(1-increment) 
+			#self.moment[node_num][0]*increment + self.lastMoments[node_num][0]*(1-increment)
+			
+			MY=(self.moment[node_num][1]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][4])*increment + self.lastMoments[node_num][1]*(1-increment) 
+			#MY=self.moment[node_num][1]*increment + self.lastMoments[node_num][1]*(1-increment)  
+
+			MZ=(self.moment[node_num][2]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][5])*increment + self.lastMoments[node_num][2]*(1-increment) 
+			#MZ=self.moment[node_num][2]*increment + self.lastMoments[node_num][2]*(1-increment) 	   
 			ops.load(self.nodeList[node_num], FX, FY, FZ, MX, MY, MZ)
 
 		StepCheck=ops.analyze(1, self.dt/self.CurrSteps, 1e-10, self.dt/self.CurrSteps, 100)

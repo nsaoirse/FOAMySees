@@ -343,8 +343,14 @@ if __name__ == '__main__':# and rank==0:
 
 
 			#################################################################################################
+
 			# gathering forces from preCICE
 			Forces=oneWayD*interface.read_data("Coupling-Data-Projection-Mesh","Force", vertexIDsForce,0)
+
+			ForcePrediction=FOAMySees.TSExpPredict(tOUT+DT)
+			with open('./fys_logs/plog', 'a+') as f:
+                                #print(Forces,ForcePrediction,file=f)
+                                print('Force Prediction Ratio= ',np.linalg.norm(FOAMySees.forceandmoment)/np.linalg.norm(ForcePrediction),file=f)
 		
 			for substep in range(1,noOpenSeessubsteps+1):						
 				currForces=(copy.deepcopy(Forces)-LastForces)*(substep/noOpenSeessubsteps) + LastForces
@@ -397,7 +403,7 @@ if __name__ == '__main__':# and rank==0:
 				# precice_dt=interface.advance(precice_dt)			
 				precice_dt_return=interface.advance(DT/noOpenFOAMsubsteps)
 				with open(fys_couplingdriver_log_location, 'a+') as f:
-					print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(substep-1)*DT/noOpenFOAMsubsteps ,file=f)
+					print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(noOpenFOAMsubsteps-(substep))*DT/noOpenFOAMsubsteps ,file=f)
 			
 			#  checking if residuals<tolerances & performing accleration (implicit), no accel/iter (explicit)	
 			#################################################################################################		
@@ -430,6 +436,13 @@ if __name__ == '__main__':# and rank==0:
 				FOAMySees.lastDisplacements=copy.deepcopy(FOAMySees.displacement)	
 				FOAMySees.stepNumber+=1
 				FOAMySees.iteration=1
+				
+				FOAMySees.Flast5times[:,4]=FOAMySees.Flast5times[:,3]
+				FOAMySees.Flast5times[:,3]=FOAMySees.Flast5times[:,2]
+				FOAMySees.Flast5times[:,2]=FOAMySees.Flast5times[:,1]
+				FOAMySees.Flast5times[:,1]=FOAMySees.Flast5times[:,0]
+				FOAMySees.Flast5times[:,0]=np.reshape(FOAMySees.forceandmoment,[FOAMySees.ndofs,])[:]
+				
 				
 				# we are converged, or have given up!
 				#################################################################################################			

@@ -1,0 +1,9 @@
+export FYS_inputFilesLocation="fromUser"
+export FYS_OpenSeesPyModelFile="OpenSeesModel.py"
+export FYS_Nprocessors=4
+export FYS_OpenFOAMSolver="interFoam"
+export FYS_isPartOfHydro="No"
+export FYS_nameOfCoupledPatchOrSurfaceFile="interface"
+export FYS_useExistingOpenFOAMCaseFolder=1
+export FYS_ExistingOpenFOAMCase="Fluid"
+export FYS_HydrojsonFile="none"
