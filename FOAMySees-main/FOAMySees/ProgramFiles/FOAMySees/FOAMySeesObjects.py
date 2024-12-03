@@ -74,9 +74,9 @@ class FOAMySeesInstance():
 			self.ForcePredictionAlpha=self.config.alphaTS
 			
 		if self.config.stagger=='yes':
-		        self.PredictionTend=1.5*self.dt
+		        self.PredictionTend=1.5*self.dt*self.config.betaTS
 		else:
-		        self.PredictionTend=2*self.dt
+		        self.PredictionTend=2*self.dt*self.config.betaTS
 		        
 		self.totalSteps=self.config.endTime/self.dt
 		self.currentTStackPositionF=1
@@ -166,7 +166,7 @@ class FOAMySeesInstance():
 	    
 	def TSExpPredict(self,predictWhat):
 
-		dt=self.dt
+		dt=self.dt*self.config.betaTS
 
 		N=self.ndofs
 
@@ -222,7 +222,7 @@ class FOAMySeesInstance():
 				fixZ(zLoc,*[1,1,1,1,1,1])
 				
 	def makeDataArrays(self):
-		dt=self.dt	
+		dt=self.dt*self.config.betaTS	
 		self.time = []
 		try: 	
 			print("trying to find a coupled nodes list...")

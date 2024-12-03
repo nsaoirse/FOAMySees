@@ -1258,10 +1258,10 @@ The work which led to development of this tool was funded by the National Scienc
 				
 		self.plotAgglom3 = self.plotAgglom3Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
 
-		self.plotAgglom1ref = self.plotAgglom1Widget.plot([0], [0],pen='r',name="Reference")  # Initialize with a single point
-		self.plotAgglom2ref = self.plotAgglom2Widget.plot([0], [0],pen='r',name="Reference")  # Initialize with a single point
+		self.plotAgglom1ref = self.plotAgglom1Widget.plot([0], [0],pen=pg.mkPen('r', style=pg.QtCore.Qt.DashDotDotLine),name="Reference")  # Initialize with a single point
+		self.plotAgglom2ref = self.plotAgglom2Widget.plot([0], [0],pen=pg.mkPen('r', style=pg.QtCore.Qt.DashDotDotLine),name="Reference")  # Initialize with a single point
 				
-		self.plotAgglom3ref = self.plotAgglom3Widget.plot([0], [0],pen='r',name="Reference")  # Initialize with a single point
+		self.plotAgglom3ref = self.plotAgglom3Widget.plot([0], [0],pen=pg.mkPen('r', style=pg.QtCore.Qt.DashDotDotLine),name="Reference")  # Initialize with a single point
 
 
 		# Set up the plot pen='g',name="Fluid to Structure"
