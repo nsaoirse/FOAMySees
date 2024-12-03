@@ -72,8 +72,8 @@ The work which led to development of this tool was funded by the National Scienc
 
 	def about(self):
 		QMessageBox.about('''
-#| ===============================================        ____/__\___/__\____	 _.*_*.		     |
-#|		 F ield		   |   |  S tructural	  ||__|/\|___|/\|__||	  \ \ \ \.           |
+#| ===============================================	____/__\___/__\____	 _.*_*.		     |
+#|		 F ield		   |   |  S tructural	  ||__|/\|___|/\|__||	  \ \ \ \.	   |
 #|		 O peration	   |___|  E ngineering &  ||__|/\|___|/\|__||	   | | |  \._ CESG   | 
 #|		 A nd		       |  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW    |
 #|		 M anipulation	   |___|  S imulation	  ||__|/\|___|/\|__||   __/, / _ \___.. 2023 |
@@ -637,7 +637,44 @@ The work which led to development of this tool was funded by the National Scienc
 
 
 	def updateForcePlots(self):
+		allagglom=glob.glob("./RunCase/*.outagglom")
+		plotAgglom1dat=np.loadtxt(allagglom[0], dtype='float', skiprows=0)
+		plotAgglom1t=plotAgglom1dat[:,0]
+		plotAgglom1x=plotAgglom1dat[:,self.agglomvar1]
+		self.plotAgglom1Widget.setTitle(allagglom[0].strip('.outagglom').strip('./RunCase/'))
 
+		plotAgglom2dat=np.loadtxt(allagglom[1], dtype='float', skiprows=0)
+		plotAgglom2t=plotAgglom2dat[:,0]
+		plotAgglom2x=plotAgglom2dat[:,self.agglomvar2]
+		
+		self.plotAgglom2Widget.setTitle(allagglom[1].strip('.outagglom').strip('./RunCase/'))
+		
+		plotAgglom3dat=np.loadtxt(allagglom[2], dtype='float', skiprows=0)
+		plotAgglom3t=plotAgglom3dat[:,0]
+		plotAgglom3x=plotAgglom3dat[:,self.agglomvar3]
+		
+		self.plotAgglom3Widget.setTitle(allagglom[2].strip('.outagglom').strip('./RunCase/'))
+
+		self.plotAgglom1.setData(plotAgglom1t,plotAgglom1x)
+		if self.checkboxPlotRef1.isChecked():
+			plotAgglom1ref=np.loadtxt('./RunCase/reference.plot', dtype='float', skiprows=0)
+			self.plotAgglom1ref.setData(plotAgglom1ref[:,0],plotAgglom1ref[:,1])
+		else:
+                        self.plotAgglom1ref.setData([0],[0])
+			
+		self.plotAgglom2.setData(plotAgglom2t,plotAgglom2x)
+		if self.checkboxPlotRef2.isChecked():
+			plotAgglom2ref=np.loadtxt('./RunCase/reference.plot', dtype='float', skiprows=0)
+			self.plotAgglom2ref.setData(plotAgglom2ref[:,0],plotAgglom2ref[:,1])
+		else:
+                        self.plotAgglom2ref.setData([0],[0])
+                        
+		self.plotAgglom3.setData(plotAgglom3t,plotAgglom3x)
+		if self.checkboxPlotRef3.isChecked():
+			plotAgglom3ref=np.loadtxt('./RunCase/reference.plot', dtype='float', skiprows=0)
+			self.plotAgglom3ref.setData(plotAgglom3ref[:,0],plotAgglom3ref[:,1])
+		else:
+                        self.plotAgglom3ref.setData([0],[0])			
 		#self.updateCouplingDataProjectionMeshPlot()
 				
 		try:
@@ -1067,8 +1104,21 @@ The work which led to development of this tool was funded by the National Scienc
 		#self.CouplingMeshView.show()
 		self.CouplingMeshView.update()
 		#self.CouplingMeshView.render()
+	def on_text_changed1(self):
 
+		self.agglomvar1=int(self.textbox1.value())
+		self.updateForcePlots()
+		
+	def on_text_changed2(self):
 
+		self.agglomvar2=int(self.textbox2.value())
+		self.updateForcePlots()
+		
+	def on_text_changed3(self):
+
+		self.agglomvar3=int(self.textbox3.value())
+		self.updateForcePlots()
+		
 	def mainWidgetOpenFOAM(self):
 		# Vertical Layouts
 		self.Canvas4 = QVBoxLayout()  # Initializing the main vertical box layout for the System Figure
@@ -1145,14 +1195,15 @@ The work which led to development of this tool was funded by the National Scienc
 
 		emp = QLabel('')
 		Empty = QVBoxLayout(emp)
+		force = QVBoxLayout()
 		fig_force = QVBoxLayout()
-		
+		fig_force2 =QVBoxLayout()
 		# Start updating the plot in a separate thread
 		self.forceplottimer = pg.QtCore.QTimer()
 		self.worktimer.timeout.connect(self.updateForcePlots)
 		self.worktimer.start(100)  # Update every 100ms
 
-		pwx,pwy = 800,140
+		pwx,pwy = 400,250
 		# Create a PlotWidget for the graph
 		self.plotForceXWidget = pg.PlotWidget()
 		self.plotForceXWidget.setFixedSize(pwx,pwy)
@@ -1176,7 +1227,43 @@ The work which led to development of this tool was funded by the National Scienc
 		self.plotForceZWidget.setFixedSize(pwx,pwy)
 		self.plotForceZWidget.setLabel('left', 'Force')
 		self.plotForceZWidget.setLabel('bottom', 'Time (s)')
+
+
+# Create a PlotWidget for the graph
+
+		pwx,pwy = 400,250
+		self.plotAgglom1Widget = pg.PlotWidget()
+		self.plotAgglom1Widget.setFixedSize(pwx,pwy)
+		self.plotAgglom1Widget.setTitle("outagglom1")
+		# Set axis labels
+		self.plotAgglom1Widget.setLabel('left', 'agglomval')
+		self.plotAgglom1Widget.setLabel('bottom', 'Time (s)')
 		
+		self.plotAgglom2Widget = pg.PlotWidget()
+		self.plotAgglom2Widget.setFixedSize(pwx,pwy)
+		self.plotAgglom2Widget.setTitle("outagglom2")
+		# Set axis labels
+		self.plotAgglom2Widget.setLabel('left', 'agglomval')
+		self.plotAgglom2Widget.setLabel('bottom', 'Time (s)')
+
+		self.plotAgglom3Widget = pg.PlotWidget()
+		self.plotAgglom3Widget.setFixedSize(pwx,pwy)
+		self.plotAgglom3Widget.setTitle("outagglom3")
+		# Set axis labels
+		self.plotAgglom3Widget.setLabel('left', 'agglomval')
+		self.plotAgglom3Widget.setLabel('bottom', 'Time (s)')
+		self.plotAgglom1 = self.plotAgglom1Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+
+		self.plotAgglom2 = self.plotAgglom2Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+				
+		self.plotAgglom3 = self.plotAgglom3Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+
+		self.plotAgglom1ref = self.plotAgglom1Widget.plot([0], [0],pen='r',name="Reference")  # Initialize with a single point
+		self.plotAgglom2ref = self.plotAgglom2Widget.plot([0], [0],pen='r',name="Reference")  # Initialize with a single point
+				
+		self.plotAgglom3ref = self.plotAgglom3Widget.plot([0], [0],pen='r',name="Reference")  # Initialize with a single point
+
+
 		# Set up the plot pen='g',name="Fluid to Structure"
 
 		# Set up the plot
@@ -1201,6 +1288,65 @@ The work which led to development of this tool was funded by the National Scienc
 		fig_force.addWidget(self.plotForceXWidget)
 		fig_force.addWidget(self.plotForceYWidget)
 		fig_force.addWidget(self.plotForceZWidget)
+
+		self.textbox1 = QDoubleSpinBox()
+
+		self.textbox1.setRange(1,6)
+		self.textbox1.valueChanged.connect(self.on_text_changed1)
+		b1=QHBoxLayout()
+		l1=QLabel("Variable/Column: ")
+
+		self.checkboxPlotRef1 = QCheckBox('Plot reference?', self)
+		
+		self.checkboxPlotRef1.setChecked(False)
+		b1.addWidget(l1)
+		b1.addWidget(self.textbox1)
+		b1.addWidget(self.checkboxPlotRef1)
+
+		
+		self.textbox2 = QDoubleSpinBox()
+
+		self.textbox2.setRange(1,6)
+		self.textbox2.valueChanged.connect(self.on_text_changed2)
+		b2=QHBoxLayout()
+		l2=QLabel("Variable/Column: ")
+		b2.addWidget(l2)
+		b2.addWidget(self.textbox2)
+
+
+		self.checkboxPlotRef2 = QCheckBox('Plot reference?', self)
+		
+		self.checkboxPlotRef2.setChecked(False)
+		b2.addWidget(self.checkboxPlotRef2)		
+		self.textbox3 = QDoubleSpinBox()
+
+		self.textbox3.setRange(1,6)
+		self.textbox3.valueChanged.connect(self.on_text_changed3)
+		b3=QHBoxLayout()
+		l3=QLabel("Variable/Column: ")
+		b3.addWidget(l3)
+		b3.addWidget(self.textbox3)
+		self.checkboxPlotRef3 = QCheckBox('Plot reference?', self)
+		
+		self.checkboxPlotRef3.setChecked(False)
+		
+		b3.addWidget(self.checkboxPlotRef3)
+		
+		self.agglomvar1=int(self.textbox1.value())
+
+		self.agglomvar2=int(self.textbox2.value())
+
+		self.agglomvar3=int(self.textbox3.value())
+
+		fig_force2.addLayout(b1)
+		fig_force2.addWidget(self.plotAgglom1Widget)
+		
+		fig_force2.addLayout(b2)
+		fig_force2.addWidget(self.plotAgglom2Widget)
+
+		fig_force2.addLayout(b3)
+		fig_force2.addWidget(self.plotAgglom3Widget)
+
 		self.slider1 = QSlider(Qt.Horizontal)
 		self.slider1.setMinimum(1)  # Minimum logarithmic value
 		self.slider1.setMaximum(10000)  # Maximum logarithmic value
@@ -1239,12 +1385,12 @@ The work which led to development of this tool was funded by the National Scienc
 		self.slider2SpinBoxDecr=QDoubleSpinBox()
 
 		self.slider1SpinBoxIncr.setRange(1e-10,1e5)
-		                                         
+							 
 		self.slider2SpinBoxIncr.setRange(1e-10,1e5)
 
 		
 		self.slider1SpinBoxDecr.setSingleStep(1e-1)
-		                                         
+							 
 		self.slider2SpinBoxDecr.setSingleStep(1e-1)
 
 		self.slider1SpinBoxIncr.setValue(1)
@@ -1255,7 +1401,7 @@ The work which led to development of this tool was funded by the National Scienc
 
 
 		self.slider1SpinBoxDecr.setRange(1e-10,1)
-		                                         
+							 
 		self.slider2SpinBoxDecr.setRange(1e-10,1)
 		self.slider1SpinBoxDecr.setValue(1)
 		self.slider2SpinBoxDecr.setValue(1)
@@ -1286,11 +1432,17 @@ The work which led to development of this tool was funded by the National Scienc
 		fig_force_sliders.addWidget(self.slider1)
 		fig_force_sliders.addWidget(self.slider2)
 		
-		fig_force.addLayout(fig_force_labels)		
-		fig_force.addLayout(fig_force_sliders)
-		fig_force.addWidget(self.CouplingMeshView)		
+		force.addLayout(fig_force_labels)		
+		force.addLayout(fig_force_sliders)
+			
 		self.SetFigureOpenFOAM()
-		layout.addLayout(fig_force)		
+
+		fig_force3 =QHBoxLayout()
+		fig_force3.addWidget(self.CouplingMeshView)	
+		fig_force3.addLayout(fig_force)
+		fig_force3.addLayout(fig_force2)
+		force.addLayout(fig_force3)
+		layout.addLayout(force)		
 
 		return widget
 	def on_spin_value_changed1(self):
@@ -1319,7 +1471,7 @@ The work which led to development of this tool was funded by the National Scienc
 	def on_slider_value_changed(self):
 		self.slider1Name.setText("Displacement Scale: "+str(self.slider1.value())+" = SF1_d  * SF2_d  || SF1_d = ")
 		self.slider1SpinBoxIncr.setValue(float(self.slider1.value()))
-                #self.slider2SpinBoxDecr.setValue(float(1))
+		#self.slider2SpinBoxDecr.setValue(float(1))
 		self.slider2Name.setText("Force Vector Scale: "+str(self.slider2.value())+" = SF1_f  * SF2_f  || SF1_f = ")
 		self.slider2SpinBoxIncr.setValue(float(self.slider2.value()))
 		#self.slider2SpinBoxDecr.setValue(float(1))

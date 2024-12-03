@@ -71,11 +71,17 @@ class FOAMySeesInstance():
 		if self.config.TaylorSeriesStabilize=='no':
 			self.ForcePredictionAlpha=0.0
 		else:
-			self.ForcePredictionAlpha=self.config.alphaTS_ForceBackwards
-
-
+			self.ForcePredictionAlpha=self.config.alphaTS
+			
+		if self.config.stagger=='yes':
+		        self.PredictionTend=1.5*self.dt
+		else:
+		        self.PredictionTend=2*self.dt
+		        
 		self.totalSteps=self.config.endTime/self.dt
-		
+		self.currentTStackPositionF=1
+		self.currentTStackPositionD=1
+                		
 		self.fys_couplingdriver_log_location='fys_logs/FOAMySeesCouplingDriver.log'
 		self.work_log_location='fys_logs/WorkInAndOut.log'
 		self.work_array_location='fys_logs/WorkInAndOutArray.log'
@@ -99,6 +105,7 @@ class FOAMySeesInstance():
 		self.makeDataArrays()
 			
 	def calculateUpdatedMoments(self,Forces):
+		self.currentTStackPositionF+=1
 		for node_num in range(len(self.coupledNodes)):
 			
 			self.displacement[node_num][0:6]=ops.nodeDisp(self.nodeList[node_num])
@@ -115,8 +122,14 @@ class FOAMySeesInstance():
 			self.moment[node_num,:]=[np.dot(FZz,RBGDY)-np.dot(FYy,RBGDZ), np.dot(FXx,RBGDZ)-np.dot(FZz,RBGDX), np.dot(FYy,RBGDX)-np.dot(FXx,RBGDY)]
 			self.forceandmoment[node_num,3:6]=self.moment[node_num,:]
 			self.forceandmoment[node_num,0:3]=self.force[node_num,:]
-			
-	def projectDisplacements(self,Displacement):
+		if self.config.betaTS<self.currentTStackPositionF:				        
+                    self.Flast5times[:,4]=self.Flast5times[:,3]
+                    self.Flast5times[:,3]=self.Flast5times[:,2]
+                    self.Flast5times[:,2]=self.Flast5times[:,1]
+                    self.Flast5times[:,1]=self.Flast5times[:,0]
+                    self.Flast5times[:,0]=np.reshape(self.forceandmoment,[self.ndofs,])[:]
+                    self.currentTStackPosition=1	
+	def projectDisplacements(self,Displacement,project=0):
 		
 		for node_num in range(len(self.coupledNodes)):
 			
@@ -132,23 +145,37 @@ class FOAMySeesInstance():
 			rotatedBranchGroup=self.RotateTreeBranch(originalBranchGroup,phi,theta,psi)
 			rotatedBranchDeltas=rotatedBranchGroup-originalBranchGroup
 			
-			Displacement[self.NodeToBranchNodeRelationships[node_num][1:]]=rotatedBranchDeltas+self.displacement[node_num,0:3]
-		return Displacement
 
-	def TSExpPredict(self,whattime):
+			Displacement[self.NodeToBranchNodeRelationships[node_num][1:]]=rotatedBranchDeltas+self.displacement[node_num,0:3]
+
+		if self.config.betaTS<self.currentTStackPositionD:
+			self.Dlast5times[:,4]=self.Dlast5times[:,3]
+			self.Dlast5times[:,3]=self.Dlast5times[:,2]
+			self.Dlast5times[:,2]=self.Dlast5times[:,1]
+			self.Dlast5times[:,1]=self.Dlast5times[:,0]
+			self.Dlast5times[:,0]=np.reshape(self.displacement,[self.ndofs,])[:]
+			self.currentTStackPositionD=1
+			
+		if project==0:
+                	pass
+		else:
+                	self.TSExpPredict(self.Dlast5times)
+
+                	Displacement=self.projectDisplacements(Displacement)
+		return Displacement
+	    
+	def TSExpPredict(self,predictWhat):
 
 		dt=self.dt
 
 		N=self.ndofs
 
-		ysel=self.Flast5times # this is a Nx5 array with the DOF's last 5 values
+		ysel=predictWhat # this is a Nx5 array with the DOF's last 5 values
 
 		#####
 		# in the solution loop
 
-		t_center=whattime-2*dt
-		xdes=t_center+2*dt
-		dt_t=2*dt
+		dt_t=self.PredictionTend
 
 		result=np.array(np.einsum('mnp,mp->mn', self.CinvStar, ysel))
 
@@ -164,7 +191,6 @@ class FOAMySeesInstance():
 		#print('prediction', prediction)
 
 		return np.reshape(np.array(prediction),[len(self.coupledNodes),6])
-
 			
 	def readCheckpoint(self,stepOut):
 		ops.database('File',"SeesCheckpoints/checkpoints/"+str(stepOut))
@@ -222,7 +248,8 @@ class FOAMySeesInstance():
 		self.ndofs=len(self.coupledNodes)*6
 		
 		self.Flast5times=np.zeros([self.ndofs,5])
-					
+		self.Dlast5times=np.zeros([self.ndofs,5])
+		
 		self.phithetapsi=np.zeros([len(self.coupledNodes),3])
 
 		self.force=np.zeros([len(self.coupledNodes),3])
@@ -299,7 +326,7 @@ class FOAMySeesInstance():
 		
 	def iterate(self,CurrSteps,stepDT):
 		
-		ForcePrediction=self.TSExpPredict(ops.getTime()+stepDT)
+		ForcePrediction=self.TSExpPredict(self.Flast5times)
 
 		for node_num in range(self.NNODES):
 			FX=self.force[node_num][0]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][0]

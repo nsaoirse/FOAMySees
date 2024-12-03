@@ -306,169 +306,477 @@ if __name__ == '__main__':# and rank==0:
 	FOAMySees.thisTime=0
 	FOAMySees.stepNumber=0
 	FOAMySees.iteration=0
-	
-	#################################################################################################
-	# preCICE action - entering the coupling loop
-	while interface.is_coupling_ongoing():
-		if FOAMySees.thisTime<FOAMySees.config.couplingStartTime:					
-			with open('./fys_logs/tlog', 'a+') as f:
-				print("{} {} {} {}".format(ops.getTime(),FOAMySees.stepNumber,FOAMySees.totalSteps,FOAMySees.iteration),file=f)
 
-			interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, LastDisplacement)
-			interface.requires_reading_checkpoint()
-			FOAMySees.stepForward(DT)			
-			interface.advance(DT)
-			FOAMySees.thisTime+=DT
-			print("Uncoupled Simulation Time: {}s, {}% to coupling start time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.couplingStartTime,FOAMySees.config.couplingStartTime))
-			interface.requires_writing_checkpoint()
-			FOAMySees.stepNumber+=1
+	if FOAMySees.config.stagger=='no':
+                #################################################################################################
+                # preCICE action - entering the coupling loop
+                while interface.is_coupling_ongoing():
+                        if FOAMySees.thisTime<FOAMySees.config.couplingStartTime:					
+                                with open('./fys_logs/tlog', 'a+') as f:
+                                        print("{} {} {} {}".format(ops.getTime(),FOAMySees.stepNumber,FOAMySees.totalSteps,FOAMySees.iteration),file=f)
+
+                                interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, LastDisplacement)
+                                interface.requires_reading_checkpoint()
+                                FOAMySees.stepForward(DT)			
+                                interface.advance(DT)
+                                FOAMySees.thisTime+=DT
+                                print("Uncoupled Simulation Time: {}s, {}% to coupling start time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.couplingStartTime,FOAMySees.config.couplingStartTime))
+                                interface.requires_writing_checkpoint()
+                                FOAMySees.stepNumber+=1
+                                
+                        else:
+                                print("Coupled Simulation Time: {}s, {}% to termination time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.endTime,FOAMySees.config.endTime))
+                                #################################################################################################
+                                # preCICE action - checking if a database needs to be written (implicit only)
+                                if (interface.requires_writing_checkpoint()) or newStep==1:
+
+                                        # summons database save in OpenSees
+                                        FOAMySees.writeCheckpoint(stepOut)
+
+                                if (interface.requires_reading_checkpoint()):
+
+                                        # summons database save in OpenSees
+                                        FOAMySees.readCheckpoint(stepOut)
+
+                                #################################################################################################		
+                                # creating OpenSees recorders for the timestep				
+                                FOAMySees.createRecorders.createNodeRecorders(FOAMySees,FOAMySees.nodeRecInfoList)
+
+
+                                #################################################################################################
+
+                                # gathering forces from preCICE
+                                Forces=oneWayD*interface.read_data("Coupling-Data-Projection-Mesh","Force", vertexIDsForce,0)
+
+                                for substep in range(1,noOpenSeessubsteps+1):						
+                                        currForces=(copy.deepcopy(Forces)-LastForces)*(substep/noOpenSeessubsteps) + LastForces
+
+                                        #################################################################################################		
+                                        # looping through the branch groups and determining applied FEM nodal forces
+                                        for node in FOAMySees.NodeToCellFaceCenterRelationships:
+                                                FOAMySees.force[node[0],:]=np.sum(currForces[node[1:],:],axis=0)
+                                        #################################################################################################		
+                                        # looping through the branch groups and determining applied FEM nodal moments
+                                        FOAMySees.calculateUpdatedMoments(currForces)
+
+                                        #################################################################################################		
+                                        # stepping forward in time with a variableTransient time integration
+                                        # the forces and moments are applied to the coupled nodes here
+                                        StepCheck=FOAMySees.stepForward(FOAMySees.dt/noOpenSeessubsteps)
+
+                                        #################################################################################################		
+                                        # reporting
+                                        with open(fys_couplingdriver_log_location, 'a+') as f:
+                                                print(ops.getTime(),' = OpenSees time\n', substep,'/',noOpenSeessubsteps, ' = substep/noOpenSeessubsteps',file=f)
+
+                                        #################################################################################################
+                                        # did the step converge?
+                                        if (StepCheck!=0):
+                                                with open(fys_couplingdriver_log_location, 'a+') as f:
+                                                        print(' OpenSeesPy Step did not converge :(',FOAMySees.thisTime,file=f)
+                                                
+                                #################################################################################################			
+                                # projecting the displacement field from OpenSees to the coupling data projection mesh				
+                                Displacement=oneWay*FOAMySees.projectDisplacements(Displacement)
+                                
+                                #################################################################################################			
+                                # calculating the Work
+                                                
+                                FOAMySees.WorkIn=np.sum(FOAMySees.forceandmoment*(FOAMySees.displacement-FOAMySees.lastDisplacements))
+                                FOAMySees.WorkOut=0
+                                with open(work_log_location, 'a+') as f:
+                                                                print(FOAMySees.config.oneWay,onewaystatus,file=f)
+                                for substep in range(1,noOpenFOAMsubsteps+1):
+                                        FOAMySees.WorkOut+=np.sum((Forces)*(Displacement-LastDisplacement)*(1/noOpenFOAMsubsteps))
+                                        with open(fys_couplingdriver_log_location, 'a+') as f:
+                                                print('iteration:',iteration,', Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f)  (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
+                                
+                                        #################################################################################################
+                                        # sending the projected displacements to preCICE to be mapped to OpenFOAM during the next iteration or timestep
+                                        interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, oneWay*(LastDisplacement+(Displacement-LastDisplacement)*(substep/noOpenFOAMsubsteps)))
+                                        #################################################################################################		
+                                        # Advancing the coupling scheme -
+                                        # precice_dt=interface.advance(precice_dt)			
+                                        precice_dt_return=interface.advance(DT/noOpenFOAMsubsteps)
+                                        with open(fys_couplingdriver_log_location, 'a+') as f:
+                                                print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(noOpenFOAMsubsteps-(substep))*DT/noOpenFOAMsubsteps ,file=f)
+                                
+                                #  checking if residuals<tolerances & performing accleration (implicit), no accel/iter (explicit)	
+                                #################################################################################################		
+                                # checking with preCICE to see if we have converged, or if we need to try the timestep again with new coupling data
+                                if interface.requires_reading_checkpoint():
+                                        #FOAMySees.CurrSteps+=1				
+                                        FOAMySees.readCheckpoint(stepOut)
+                                        # reading the previously saved database
+                                        StepCheck=0
+                                        # adding one to the iteration counter
+                                        FOAMySees.iteration+=1
+                                        
+                                        # letting preCICE know we are finished going back in time			
+                                else:
+                                        LastForces=copy.deepcopy(Forces)
+                                        LastDisplacement=copy.deepcopy(Displacement)
+                                        FOAMySees.StepsPerFluidStep=1
+
+                                        with open('./fys_logs/verticesForce.log','w') as f:
+                                                for force in Forces:
+                                                        print("{} {} {}".format(force[0],force[1],force[2]),file=f)
+                                        with open('./fys_logs/verticesDisplacement.log','w') as f:
+                                                for delta in Displacement:
+                                                        print("{} {} {}".format(delta[0],delta[1],delta[2]),file=f)				
+                                        
+                                        #################################################################################################
+                                        # saving these for some sort of surrogate model?
+                                        FOAMySees.lastForceandmoment=copy.deepcopy(FOAMySees.forceandmoment)
+                                        FOAMySees.lastForces=copy.deepcopy(FOAMySees.force)
+                                        FOAMySees.lastDisplacements=copy.deepcopy(FOAMySees.displacement)	
+                                        FOAMySees.stepNumber+=1
+                                        FOAMySees.iteration=1
+                                        
+                                        FOAMySees.Dlast5times[:,4]=FOAMySees.Dlast5times[:,3]
+                                        FOAMySees.Dlast5times[:,3]=FOAMySees.Dlast5times[:,2]
+                                        FOAMySees.Dlast5times[:,2]=FOAMySees.Dlast5times[:,1]
+                                        FOAMySees.Dlast5times[:,1]=FOAMySees.Dlast5times[:,0]
+                                        FOAMySees.Dlast5times[:,0]=np.reshape(FOAMySees.displacement,[FOAMySees.ndofs,])[:]
+                                        
+                                        FOAMySees.Flast5times[:,4]=FOAMySees.Flast5times[:,3]
+                                        FOAMySees.Flast5times[:,3]=FOAMySees.Flast5times[:,2]
+                                        FOAMySees.Flast5times[:,2]=FOAMySees.Flast5times[:,1]
+                                        FOAMySees.Flast5times[:,1]=FOAMySees.Flast5times[:,0]
+                                        FOAMySees.Flast5times[:,0]=np.reshape(FOAMySees.forceandmoment,[FOAMySees.ndofs,])[:]
+                                        
+                                        
+                                        # we are converged, or have given up!
+                                        #################################################################################################			
+                                        # doing some house keeping
+                                        Popen("ls -t SeesCheckpoints/checkpoints/*| tail -n +100 | xargs -d '\n' rm", shell=True, stdin=None, stdout=None, stderr=None,)
+                                        newStep=1
+                                        tOUT += DT
+                                        FOAMySees.CurrSteps=1
+                                        stepOut+=1
+                                        FOAMySees.StepsPerFluidStep=1
+                
+                                #################################################################################################
+                                #ops.wipe()
+                                # calling all the recorders made
+
+                                ops.record()
+                                
+                                FOAMySees.writeLogs()
+                                
+                                FOAMySees.createRecorders.appendRecords(FOAMySees,FOAMySees.nodeRecInfoList)		
+                                if tOUT>=FOAMySees.config.SeesVTKOUTRate:
+                                        tOUT=0
+                                        FOAMySees.createRecorders.createPVDRecorder(FOAMySees)
+
+                                #################################################################################################
+                with open(fys_couplingdriver_log_location, 'a+') as f:
+                        print("Exiting FOAMySees Coupling Driver",file=f)
+
+                interface.finalize()
+
+	else:
+                firstStep=1
+                #################################################################################################
+                # preCICE action - entering the coupling loop
+                while interface.is_coupling_ongoing():
+                        if firstStep==1:
+                            print("Coupled Simulation Time: {}s, {}% to termination time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.endTime,FOAMySees.config.endTime))
+                            #################################################################################################
+                            # preCICE action - checking if a database needs to be written (implicit only)
+                            if (interface.requires_writing_checkpoint()) or newStep==1:
+
+                                    # summons database save in OpenSees
+                                    FOAMySees.writeCheckpoint(stepOut)
+
+                            if (interface.requires_reading_checkpoint()):
+
+                                    # summons database save in OpenSees
+                                    FOAMySees.readCheckpoint(stepOut)
+
+                            #################################################################################################		
+                            # creating OpenSees recorders for the timestep				
+                            FOAMySees.createRecorders.createNodeRecorders(FOAMySees,FOAMySees.nodeRecInfoList)
+
+                            #################################################################################################
+
+                            # gathering forces from preCICE
+                            Forces=oneWayD*interface.read_data("Coupling-Data-Projection-Mesh","Force", vertexIDsForce,0)
+
+                            for substep in range(1,noOpenSeessubsteps+1):						
+                                    currForces=(copy.deepcopy(Forces)-LastForces)*(substep/noOpenSeessubsteps) + LastForces
+
+                                    #################################################################################################		
+                                    # looping through the branch groups and determining applied FEM nodal forces
+                                    for node in FOAMySees.NodeToCellFaceCenterRelationships:
+                                            FOAMySees.force[node[0],:]=np.sum(currForces[node[1:],:],axis=0)
+                                    #################################################################################################		
+                                    # looping through the branch groups and determining applied FEM nodal moments
+                                    FOAMySees.calculateUpdatedMoments(currForces)
+
+                                    #################################################################################################		
+                                    # stepping forward in time with a variableTransient time integration
+                                    # the forces and moments are applied to the coupled nodes here
+                                    StepCheck=FOAMySees.stepForward(0.5*FOAMySees.dt/noOpenSeessubsteps)
+
+                                    #################################################################################################		
+                                    # reporting
+                                    with open(fys_couplingdriver_log_location, 'a+') as f:
+                                            print(ops.getTime(),' = OpenSees time\n', substep,'/',noOpenSeessubsteps, ' = substep/noOpenSeessubsteps',file=f)
+
+                                    #################################################################################################
+                                    # did the step converge?
+                                    if (StepCheck!=0):
+                                            with open(fys_couplingdriver_log_location, 'a+') as f:
+                                                        print(' OpenSeesPy Step did not converge :(',FOAMySees.thisTime,file=f)
+                                            
+                            #################################################################################################			
+                            # projecting the displacement field from OpenSees to the coupling data projection mesh				
+                            Displacement=oneWay*FOAMySees.projectDisplacements(Displacement)
+                            
+                            #################################################################################################			
+                            # calculating the Work
+                                            
+                            FOAMySees.WorkIn=np.sum(FOAMySees.forceandmoment*(FOAMySees.displacement-FOAMySees.lastDisplacements))
+                            FOAMySees.WorkOut=0
+                            with open(work_log_location, 'a+') as f:
+                                                        print(FOAMySees.config.oneWay,onewaystatus,file=f)
+                            for substep in range(1,noOpenFOAMsubsteps+1):
+                                    FOAMySees.WorkOut+=np.sum((Forces)*(Displacement-LastDisplacement)*(1/noOpenFOAMsubsteps))
+                                    with open(fys_couplingdriver_log_location, 'a+') as f:
+                                            print('iteration:',iteration,', Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f)  (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
+                            
+                                    #################################################################################################
+                                    # sending the projected displacements to preCICE to be mapped to OpenFOAM during the next iteration or timestep
+                                    interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, oneWay*(LastDisplacement+(Displacement-LastDisplacement)*(substep/noOpenFOAMsubsteps)))
+                                    #################################################################################################		
+                                    # Advancing the coupling scheme -
+                                    # precice_dt=interface.advance(precice_dt)			
+                                    precice_dt_return=interface.advance(DT/noOpenFOAMsubsteps)
+                                    with open(fys_couplingdriver_log_location, 'a+') as f:
+                                            print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(noOpenFOAMsubsteps-(substep))*DT/noOpenFOAMsubsteps ,file=f)
+                            
+                            #  checking if residuals<tolerances & performing accleration (implicit), no accel/iter (explicit)	
+                            #################################################################################################		
+                            # checking with preCICE to see if we have converged, or if we need to try the timestep again with new coupling data
+                            if interface.requires_reading_checkpoint():
+                                    #FOAMySees.CurrSteps+=1				
+                                    FOAMySees.readCheckpoint(stepOut)
+                                    # reading the previously saved database
+                                    StepCheck=0
+                                    # adding one to the iteration counter
+                                    FOAMySees.iteration+=1
+                                    
+                                    # letting preCICE know we are finished going back in time			
+                            else:
+                                    LastForces=copy.deepcopy(Forces)
+                                    LastDisplacement=copy.deepcopy(Displacement)
+                                    FOAMySees.StepsPerFluidStep=1
+
+                                    with open('./fys_logs/verticesForce.log','w') as f:
+                                            for force in Forces:
+                                                    print("{} {} {}".format(force[0],force[1],force[2]),file=f)
+                                    with open('./fys_logs/verticesDisplacement.log','w') as f:
+                                            for delta in Displacement:
+                                                    print("{} {} {}".format(delta[0],delta[1],delta[2]),file=f)				
+                                    
+                                    #################################################################################################
+                                    # saving these for some sort of surrogate model?
+                                    FOAMySees.lastForceandmoment=copy.deepcopy(FOAMySees.forceandmoment)
+                                    FOAMySees.lastForces=copy.deepcopy(FOAMySees.force)
+                                    FOAMySees.lastDisplacements=copy.deepcopy(FOAMySees.displacement)	
+                                    FOAMySees.stepNumber+=1
+                                    FOAMySees.iteration=1
+                                    
+                                    FOAMySees.Dlast5times[:,4]=FOAMySees.Dlast5times[:,3]
+                                    FOAMySees.Dlast5times[:,3]=FOAMySees.Dlast5times[:,2]
+                                    FOAMySees.Dlast5times[:,2]=FOAMySees.Dlast5times[:,1]
+                                    FOAMySees.Dlast5times[:,1]=FOAMySees.Dlast5times[:,0]
+                                    FOAMySees.Dlast5times[:,0]=np.reshape(FOAMySees.displacement,[FOAMySees.ndofs,])[:]
+                                    
+                                    FOAMySees.Flast5times[:,4]=FOAMySees.Flast5times[:,3]
+                                    FOAMySees.Flast5times[:,3]=FOAMySees.Flast5times[:,2]
+                                    FOAMySees.Flast5times[:,2]=FOAMySees.Flast5times[:,1]
+                                    FOAMySees.Flast5times[:,1]=FOAMySees.Flast5times[:,0]
+                                    FOAMySees.Flast5times[:,0]=np.reshape(FOAMySees.forceandmoment,[FOAMySees.ndofs,])[:]
+                                    
+                                    
+                                    # we are converged, or have given up!
+                                    #################################################################################################			
+                                    # doing some house keeping
+                                    Popen("ls -t SeesCheckpoints/checkpoints/*| tail -n +100 | xargs -d '\n' rm", shell=True, stdin=None, stdout=None, stderr=None,)
+                                    newStep=1
+                                    tOUT += DT
+                                    FOAMySees.CurrSteps=1
+                                    stepOut+=1
+                                    FOAMySees.StepsPerFluidStep=1
                         
-		else:
-			print("Coupled Simulation Time: {}s, {}% to termination time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.endTime,FOAMySees.config.endTime))
-			#################################################################################################
-			# preCICE action - checking if a database needs to be written (implicit only)
-			if (interface.requires_writing_checkpoint()) or newStep==1:
+                                    #################################################################################################
+                                    #ops.wipe()
+                                    # calling all the recorders made
 
-				# summons database save in OpenSees
-				FOAMySees.writeCheckpoint(stepOut)
+                                    ops.record()
+                        
+                                    FOAMySees.writeLogs()
+                        
+                                    FOAMySees.createRecorders.appendRecords(FOAMySees,FOAMySees.nodeRecInfoList)		
+                                    if tOUT>=FOAMySees.config.SeesVTKOUTRate:
+                                            tOUT=0
+                                            FOAMySees.createRecorders.createPVDRecorder(FOAMySees)
+                        firstStep=0
+                        timeProject=1
+                        #################################################################################################
+                        if FOAMySees.thisTime<FOAMySees.config.couplingStartTime:					
+                                    with open('./fys_logs/tlog', 'a+') as f:
+                                            print("{} {} {} {}".format(ops.getTime(),FOAMySees.stepNumber,FOAMySees.totalSteps,FOAMySees.iteration),file=f)
 
-			if (interface.requires_reading_checkpoint()):
+                                    interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, LastDisplacement)
+                                    interface.requires_reading_checkpoint()
+                                    FOAMySees.stepForward(DT)			
+                                    interface.advance(DT)
+                                    FOAMySees.thisTime+=DT
+                                    print("Uncoupled Simulation Time: {}s, {}% to coupling start time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.couplingStartTime,FOAMySees.config.couplingStartTime))
+                                    interface.requires_writing_checkpoint()
+                                    FOAMySees.stepNumber+=1
+                                    
+                        else:
+                                    print("Coupled Simulation Time: {}s, {}% to termination time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.endTime,FOAMySees.config.endTime))
+                                    #################################################################################################
+                                    # preCICE action - checking if a database needs to be written (implicit only)
+                                    if (interface.requires_writing_checkpoint()) or newStep==1:
 
-				# summons database save in OpenSees
-				FOAMySees.readCheckpoint(stepOut)
+                                            # summons database save in OpenSees
+                                            FOAMySees.writeCheckpoint(stepOut)
 
-			#################################################################################################		
-			# creating OpenSees recorders for the timestep				
-			FOAMySees.createRecorders.createNodeRecorders(FOAMySees,FOAMySees.nodeRecInfoList)
+                                    if (interface.requires_reading_checkpoint()):
+
+                                            # summons database save in OpenSees
+                                            FOAMySees.readCheckpoint(stepOut)
+
+                                    #################################################################################################		
+                                    # creating OpenSees recorders for the timestep				
+                                    FOAMySees.createRecorders.createNodeRecorders(FOAMySees,FOAMySees.nodeRecInfoList)
 
 
-			#################################################################################################
+                                    #################################################################################################
 
-			# gathering forces from preCICE
-			Forces=oneWayD*interface.read_data("Coupling-Data-Projection-Mesh","Force", vertexIDsForce,0)
+                                    # gathering forces from preCICE
+                                    Forces=oneWayD*interface.read_data("Coupling-Data-Projection-Mesh","Force", vertexIDsForce,0)
 
-			ForcePrediction=FOAMySees.TSExpPredict(tOUT+DT)
-			with open('./fys_logs/plog', 'a+') as f:
-                                #print(Forces,ForcePrediction,file=f)
-                                print('Force Prediction Ratio= ',np.linalg.norm(FOAMySees.forceandmoment)/np.linalg.norm(ForcePrediction),file=f)
-		
-			for substep in range(1,noOpenSeessubsteps+1):						
-				currForces=(copy.deepcopy(Forces)-LastForces)*(substep/noOpenSeessubsteps) + LastForces
+                                    for substep in range(1,noOpenSeessubsteps+1):						
+                                            currForces=(copy.deepcopy(Forces)-LastForces)*(substep/noOpenSeessubsteps) + LastForces
 
-				#################################################################################################		
-				# looping through the branch groups and determining applied FEM nodal forces
-				for node in FOAMySees.NodeToCellFaceCenterRelationships:
-					FOAMySees.force[node[0],:]=np.sum(currForces[node[1:],:],axis=0)
-				#################################################################################################		
-				# looping through the branch groups and determining applied FEM nodal moments
-				FOAMySees.calculateUpdatedMoments(currForces)
+                                            #################################################################################################		
+                                            # looping through the branch groups and determining applied FEM nodal forces
+                                            for node in FOAMySees.NodeToCellFaceCenterRelationships:
+                                                    FOAMySees.force[node[0],:]=np.sum(currForces[node[1:],:],axis=0)
+                                            #################################################################################################		
+                                            # looping through the branch groups and determining applied FEM nodal moments
+                                            FOAMySees.calculateUpdatedMoments(currForces)
 
-				#################################################################################################		
-				# stepping forward in time with a variableTransient time integration
-				# the forces and moments are applied to the coupled nodes here
-				StepCheck=FOAMySees.stepForward(FOAMySees.dt/noOpenSeessubsteps)
+                                            #################################################################################################		
+                                            # stepping forward in time with a variableTransient time integration
+                                            # the forces and moments are applied to the coupled nodes here
+                                            StepCheck=FOAMySees.stepForward(FOAMySees.dt/noOpenSeessubsteps)
 
-				#################################################################################################		
-				# reporting
-				with open(fys_couplingdriver_log_location, 'a+') as f:
-					print(ops.getTime(),' = OpenSees time\n', substep,'/',noOpenSeessubsteps, ' = substep/noOpenSeessubsteps',file=f)
+                                            #################################################################################################		
+                                            # reporting
+                                            with open(fys_couplingdriver_log_location, 'a+') as f:
+                                                    print(ops.getTime(),' = OpenSees time\n', substep,'/',noOpenSeessubsteps, ' = substep/noOpenSeessubsteps',file=f)
 
-				#################################################################################################
-				# did the step converge?
-				if (StepCheck!=0):
-					with open(fys_couplingdriver_log_location, 'a+') as f:
-						print(' OpenSeesPy Step did not converge :(',FOAMySees.thisTime,file=f)
-					
-			#################################################################################################			
-			# projecting the displacement field from OpenSees to the coupling data projection mesh				
-			Displacement=oneWay*FOAMySees.projectDisplacements(Displacement)
-			
-			#################################################################################################			
-			# calculating the Work
-					
-			FOAMySees.WorkIn=np.sum(FOAMySees.forceandmoment*(FOAMySees.displacement-FOAMySees.lastDisplacements))
-			FOAMySees.WorkOut=0
-			with open(work_log_location, 'a+') as f:
-							print(FOAMySees.config.oneWay,onewaystatus,file=f)
-			for substep in range(1,noOpenFOAMsubsteps+1):
-				FOAMySees.WorkOut+=np.sum((Forces)*(Displacement-LastDisplacement)*(1/noOpenFOAMsubsteps))
-				with open(fys_couplingdriver_log_location, 'a+') as f:
-					print('iteration:',iteration,', Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f)  (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
-			
-				#################################################################################################
-				# sending the projected displacements to preCICE to be mapped to OpenFOAM during the next iteration or timestep
-				interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, oneWay*(LastDisplacement+(Displacement-LastDisplacement)*(substep/noOpenFOAMsubsteps)))
-				#################################################################################################		
-				# Advancing the coupling scheme -
-				# precice_dt=interface.advance(precice_dt)			
-				precice_dt_return=interface.advance(DT/noOpenFOAMsubsteps)
-				with open(fys_couplingdriver_log_location, 'a+') as f:
-					print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(noOpenFOAMsubsteps-(substep))*DT/noOpenFOAMsubsteps ,file=f)
-			
-			#  checking if residuals<tolerances & performing accleration (implicit), no accel/iter (explicit)	
-			#################################################################################################		
-			# checking with preCICE to see if we have converged, or if we need to try the timestep again with new coupling data
-			if interface.requires_reading_checkpoint():
-				#FOAMySees.CurrSteps+=1				
-				FOAMySees.readCheckpoint(stepOut)
-				# reading the previously saved database
-				StepCheck=0
-				# adding one to the iteration counter
-				FOAMySees.iteration+=1
-				
-				# letting preCICE know we are finished going back in time			
-			else:
-				LastForces=copy.deepcopy(Forces)
-				LastDisplacement=copy.deepcopy(Displacement)
-				FOAMySees.StepsPerFluidStep=1
+                                            #################################################################################################
+                                            # did the step converge?
+                                            if (StepCheck!=0):
+                                                    with open(fys_couplingdriver_log_location, 'a+') as f:
+                                                            print(' OpenSeesPy Step did not converge :(',FOAMySees.thisTime,file=f)
+                                                    
+                                    #################################################################################################			
+                                    # projecting the displacement field from OpenSees to the coupling data projection mesh				
+                                    
+                                    
+                                    Displacement=oneWay*FOAMySees.projectDisplacements(Displacement,timeProject)
+                                    #################################################################################################			
+                                    # calculating the Work
+                                                    
+                                    FOAMySees.WorkIn=np.sum(FOAMySees.forceandmoment*(FOAMySees.displacement-FOAMySees.lastDisplacements))
+                                    FOAMySees.WorkOut=0
+                                    with open(work_log_location, 'a+') as f:
+                                                                        print(FOAMySees.config.oneWay,onewaystatus,file=f)
+                                    for substep in range(1,noOpenFOAMsubsteps+1):
+                                            FOAMySees.WorkOut+=np.sum((Forces)*(Displacement-LastDisplacement)*(1/noOpenFOAMsubsteps))
+                                            with open(fys_couplingdriver_log_location, 'a+') as f:
+                                                    print('iteration:',iteration,', Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f)  (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
+                                    
+                                            #################################################################################################
+                                            # sending the projected displacements to preCICE to be mapped to OpenFOAM during the next iteration or timestep
+                                            interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, oneWay*(LastDisplacement+(Displacement-LastDisplacement)*(substep/noOpenFOAMsubsteps)))
+                                            #################################################################################################		
+                                            # Advancing the coupling scheme -
+                                            # precice_dt=interface.advance(precice_dt)			
+                                            precice_dt_return=interface.advance(DT/noOpenFOAMsubsteps)
+                                            with open(fys_couplingdriver_log_location, 'a+') as f:
+                                                    print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(noOpenFOAMsubsteps-(substep))*DT/noOpenFOAMsubsteps ,file=f)
+                                    
+                                    #  checking if residuals<tolerances & performing accleration (implicit), no accel/iter (explicit)	
+                                    #################################################################################################		
+                                    # checking with preCICE to see if we have converged, or if we need to try the timestep again with new coupling data
+                                    if interface.requires_reading_checkpoint():
+                                            #FOAMySees.CurrSteps+=1				
+                                            FOAMySees.readCheckpoint(stepOut)
+                                            # reading the previously saved database
+                                            StepCheck=0
+                                            # adding one to the iteration counter
+                                            FOAMySees.iteration+=1
+                                            
+                                            # letting preCICE know we are finished going back in time			
+                                    else:
+                                            LastForces=copy.deepcopy(Forces)
+                                            LastDisplacement=copy.deepcopy(Displacement)
+                                            FOAMySees.StepsPerFluidStep=1
 
-				with open('./fys_logs/verticesForce.log','w') as f:
-					for force in Forces:
-						print("{} {} {}".format(force[0],force[1],force[2]),file=f)
-				with open('./fys_logs/verticesDisplacement.log','w') as f:
-					for delta in Displacement:
-						print("{} {} {}".format(delta[0],delta[1],delta[2]),file=f)				
-				
-				#################################################################################################
-				# saving these for some sort of surrogate model?
-				FOAMySees.lastForceandmoment=copy.deepcopy(FOAMySees.forceandmoment)
-				FOAMySees.lastForces=copy.deepcopy(FOAMySees.force)
-				FOAMySees.lastDisplacements=copy.deepcopy(FOAMySees.displacement)	
-				FOAMySees.stepNumber+=1
-				FOAMySees.iteration=1
-				
-				FOAMySees.Flast5times[:,4]=FOAMySees.Flast5times[:,3]
-				FOAMySees.Flast5times[:,3]=FOAMySees.Flast5times[:,2]
-				FOAMySees.Flast5times[:,2]=FOAMySees.Flast5times[:,1]
-				FOAMySees.Flast5times[:,1]=FOAMySees.Flast5times[:,0]
-				FOAMySees.Flast5times[:,0]=np.reshape(FOAMySees.forceandmoment,[FOAMySees.ndofs,])[:]
-				
-				
-				# we are converged, or have given up!
-				#################################################################################################			
-				# doing some house keeping
-				Popen("ls -t SeesCheckpoints/checkpoints/*| tail -n +100 | xargs -d '\n' rm", shell=True, stdin=None, stdout=None, stderr=None,)
-				newStep=1
-				tOUT += DT
-				FOAMySees.CurrSteps=1
-				stepOut+=1
-				FOAMySees.StepsPerFluidStep=1
-	
-			#################################################################################################
-			#ops.wipe()
-			# calling all the recorders made
+                                            with open('./fys_logs/verticesForce.log','w') as f:
+                                                    for force in Forces:
+                                                            print("{} {} {}".format(force[0],force[1],force[2]),file=f)
+                                            with open('./fys_logs/verticesDisplacement.log','w') as f:
+                                                    for delta in Displacement:
+                                                            print("{} {} {}".format(delta[0],delta[1],delta[2]),file=f)				
+                                            
+                                            #################################################################################################
+                                            # saving these for some sort of surrogate model?
+                                            FOAMySees.lastForceandmoment=copy.deepcopy(FOAMySees.forceandmoment)
+                                            FOAMySees.lastForces=copy.deepcopy(FOAMySees.force)
+                                            FOAMySees.lastDisplacements=copy.deepcopy(FOAMySees.displacement)	
+                                            FOAMySees.stepNumber+=1
+                                            FOAMySees.iteration=1
+                                            
 
-			ops.record()
-			
-			FOAMySees.writeLogs()
-			
-			FOAMySees.createRecorders.appendRecords(FOAMySees,FOAMySees.nodeRecInfoList)		
-			if tOUT>=FOAMySees.config.SeesVTKOUTRate:
-				tOUT=0
-				FOAMySees.createRecorders.createPVDRecorder(FOAMySees)
+                                            
+                                            
+                                            # we are converged, or have given up!
+                                            #################################################################################################			
+                                            # doing some house keeping
+                                            Popen("ls -t SeesCheckpoints/checkpoints/*| tail -n +100 | xargs -d '\n' rm", shell=True, stdin=None, stdout=None, stderr=None,)
+                                            newStep=1
+                                            tOUT += DT
+                                            FOAMySees.CurrSteps=1
+                                            stepOut+=1
+                                            FOAMySees.StepsPerFluidStep=1
+                
+                                    #################################################################################################
+                                    #ops.wipe()
+                                    # calling all the recorders made
 
-			#################################################################################################
-	with open(fys_couplingdriver_log_location, 'a+') as f:
-		print("Exiting FOAMySees Coupling Driver",file=f)
+                                    ops.record()
+                                    
+                                    FOAMySees.writeLogs()
+                                    
+                                    FOAMySees.createRecorders.appendRecords(FOAMySees,FOAMySees.nodeRecInfoList)		
+                                    if tOUT>=FOAMySees.config.SeesVTKOUTRate:
+                                            tOUT=0
+                                            FOAMySees.createRecorders.createPVDRecorder(FOAMySees)
 
-	interface.finalize()
+                                    #################################################################################################
+                with open(fys_couplingdriver_log_location, 'a+') as f:
+                        print("Exiting FOAMySees Coupling Driver",file=f)
+
+                interface.finalize()
