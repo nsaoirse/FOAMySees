@@ -19,7 +19,9 @@ try:
 	os.mkdir('OpenFOAM_logs')
 except:
 	pass
-
+    
+stagger='no'
+betaTS=1
 accelerateWhatData='both' # this will be overwritten below if that variable is defined in the configuration file
 
 
@@ -122,7 +124,7 @@ if __name__=="__main__":
 						default="1")
 	parser.add_argument("SnappyHexMeshPointInMeshZ", help="specify point in mesh to keep", type=str,
 						default="1")
-
+        
 	parser.add_argument("singlePhaseSimulation", help="is fluid model single phase?", type=str,
 						default="0")
 	
@@ -132,6 +134,8 @@ if __name__=="__main__":
 	parser.add_argument("singlePhaseKinViscosity", help="single phase kinematic viscosity", type=str,
 						default="1e-06")
     
+	parser.add_argument("SnappyHexMeshMaxLevels", help="max levels for mesh castellation before snapping to surface", type=str,
+						default="4")
 	
 	args = parser.parse_args()
 
@@ -188,7 +192,7 @@ if __name__=="__main__":
 			print('number of OpenSees Steps Per Coupling Timestep: ',args.numOpenSeesStepsPerCouplingTimestep,file=f)	
 
 	# single phase fluid options
-	isFluidSinglePhase=args.singlePhaseSimulation
+	isFluidSinglePhase=int(args.singlePhaseSimulation)
 	fluidRho=args.singlePhaseDensity
 	fluidNu=args.singlePhaseKinViscosity
 	
@@ -198,7 +202,8 @@ if __name__=="__main__":
 	shmLoc=args.SnappyHexMeshPointInMeshX+" "+args.SnappyHexMeshPointInMeshY+" "+args.SnappyHexMeshPointInMeshZ
 	runPreliminaryAnalysis="No"
 	bathExists=0
-
+	shmLevels=args.SnappyHexMeshMaxLevels
+        
 	if isPartOfHydro=="Yes":
 		with open('fys_logs/FOAMySeesInitializeVariables.log', 'a+') as f:	
 			print("THIS CASE IS RUN FROM HYDROUQ",file=f)	
@@ -521,10 +526,10 @@ if __name__=="__main__":
 
 		# run configuration file subfunctions
 		writeOpenFOAMDecomposition(DomainDecomposition,writeOpenFOAMHere)
-		if isFluidSinglePhase==1:
+		if int(isFluidSinglePhase)==1:
 		    writeOpenFOAMpreCICEDictSinglePhase(nameOfCoupledPatchOrSurfaceFile,writeOpenFOAMHere,fluidRho,fluidNu)
 		else:
-		    writeOpenFOAMpreCICEDict(nameOfCoupledPatchOrSurfaceFile,writeOpenFOAMHere)
+		    writeOpenFOAMpreCICEDict(nameOfCoupledPatchOrSurfaceFile,writeOpenFOAMHere,fluidRho,fluidNu)
 
 		buildOpenSeesModelFile(openSeesPyScript,writeOpenSeesHere,copyCaseFilesTo)
 
@@ -652,24 +657,17 @@ if __name__=="__main__":
 		if bathExists==1:
 			with open(fys_log_location, 'a+') as f:	
 				print('Building bathymetry',file=f)	
-			buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesBathymetry(bathExists,writeOpenFOAMHere,shmLoc)
+			buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesBathymetry(bathExists,writeOpenFOAMHere,shmLoc,shmLevels)
 			Popen('''cd '''+writeOpenFOAMHere+ifsnappy, shell=True).wait()
 			with open(fys_log_location, 'a+') as f:	
 				print('Bathymetry Built',file=f)	
 
-		if Turbulence=="No":
-			ifnotTurbulence='''
-			rm -rf 0/epsilon*
-			rm -rf 0/nut*
-			rm -rf 0/omega*
-			rm -rf 0/k*'''
-		else:
-			ifnotTurbulence=''' '''
+
 		
 		with open(fys_log_location, 'a+') as f:	
 			print('Preparing the 0 time folder, Meshing the structure, Setting Fields',file=f)	
 	 
-		buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesStructure(nameOfCoupledPatchOrSurfaceFile,writeOpenFOAMHere,shmLoc)
+		buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesStructure(nameOfCoupledPatchOrSurfaceFile,writeOpenFOAMHere,shmLoc,shmLevels)
 
 		Popen('''cd '''+writeOpenFOAMHere+''' 
 			echo "  Preparing the mesh..."
@@ -678,9 +676,9 @@ if __name__=="__main__":
 			rm -r 0
 			fi
 			cp -r 0.org 0
-			'''+ifnotTurbulence+'''
-
+			
 			'''+ifsnappy+'''
+
 			echo Setting the fields...
 			setFields > ../OpenFOAM_logs/log.setFields
 			echo decomposePar setting up parallel case...

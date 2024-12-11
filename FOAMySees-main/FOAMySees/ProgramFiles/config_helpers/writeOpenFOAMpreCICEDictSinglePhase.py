@@ -1,4 +1,4 @@
-def writeOpenFOAMpreCICEDict(coupledPatchName,writeHere,fluidRho,fluidNu):
+def writeOpenFOAMpreCICEDictSinglePhase(coupledPatchName,writeHere,fluidRho,fluidNu):
 	print('Writing OpenFOAM preciceDict file')
 	print( 'name of coupled surface(s) :', coupledPatchName)
 	OFpreCICEDict=['''/*--------------------------------*- C++ -*----------------------------------*\
@@ -48,9 +48,9 @@ interfaces
 FSI
 {
  namePointDisplacement pointDisplacement;
- solverType incompressible;
- nu              nu [ 0 2 -1 0 0 0 0 ] 1e-03;''','''
- rho             rho [1 -3 0 0 0 0 0] {};'''.format(),'''
+ solverType incompressible;'''+'''
+ nu              nu [ 0 2 -1 0 0 0 0 ] {};'''.format(fluidNu),'''
+ rho             rho [1 -3 0 0 0 0 0] {};'''.format(fluidRho),'''
 }
 ''']
 

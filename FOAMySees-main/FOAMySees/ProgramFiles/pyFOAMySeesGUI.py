@@ -1,4 +1,3 @@
-import matplotlib as mpl
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import time
@@ -33,7 +32,7 @@ import os.path as osp
 #| ============================================== ____/__\___/__\____	 _.*_*.				 |
 #|	F ield		|   |  S tructural	  ||__|/\|___|/\|__||	  \ \ \ \.		 |
 #|	O peration	|___|  E ngineering &	  ||__|/\|___|/\|__||	   | | |  \._ CESG   |  
-#|	A nd    .    .  .   |  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW	|
+#|	A nd	.	.  .   |  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW	|
 #|	M anipulation	|___|  S imulation	  ||__|/\|___|/\|__||   __/, / _ \___.. 2023 |
 #| ==============================================_||  |/\| | |/\|  ||__/,_/__,_____/..__ nsl_|
 # Configure the logging module
@@ -42,10 +41,14 @@ class pyFOAMySeesGUI(QMainWindow):
 
 	def __init__(self, parent=QMainWindow):
 
-		super().__init__()  # Inheriting the constructor from QMainWindow
+
 		self.LogFile="FOAMySeesGUILog"
 		
 		self.couplingIteration=0
+		self.time=0
+		self.timestep=0
+		self.totaltimesteps=1
+		super().__init__()  # Inheriting the constructor from QMainWindow
 
 		self.initUI()  # Adding some things to the constructor
 		self.ProgramDetails='''
@@ -69,15 +72,14 @@ The work which led to development of this tool was funded by the National Scienc
 
 
 '''
-
 	def about(self):
 		QMessageBox.about('''
-#| ===============================================	____/__\___/__\____	 _.*_*.		     |
-#|		 F ield		   |   |  S tructural	  ||__|/\|___|/\|__||	  \ \ \ \.	   |
+#| ===============================================	  ____/__\___/__\____	 _.*_*.		     |
+#|		 F ield		   |   |  S tructural	  ||__|/\|___|/\|__||	  \ \ \ \.	     |
 #|		 O peration	   |___|  E ngineering &  ||__|/\|___|/\|__||	   | | |  \._ CESG   | 
 #|		 A nd		       |  E arthquake	  ||__|/\|___|/\|__||	  _/_/_/ | .\. UW    |
 #|		 M anipulation	   |___|  S imulation	  ||__|/\|___|/\|__||   __/, / _ \___.. 2023 |
-#| ===============================================       _||  |/\| | |/\|  ||__/,_/__,_____/..__ nsl_|
+#| ===============================================	 _||  |/\| | |/\|  ||__/,_/__,_____/..__ nsl_|
 ''', self.ProgramDetails)
 	
 		
@@ -167,7 +169,7 @@ The work which led to development of this tool was funded by the National Scienc
 		
 
 		layoutinner2 = QVBoxLayout() 
-		layoutinner2.addWidget(self.mainWidgetOpenSees())
+		layoutinner2.addWidget(self.OpenFOAMPlotsWidget())
 		tab2.setLayout(layoutinner2)
 		
 		
@@ -182,8 +184,8 @@ The work which led to development of this tool was funded by the National Scienc
 		 
 		tabs.addTab(tab4, "Plot Solution[dev]")
 		tabs.addTab(tab0, "Plot Residuals[dev]")
-		tabs.addTab(tab1, "Setup OpenFOAM[dev]")
-		tabs.addTab(tab2, "Setup OpenSees[n/a]")
+		tabs.addTab(tab1, "Visualize OpenFOAM[dev]")
+		tabs.addTab(tab2, "Plot Result Graphs[dev]")
 		tabs.addTab(tab3, "Settings[n/a]")	   
 
 		
@@ -249,14 +251,42 @@ The work which led to development of this tool was funded by the National Scienc
 		self.show() 
 		
 	def updateTpbar(self):
-		tpbartimes=np.loadtxt('./RunCase/fys_logs/tlog', dtype='float')
-		self.time=tpbartimes[-1,0]
-		self.timestep=tpbartimes[-1,1]
-		self.totaltimesteps=tpbartimes[-1,2]
-		self.latestIteration=tpbartimes[-1,3]
+		try:
+			tpbartimes=np.loadtxt('./RunCase/fys_logs/tlog', dtype='float')
+			
+			try:
+				self.time=tpbartimes[-1,0]
+				self.timestep=tpbartimes[-1,1]
+				self.totaltimesteps=tpbartimes[-1,2]
+				self.latestIteration=tpbartimes[-1,3]
+			except:
+				self.time=0
+				self.timestep=0
+				self.totaltimesteps=1
+				self.latestIteration=0
+		except:
+			opera='initializing model(s)'
+		try:	
+                        oper=np.loadtxt('./RunCase/fys_logs/olog', dtype='float')
 
+                        if oper[-1][0]==1:
+                                opera="OpenSees Checkpoint"
+                                if oper[-1][2]==1:
+                                        opera="STEP FORWARD FyS"
+                        if oper[-1][1]==1:
+                                opera="preCICE/OpenFOAM Operation"
+                                if oper[-1][2]==1:
+                                        opera="OpenFOAM Operation"
+                                if sum(oper[-1][:])==3:
+                                        opera="t={} coupled timestep converged".format(self.time)
+		except:
+                        opera='initializing model(s)'
+		try:
+			self.getOpsLog()
+		except:
+			pass
 		
-		self.simProg.setText("Simulation Progress: Time {} s, Timestep {} of {}".format(self.time,self.timestep,self.totaltimesteps))
+		self.simProg.setText(opera+": "+"Simulation Progress: Time {} s, Timestep {} of {}".format(self.time,self.timestep,self.totaltimesteps))
 
 		self.Tpbar.setValue(int(100*self.timestep/self.totaltimesteps))
 	
@@ -266,7 +296,7 @@ The work which led to development of this tool was funded by the National Scienc
 		returnCode+=os.system("pkg-config --cflags libprecice >> checkEnv")
 		
 		if returnCode>0:
-			self.textEdit.append('Environment not configured properly. Make sure you have installed and loaded everything.')
+			('Environment not configured properly. Make sure you have installed and loaded everything.')
 			print('Environment not configured properly. Make sure you have installed and loaded everything.')
 	def couplingResidualPlotterWidget(self):
 		# Vertical Layouts
@@ -381,43 +411,57 @@ The work which led to development of this tool was funded by the National Scienc
 			keepAllFloat.append(point)
 		print(keepAllFloat[0:-1])
 		self.CouplingArray=np.array(keepAllFloat[0:-1], dtype=float)
-		tpbartimes=np.loadtxt('./RunCase/fys_logs/tlog', dtype='float')
-		self.time=tpbartimes[-1,0]
-		self.timestep=tpbartimes[-1,1]
-		self.totaltimesteps=tpbartimes[-1,2]
-		self.latestIteration=tpbartimes[-1,3]
-		self.textEdit.append('-----------------\nTime: {} \nIteration: {} \n *Displacement: \n\tresidual {} \n\ttolerance {} \n\tnormalization factor {} \n *Force: \n\tresidual {} \n\ttolerance {} \n\tnormalization factor {}'.format(self.time,self.latestIteration,self.CouplingArray[-1,0],self.CouplingArray[-1,1],self.CouplingArray[-1,2],self.CouplingArray[-1,3],self.CouplingArray[-1,4],self.CouplingArray[-1,5]))				
-
+		
+		try:
+			tpbartimes=np.loadtxt('./RunCase/fys_logs/tlog', dtype='float')
+			self.time=tpbartimes[-1,0]
+			self.timestep=tpbartimes[-1,1]
+			self.totaltimesteps=tpbartimes[-1,2]
+			self.latestIteration=tpbartimes[-1,3]
+		except:
+			#tpbartimes=np.loadtxt('./RunCase/fys_logs/tlog', dtype='float')
+			self.time=0
+			self.timestep=0
+			self.totaltimesteps=1
+			self.latestIteration=0
+		try:
+                        self.textEdit.append('-----------------\nTime: {} \nIteration: {} \n *Displacement: \n\tresidual {} \n\ttolerance {} \n\tnormalization factor {} \n *Force: \n\tresidual {} \n\ttolerance {} \n\tnormalization factor {}'.format(self.time,self.latestIteration,self.CouplingArray[-1,0],self.CouplingArray[-1,1],self.CouplingArray[-1,2],self.CouplingArray[-1,3],self.CouplingArray[-1,4],self.CouplingArray[-1,5]))				
+		except:
+                        self.textEdit.append('Simulation has not started. Initializing...')
 		
 	def updateCouplingPlot(self):
 
 		self.getCouplingResiduals()
+		try:
+                        self.couplingIteration=range(1,len(self.CouplingArray[:,2])+1)
+                        self.couplingIteration2=range(1,len(self.CouplingArray[:,2])+1)
+                        self.couplingError=self.CouplingArray[:,0]
+                        self.couplingTol=self.CouplingArray[:,1]
+                        print(self.couplingError)
+                        # Update the plot
+                        self.CouplingPlot.setData(self.couplingIteration, self.couplingError+self.couplingTol[-1])
+                        self.CouplingPlotTol.setData(self.couplingIteration, self.couplingTol)
 
-		self.couplingIteration=range(1,len(self.CouplingArray[:,2])+1)
-		self.couplingIteration2=range(1,len(self.CouplingArray[:,2])+1)
-		self.couplingError=self.CouplingArray[:,0]
-		self.couplingTol=self.CouplingArray[:,1]
-		print(self.couplingError)
-		# Update the plot
-		self.CouplingPlot.setData(self.couplingIteration, self.couplingError+self.couplingTol[-1])
-		self.CouplingPlotTol.setData(self.couplingIteration, self.couplingTol)
+                        self.plotCouplingWidget.setTitle("Displacement Coupling Residual vs Tolerance by Iteration")
 
-		self.plotCouplingWidget.setTitle("Displacement Coupling Residual vs Tolerance by Iteration")
+                        # Set axis labels
+                        self.plotCouplingWidget.setLabel('left', 'Coupling ')
+                        self.plotCouplingWidget.setLabel('bottom', 'Iteration')
 
-		# Set axis labels
-		self.plotCouplingWidget.setLabel('left', 'Coupling ')
-		self.plotCouplingWidget.setLabel('bottom', 'Iteration')
+                        self.couplingError2=self.CouplingArray[:,3]
+                        self.couplingTol2=self.CouplingArray[:,4]			
 
-		self.couplingError2=self.CouplingArray[:,3]
-		self.couplingTol2=self.CouplingArray[:,4]			
-
-		# Update the plot
-		self.CouplingPlot2.setData(self.couplingIteration2, self.couplingError2+self.couplingTol[-1])
-		self.CouplingPlotTol2.setData(self.couplingIteration2, self.couplingTol2)
-		self.plotCouplingWidget2.setTitle("Force Coupling Residual vs Tolerance by Iteration")
-			# Set axis labels
-		self.plotCouplingWidget2.setLabel('left', 'Coupling ')
-		self.plotCouplingWidget2.setLabel('bottom', 'Iteration')
+                        # Update the plot
+                        self.CouplingPlot2.setData(self.couplingIteration2, self.couplingError2+self.couplingTol[-1])
+                        self.CouplingPlotTol2.setData(self.couplingIteration2, self.couplingTol2)
+                        self.plotCouplingWidget2.setTitle("Force Coupling Residual vs Tolerance by Iteration")
+                                # Set axis labels
+                        self.plotCouplingWidget2.setLabel('left', 'Coupling ')
+                        self.plotCouplingWidget2.setLabel('bottom', 'Iteration')
+		except:
+                        self.plotCouplingWidget.setTitle("Nothing to plot yet")
+                        self.plotCouplingWidget2.setTitle("Nothing to plot yet")
+                        pass
 	
 	def residualPlotterWidget(self):
 		# Vertical Layouts
@@ -637,46 +681,50 @@ The work which led to development of this tool was funded by the National Scienc
 
 
 	def updateForcePlots(self):
-		allagglom=glob.glob("./RunCase/*.outagglom")
-		plotAgglom1dat=np.loadtxt(allagglom[0], dtype='float', skiprows=0)
-		plotAgglom1t=plotAgglom1dat[:,0]
-		plotAgglom1x=plotAgglom1dat[:,self.agglomvar1]
-		self.plotAgglom1Widget.setTitle(allagglom[0].strip('.outagglom').strip('./RunCase/'))
+		try:
+			allagglom=glob.glob("./RunCase/*.outagglom")
+			plotAgglom1dat=np.loadtxt(allagglom[0], dtype='float', skiprows=0)
+			plotAgglom1t=plotAgglom1dat[:,0]
+			plotAgglom1x=plotAgglom1dat[:,self.agglomvar1]
+			self.plotAgglom1Widget.setTitle(allagglom[0].strip('.outagglom').strip('./RunCase/'))
 
-		plotAgglom2dat=np.loadtxt(allagglom[1], dtype='float', skiprows=0)
-		plotAgglom2t=plotAgglom2dat[:,0]
-		plotAgglom2x=plotAgglom2dat[:,self.agglomvar2]
-		
-		self.plotAgglom2Widget.setTitle(allagglom[1].strip('.outagglom').strip('./RunCase/'))
-		
-		plotAgglom3dat=np.loadtxt(allagglom[2], dtype='float', skiprows=0)
-		plotAgglom3t=plotAgglom3dat[:,0]
-		plotAgglom3x=plotAgglom3dat[:,self.agglomvar3]
-		
-		self.plotAgglom3Widget.setTitle(allagglom[2].strip('.outagglom').strip('./RunCase/'))
-
-		self.plotAgglom1.setData(plotAgglom1t,plotAgglom1x)
-		if self.checkboxPlotRef1.isChecked():
-			plotAgglom1ref=np.loadtxt('./RunCase/reference.plot', dtype='float', skiprows=0)
-			self.plotAgglom1ref.setData(plotAgglom1ref[:,0],plotAgglom1ref[:,1])
-		else:
-                        self.plotAgglom1ref.setData([0],[0])
+			plotAgglom2dat=np.loadtxt(allagglom[1], dtype='float', skiprows=0)
+			plotAgglom2t=plotAgglom2dat[:,0]
+			plotAgglom2x=plotAgglom2dat[:,self.agglomvar2]
 			
-		self.plotAgglom2.setData(plotAgglom2t,plotAgglom2x)
-		if self.checkboxPlotRef2.isChecked():
-			plotAgglom2ref=np.loadtxt('./RunCase/reference.plot', dtype='float', skiprows=0)
-			self.plotAgglom2ref.setData(plotAgglom2ref[:,0],plotAgglom2ref[:,1])
-		else:
-                        self.plotAgglom2ref.setData([0],[0])
-                        
-		self.plotAgglom3.setData(plotAgglom3t,plotAgglom3x)
-		if self.checkboxPlotRef3.isChecked():
-			plotAgglom3ref=np.loadtxt('./RunCase/reference.plot', dtype='float', skiprows=0)
-			self.plotAgglom3ref.setData(plotAgglom3ref[:,0],plotAgglom3ref[:,1])
-		else:
-                        self.plotAgglom3ref.setData([0],[0])			
-		#self.updateCouplingDataProjectionMeshPlot()
+			self.plotAgglom2Widget.setTitle(allagglom[1].strip('.outagglom').strip('./RunCase/'))
+			
+			plotAgglom3dat=np.loadtxt(allagglom[2], dtype='float', skiprows=0)
+			plotAgglom3t=plotAgglom3dat[:,0]
+			plotAgglom3x=plotAgglom3dat[:,self.agglomvar3]
+			
+			self.plotAgglom3Widget.setTitle(allagglom[2].strip('.outagglom').strip('./RunCase/'))
+
+			self.plotAgglom1.setData(plotAgglom1t,plotAgglom1x)
+			if self.checkboxPlotRef1.isChecked():
+				plotAgglom1ref=np.loadtxt('./RunCase/reference.plot', dtype='float', skiprows=0)
+				self.plotAgglom1ref.setData(plotAgglom1ref[:,0],plotAgglom1ref[:,1])
+			else:
+							self.plotAgglom1ref.setData([0],[0])
 				
+			self.plotAgglom2.setData(plotAgglom2t,plotAgglom2x)
+			if self.checkboxPlotRef2.isChecked():
+				plotAgglom2ref=np.loadtxt('./RunCase/reference.plot', dtype='float', skiprows=0)
+				self.plotAgglom2ref.setData(plotAgglom2ref[:,0],plotAgglom2ref[:,1])
+			else:
+							self.plotAgglom2ref.setData([0],[0])
+							
+			self.plotAgglom3.setData(plotAgglom3t,plotAgglom3x)
+			if self.checkboxPlotRef3.isChecked():
+				plotAgglom3ref=np.loadtxt('./RunCase/reference.plot', dtype='float', skiprows=0)
+				self.plotAgglom3ref.setData(plotAgglom3ref[:,0],plotAgglom3ref[:,1])
+			else:
+				self.plotAgglom3ref.setData([0],[0])			
+			#self.updateCouplingDataProjectionMeshPlot()
+		except:
+			self.plotAgglom1Widget.setTitle("Nothing to plot yet.")
+			self.plotAgglom2Widget.setTitle("Nothing to plot yet.")
+			self.plotAgglom3Widget.setTitle("Nothing to plot yet.")
 		try:
 			self.getInterfaceForce()
 			
@@ -990,54 +1038,208 @@ The work which led to development of this tool was funded by the National Scienc
 			
 		return widget	
 
-	def mainWidgetOpenSees(self):
-		# Vertical Layouts
-		self.Canvas3 = QVBoxLayout()  # Initializing the main vertical box layout for the System Figure
-		
-		mainHolder = QVBoxLayout()  # Initializing the vertical box layout for the slider for load scaling
-		ScaleSliderHolder = QVBoxLayout()  # Initializing the vertical box layout for the slider for results scaling
-
+	def OpenFOAMPlotsWidget(self): 
+##		# Vertical Layouts
+##		self.Canvas3 = QVBoxLayout()  # Initializing the main vertical box layout for the System Figure
+##		
+##		mainHolder = QVBoxLayout()  # Initializing the vertical box layout for the slider for load scaling
+##		ScaleSliderHolder = QVBoxLayout()  # Initializing the vertical box layout for the slider for results scaling
+##
 		# Horizontal Layouts
 		Hlyt1 = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
-		Hlyt2 = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
-		Hlyt3 = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
-		Hbtnlyt = QHBoxLayout()  # Initializing the main horizontal box layout for various buttons
 
-		buttonOpenSeesPlotOpenSees = QPushButton('Plot OpenSees Model')
-		buttonOpenSeesPlotOpenSeesModes = QPushButton('Plot OpenSees Model Eigenmodes')
-		buttonOpenSeesRunPreliminaryOpenSeesAnalysis = QPushButton('Run Preliminary Analysis')
-		buttonOpenSeesRunPreliminaryOpenSeesGravityAnalysis = QPushButton('Run Gravity Analysis')
-		
-		Vbtnlyt = QVBoxLayout()  # Initializing the main horizontal box layout for various buttons
-		Vbtnlyt.addWidget(buttonOpenSeesRunPreliminaryOpenSeesAnalysis)
-		Vbtnlyt.addWidget(buttonOpenSeesRunPreliminaryOpenSeesGravityAnalysis)
-
-
-		Hbtnlyt.addLayout(Vbtnlyt)
-		Hbtnlyt.addWidget(buttonOpenSeesPlotOpenSees)
-		Hbtnlyt.addWidget(buttonOpenSeesPlotOpenSeesModes)
-
-		mainHolder.addLayout(Hbtnlyt)
-		mainHolder.addLayout(self.Canvas3)
-		Hlyt1.addLayout(mainHolder)
+##		buttonOpenSeesPlotOpenSees = QPushButton('Plot OpenSees Model')
+##		buttonOpenSeesPlotOpenSeesModes = QPushButton('Plot OpenSees Model Eigenmodes')
+##		buttonOpenSeesRunPreliminaryOpenSeesAnalysis = QPushButton('Run Preliminary Analysis')
+##		buttonOpenSeesRunPreliminaryOpenSeesGravityAnalysis = QPushButton('Run Gravity Analysis')
+##		
+##		Vbtnlyt = QVBoxLayout()  # Initializing the main horizontal box layout for various buttons
+##		Vbtnlyt.addWidget(buttonOpenSeesRunPreliminaryOpenSeesAnalysis)
+##		Vbtnlyt.addWidget(buttonOpenSeesRunPreliminaryOpenSeesGravityAnalysis)
+##
+##
+##		Hbtnlyt.addLayout(Vbtnlyt)
+##		Hbtnlyt.addWidget(buttonOpenSeesPlotOpenSees)
+##		Hbtnlyt.addWidget(buttonOpenSeesPlotOpenSeesModes)
+##
+##		mainHolder.addLayout(Hbtnlyt)
+##		mainHolder.addLayout(self.Canvas3)
+##		Hlyt1.addLayout(mainHolder)
 
 	 
 		# Creating a vertical layout within which layouts 1-4 will reside
 		layout = QVBoxLayout()  # Initializing the vertical layout
 		layout.addLayout(Hlyt1)  # Adding layouts to the vertical layout
-		layout.addLayout(Hlyt2)  # .
-		layout.addLayout(Hlyt3)  # .
 
 		widget = QWidget()  # Creating a widget to store layouts in
 		# Assigning layout to a dummy widget which will be assigned to be the Central Widget of the QMainWindow window
 		widget.setLayout(layout)  # Setting layout of the widget
-				# FIGURE 1
-		# Connections
-		buttonOpenSeesRunPreliminaryOpenSeesAnalysis.clicked.connect(self.handleOpenSeesRunPreliminaryOpenSeesAnalysis)
-		buttonOpenSeesRunPreliminaryOpenSeesGravityAnalysis.clicked.connect(self.handleOpenSeesRunPreliminaryOpenSeesGravityAnalysis)
 
-		buttonOpenSeesPlotOpenSees.clicked.connect(self.handleOpenSeesButtonOpenSees)
-		buttonOpenSeesPlotOpenSeesModes.clicked.connect(self.handleOpenSeesButtonOpenSeesModes)
+
+		fig_force = QVBoxLayout()
+		fig_force2 =QVBoxLayout()
+		# Start updating the plot in a separate thread
+		self.forceplottimer = pg.QtCore.QTimer()
+		self.worktimer.timeout.connect(self.updateForcePlots)
+		self.worktimer.start(100)  # Update every 100ms
+
+		pwx,pwy = 400,250
+		# Create a PlotWidget for the graph
+		self.plotForceXWidget = pg.PlotWidget()
+		#self.plotForceXWidget.setFixedSize(pwx,pwy)
+		self.plotForceXWidget.setTitle("X Force vs Time (g=total, b=pressure, r=viscous)")
+		# Set axis labels
+		self.plotForceXWidget.setLabel('left', 'Force')
+		self.plotForceXWidget.setLabel('bottom', 'Time (s)')
+
+		
+		self.plotForceYWidget = pg.PlotWidget()
+		self.plotForceYWidget.setTitle("Y Force vs Time (g=total, b=pressure, r=viscous)")
+		# Set axis labels
+		#self.plotForceYWidget.setFixedSize(pwx,pwy)
+		self.plotForceYWidget.setLabel('left', 'Force')
+		self.plotForceYWidget.setLabel('bottom', 'Time (s)')
+
+
+		self.plotForceZWidget = pg.PlotWidget()
+		self.plotForceZWidget.setTitle("Z Force vs Time (g=total, b=pressure, r=viscous)")
+		# Set axis labels
+		#self.plotForceZWidget.setFixedSize(pwx,pwy)
+		self.plotForceZWidget.setLabel('left', 'Force')
+		self.plotForceZWidget.setLabel('bottom', 'Time (s)')
+
+
+		# Create a PlotWidget for the graph
+
+		pwx,pwy = 400,250
+		self.plotAgglom1Widget = pg.PlotWidget()
+		#self.plotAgglom1Widget.setFixedSize(pwx,pwy)
+		self.plotAgglom1Widget.setTitle("outagglom1")
+		# Set axis labels
+		self.plotAgglom1Widget.setLabel('left', 'agglomval')
+		self.plotAgglom1Widget.setLabel('bottom', 'Time (s)')
+		
+		self.plotAgglom2Widget = pg.PlotWidget()
+		#self.plotAgglom2Widget.setFixedSize(pwx,pwy)
+		self.plotAgglom2Widget.setTitle("outagglom2")
+		# Set axis labels
+		self.plotAgglom2Widget.setLabel('left', 'agglomval')
+		self.plotAgglom2Widget.setLabel('bottom', 'Time (s)')
+
+		self.plotAgglom3Widget = pg.PlotWidget()
+		#self.plotAgglom3Widget.setFixedSize(pwx,pwy)
+		self.plotAgglom3Widget.setTitle("outagglom3")
+		# Set axis labels
+		self.plotAgglom3Widget.setLabel('left', 'agglomval')
+		self.plotAgglom3Widget.setLabel('bottom', 'Time (s)')
+		self.plotAgglom1 = self.plotAgglom1Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+
+		self.plotAgglom2 = self.plotAgglom2Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+				
+		self.plotAgglom3 = self.plotAgglom3Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+
+		self.plotAgglom1ref = self.plotAgglom1Widget.plot([0], [0],pen=pg.mkPen('r', style=pg.QtCore.Qt.DashDotDotLine),name="Reference")  # Initialize with a single point
+		self.plotAgglom2ref = self.plotAgglom2Widget.plot([0], [0],pen=pg.mkPen('r', style=pg.QtCore.Qt.DashDotDotLine),name="Reference")  # Initialize with a single point
+				
+		self.plotAgglom3ref = self.plotAgglom3Widget.plot([0], [0],pen=pg.mkPen('r', style=pg.QtCore.Qt.DashDotDotLine),name="Reference")  # Initialize with a single point
+
+
+		# Set up the plot pen='g',name="Fluid to Structure"
+
+		# Set up the plot
+		self.totalFXplot = self.plotForceXWidget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+
+		self.totalFYplot = self.plotForceYWidget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+				
+		self.totalFZplot = self.plotForceZWidget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
+
+		self.pressureFXplot = self.plotForceXWidget.plot([0], [0],pen='b',name="Pressure")  # Initialize with a single point
+
+		self.pressureFYplot = self.plotForceYWidget.plot([0], [0],pen='b',name="Pressure")  # Initialize with a single point
+				
+		self.pressureFZplot = self.plotForceZWidget.plot([0], [0],pen='b',name="Pressure")  # Initialize with a single point
+
+		self.viscousFXplot = self.plotForceXWidget.plot([0], [0],pen='r',name="Viscous")  # Initialize with a single point
+
+		self.viscousFYplot = self.plotForceYWidget.plot([0], [0],pen='r',name="Viscous")  # Initialize with a single point
+				
+		self.viscousFZplot = self.plotForceZWidget.plot([0], [0],pen='r',name="Viscous")  # Initialize with a single point
+
+		
+		fig_force.addWidget(self.plotForceXWidget)
+		fig_force.addWidget(self.plotForceYWidget)
+		fig_force.addWidget(self.plotForceZWidget)
+
+		self.textbox1 = QDoubleSpinBox()
+
+		self.textbox1.setRange(1,6)
+		self.textbox1.valueChanged.connect(self.on_text_changed1)
+		b1=QHBoxLayout()
+		l1=QLabel("Variable/Column: ")
+
+		self.checkboxPlotRef1 = QCheckBox('Plot reference?', self)
+		
+		self.checkboxPlotRef1.setChecked(False)
+		b1.addWidget(l1)
+		b1.addWidget(self.textbox1)
+		b1.addWidget(self.checkboxPlotRef1)
+
+		
+		self.textbox2 = QDoubleSpinBox()
+
+		self.textbox2.setRange(1,6)
+		self.textbox2.valueChanged.connect(self.on_text_changed2)
+		b2=QHBoxLayout()
+		l2=QLabel("Variable/Column: ")
+		b2.addWidget(l2)
+		b2.addWidget(self.textbox2)
+
+
+		self.checkboxPlotRef2 = QCheckBox('Plot reference?', self)
+		
+		self.checkboxPlotRef2.setChecked(False)
+		b2.addWidget(self.checkboxPlotRef2)		
+		self.textbox3 = QDoubleSpinBox()
+
+		self.textbox3.setRange(1,6)
+		self.textbox3.valueChanged.connect(self.on_text_changed3)
+		b3=QHBoxLayout()
+		l3=QLabel("Variable/Column: ")
+		b3.addWidget(l3)
+		b3.addWidget(self.textbox3)
+		self.checkboxPlotRef3 = QCheckBox('Plot reference?', self)
+		
+		self.checkboxPlotRef3.setChecked(False)
+		
+		b3.addWidget(self.checkboxPlotRef3)
+		
+		self.agglomvar1=int(self.textbox1.value())
+
+		self.agglomvar2=int(self.textbox2.value())
+
+		self.agglomvar3=int(self.textbox3.value())
+
+		fig_force2.addLayout(b1)
+		fig_force2.addWidget(self.plotAgglom1Widget)
+		
+		fig_force2.addLayout(b2)
+		fig_force2.addWidget(self.plotAgglom2Widget)
+
+		fig_force2.addLayout(b3)
+		fig_force2.addWidget(self.plotAgglom3Widget)
+
+	
+			
+		self.SetFigureOpenFOAM()
+		
+
+		fig_force3 =QHBoxLayout()
+
+		fig_force3.addLayout(fig_force)
+		
+		fig_force3.addLayout(fig_force2)
+		
+		Hlyt1.addLayout(fig_force3)
 
 
 		return widget	
@@ -1058,27 +1260,20 @@ The work which led to development of this tool was funded by the National Scienc
 
 				doesMeshExist=1
 
-
-		
 				reader=pv.get_reader('./RunCase/CouplingDataProjectionMesh.obj')
 				CouplingMeshViewReader=reader.read()
 				self.CouplingMeshView.clear()
+				
 				self.CouplingMeshView.add_mesh(CouplingMeshViewReader)
-
-				# use this file to plot the vector forces on the coupling mesh
-				# get dataset where to put glyphs
 				msh=np.loadtxt('./RunCase/fys_logs/branches_locations.log')
 				mesh = pv.PolyData(msh)
-
-
-				# add random scalars
-				# rng_int = rng.integers(0, N, size=x.size)
-
-
+				
 				vectors = np.loadtxt('./RunCase/fys_logs/verticesDisplacement.log')
 				mesh['displacement'] = vectors*self.slider1SpinBoxIncr.value()*self.slider1SpinBoxDecr.value()
+				
 				warped=mesh.warp_by_vector('displacement')
 				vectors = np.loadtxt('./RunCase/fys_logs/verticesForce.log')
+				
 				warped['force'] = vectors
 		
 				arrows = warped.glyph(
@@ -1091,19 +1286,11 @@ The work which led to development of this tool was funded by the National Scienc
 				self.CouplingMeshView.add_mesh(arrows, scalar_bar_args={'title': "Force Magnitude"})
 			except:
 				print('No surface file available to plot. Trying again.')
-		# plotter.add_point_labels([point_cloud.center,], ['Center',],
-		#			 point_color='yellow', point_size=20)
-		#self.CouplingMeshView.show_grid()
-		#'./RunCase/fys_logs/verticesForce.log'
 
-		#'./RunCase/fys_logs/branches_locations.log'
-		
-		# self.CouplingMeshView.add_axes_at_origin()
 		self.CouplingMeshView.show_axes()
-		
-		#self.CouplingMeshView.show()
+
 		self.CouplingMeshView.update()
-		#self.CouplingMeshView.render()
+
 	def on_text_changed1(self):
 
 		self.agglomvar1=int(self.textbox1.value())
@@ -1196,156 +1383,7 @@ The work which led to development of this tool was funded by the National Scienc
 		emp = QLabel('')
 		Empty = QVBoxLayout(emp)
 		force = QVBoxLayout()
-		fig_force = QVBoxLayout()
-		fig_force2 =QVBoxLayout()
-		# Start updating the plot in a separate thread
-		self.forceplottimer = pg.QtCore.QTimer()
-		self.worktimer.timeout.connect(self.updateForcePlots)
-		self.worktimer.start(100)  # Update every 100ms
 
-		pwx,pwy = 400,250
-		# Create a PlotWidget for the graph
-		self.plotForceXWidget = pg.PlotWidget()
-		self.plotForceXWidget.setFixedSize(pwx,pwy)
-		self.plotForceXWidget.setTitle("X Force vs Time (g=total, b=pressure, r=viscous)")
-		# Set axis labels
-		self.plotForceXWidget.setLabel('left', 'Force')
-		self.plotForceXWidget.setLabel('bottom', 'Time (s)')
-
-		
-		self.plotForceYWidget = pg.PlotWidget()
-		self.plotForceYWidget.setTitle("Y Force vs Time (g=total, b=pressure, r=viscous)")
-		# Set axis labels
-		self.plotForceYWidget.setFixedSize(pwx,pwy)
-		self.plotForceYWidget.setLabel('left', 'Force')
-		self.plotForceYWidget.setLabel('bottom', 'Time (s)')
-
-
-		self.plotForceZWidget = pg.PlotWidget()
-		self.plotForceZWidget.setTitle("Z Force vs Time (g=total, b=pressure, r=viscous)")
-		# Set axis labels
-		self.plotForceZWidget.setFixedSize(pwx,pwy)
-		self.plotForceZWidget.setLabel('left', 'Force')
-		self.plotForceZWidget.setLabel('bottom', 'Time (s)')
-
-
-# Create a PlotWidget for the graph
-
-		pwx,pwy = 400,250
-		self.plotAgglom1Widget = pg.PlotWidget()
-		self.plotAgglom1Widget.setFixedSize(pwx,pwy)
-		self.plotAgglom1Widget.setTitle("outagglom1")
-		# Set axis labels
-		self.plotAgglom1Widget.setLabel('left', 'agglomval')
-		self.plotAgglom1Widget.setLabel('bottom', 'Time (s)')
-		
-		self.plotAgglom2Widget = pg.PlotWidget()
-		self.plotAgglom2Widget.setFixedSize(pwx,pwy)
-		self.plotAgglom2Widget.setTitle("outagglom2")
-		# Set axis labels
-		self.plotAgglom2Widget.setLabel('left', 'agglomval')
-		self.plotAgglom2Widget.setLabel('bottom', 'Time (s)')
-
-		self.plotAgglom3Widget = pg.PlotWidget()
-		self.plotAgglom3Widget.setFixedSize(pwx,pwy)
-		self.plotAgglom3Widget.setTitle("outagglom3")
-		# Set axis labels
-		self.plotAgglom3Widget.setLabel('left', 'agglomval')
-		self.plotAgglom3Widget.setLabel('bottom', 'Time (s)')
-		self.plotAgglom1 = self.plotAgglom1Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
-
-		self.plotAgglom2 = self.plotAgglom2Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
-				
-		self.plotAgglom3 = self.plotAgglom3Widget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
-
-		self.plotAgglom1ref = self.plotAgglom1Widget.plot([0], [0],pen=pg.mkPen('r', style=pg.QtCore.Qt.DashDotDotLine),name="Reference")  # Initialize with a single point
-		self.plotAgglom2ref = self.plotAgglom2Widget.plot([0], [0],pen=pg.mkPen('r', style=pg.QtCore.Qt.DashDotDotLine),name="Reference")  # Initialize with a single point
-				
-		self.plotAgglom3ref = self.plotAgglom3Widget.plot([0], [0],pen=pg.mkPen('r', style=pg.QtCore.Qt.DashDotDotLine),name="Reference")  # Initialize with a single point
-
-
-		# Set up the plot pen='g',name="Fluid to Structure"
-
-		# Set up the plot
-		self.totalFXplot = self.plotForceXWidget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
-
-		self.totalFYplot = self.plotForceYWidget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
-				
-		self.totalFZplot = self.plotForceZWidget.plot([0], [0],pen='g',name="Total")  # Initialize with a single point
-
-		self.pressureFXplot = self.plotForceXWidget.plot([0], [0],pen='b',name="Pressure")  # Initialize with a single point
-
-		self.pressureFYplot = self.plotForceYWidget.plot([0], [0],pen='b',name="Pressure")  # Initialize with a single point
-				
-		self.pressureFZplot = self.plotForceZWidget.plot([0], [0],pen='b',name="Pressure")  # Initialize with a single point
-
-		self.viscousFXplot = self.plotForceXWidget.plot([0], [0],pen='r',name="Viscous")  # Initialize with a single point
-
-		self.viscousFYplot = self.plotForceYWidget.plot([0], [0],pen='r',name="Viscous")  # Initialize with a single point
-				
-		self.viscousFZplot = self.plotForceZWidget.plot([0], [0],pen='r',name="Viscous")  # Initialize with a single point
-		
-		fig_force.addWidget(self.plotForceXWidget)
-		fig_force.addWidget(self.plotForceYWidget)
-		fig_force.addWidget(self.plotForceZWidget)
-
-		self.textbox1 = QDoubleSpinBox()
-
-		self.textbox1.setRange(1,6)
-		self.textbox1.valueChanged.connect(self.on_text_changed1)
-		b1=QHBoxLayout()
-		l1=QLabel("Variable/Column: ")
-
-		self.checkboxPlotRef1 = QCheckBox('Plot reference?', self)
-		
-		self.checkboxPlotRef1.setChecked(False)
-		b1.addWidget(l1)
-		b1.addWidget(self.textbox1)
-		b1.addWidget(self.checkboxPlotRef1)
-
-		
-		self.textbox2 = QDoubleSpinBox()
-
-		self.textbox2.setRange(1,6)
-		self.textbox2.valueChanged.connect(self.on_text_changed2)
-		b2=QHBoxLayout()
-		l2=QLabel("Variable/Column: ")
-		b2.addWidget(l2)
-		b2.addWidget(self.textbox2)
-
-
-		self.checkboxPlotRef2 = QCheckBox('Plot reference?', self)
-		
-		self.checkboxPlotRef2.setChecked(False)
-		b2.addWidget(self.checkboxPlotRef2)		
-		self.textbox3 = QDoubleSpinBox()
-
-		self.textbox3.setRange(1,6)
-		self.textbox3.valueChanged.connect(self.on_text_changed3)
-		b3=QHBoxLayout()
-		l3=QLabel("Variable/Column: ")
-		b3.addWidget(l3)
-		b3.addWidget(self.textbox3)
-		self.checkboxPlotRef3 = QCheckBox('Plot reference?', self)
-		
-		self.checkboxPlotRef3.setChecked(False)
-		
-		b3.addWidget(self.checkboxPlotRef3)
-		
-		self.agglomvar1=int(self.textbox1.value())
-
-		self.agglomvar2=int(self.textbox2.value())
-
-		self.agglomvar3=int(self.textbox3.value())
-
-		fig_force2.addLayout(b1)
-		fig_force2.addWidget(self.plotAgglom1Widget)
-		
-		fig_force2.addLayout(b2)
-		fig_force2.addWidget(self.plotAgglom2Widget)
-
-		fig_force2.addLayout(b3)
-		fig_force2.addWidget(self.plotAgglom3Widget)
 
 		self.slider1 = QSlider(Qt.Horizontal)
 		self.slider1.setMinimum(1)  # Minimum logarithmic value
@@ -1394,8 +1432,11 @@ The work which led to development of this tool was funded by the National Scienc
 		self.slider2SpinBoxDecr.setSingleStep(1e-1)
 
 		self.slider1SpinBoxIncr.setValue(1)
+		self.slider1SpinBoxIncr.setDecimals(6)
+		
 		self.slider2SpinBoxIncr.setValue(1)
-
+		self.slider2SpinBoxIncr.setDecimals(6)
+		
 		self.slider1SpinBoxIncr.valueChanged.connect(self.on_spin_value_changed1)
 		self.slider2SpinBoxIncr.valueChanged.connect(self.on_spin_value_changed2)
 
@@ -1403,8 +1444,14 @@ The work which led to development of this tool was funded by the National Scienc
 		self.slider1SpinBoxDecr.setRange(1e-10,1)
 							 
 		self.slider2SpinBoxDecr.setRange(1e-10,1)
+		
+
 		self.slider1SpinBoxDecr.setValue(1)
+		self.slider1SpinBoxDecr.setDecimals(6)
+		
 		self.slider2SpinBoxDecr.setValue(1)
+		self.slider2SpinBoxDecr.setDecimals(6)
+		
 		self.slider1SpinBoxDecr.valueChanged.connect(self.on_spin_value_changed1)
 		self.slider2SpinBoxDecr.valueChanged.connect(self.on_spin_value_changed2)
 
@@ -1434,14 +1481,8 @@ The work which led to development of this tool was funded by the National Scienc
 		
 		force.addLayout(fig_force_labels)		
 		force.addLayout(fig_force_sliders)
-			
-		self.SetFigureOpenFOAM()
 
-		fig_force3 =QHBoxLayout()
-		fig_force3.addWidget(self.CouplingMeshView)	
-		fig_force3.addLayout(fig_force)
-		fig_force3.addLayout(fig_force2)
-		force.addLayout(fig_force3)
+		force.addWidget(self.CouplingMeshView)			
 		layout.addLayout(force)		
 
 		return widget
@@ -2055,7 +2096,11 @@ The work which led to development of this tool was funded by the National Scienc
 		except: 
 			self.textEdit.append('no log file exists yet')
 		self.getLog()
-
+		
+	def getOpsLog(self):		
+		with open("RunCase/fys_logs/What is Happening With OpenSees.log","r") as fileInput:
+			self.textEdit.append(fileInput.read())
+			
 	def getLog(self):
 		self.textEdit.clear()
 		try:

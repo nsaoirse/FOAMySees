@@ -28,6 +28,7 @@ def writeControlDict(OpenFOAMSolver,startOFSimAt,endTime,SolutionDT,writeDT,writ
 		"libOpenFOAM.so"
 		"libforces.so"
 		"libOpenFOAM.so"
+		petscFoam
 	);
 	''','''
 	application	 {};'''.format(OpenFOAMSolver),'''
@@ -78,11 +79,7 @@ def writeControlDict(OpenFOAMSolver,startOFSimAt,endTime,SolutionDT,writeDT,writ
 	maxDeltaT {};'''.format(SolutionDT),'''
 	functions 
 	{
-				preCICE_Adapter
-		{
-		   type preciceAdapterFunctionObject;
-			libs ("libpreciceAdapterFunctionObject.so");
-		}
+
 		''',
 		allFunctionObjects,
 		'''

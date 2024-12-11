@@ -1,4 +1,4 @@
-def buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesBathymetry(bathExists,writeHere,shmLOC):
+def buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesBathymetry(bathExists,writeHere,shmLOC,shmLevels):
 	print('Building SHM and Surface Feature Extract Dictionaries')
 	patchLayers=''''''
 	geomSHM=''''''
@@ -29,9 +29,9 @@ def buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesBathymetry(bathExists,
 		 
 		refineSurfs+='''	
 			flumeFloor
-				{
-					level	(1 1);
-					patchInfo
+				{'''+'''
+					level	(1 {});
+					patchInfo'''.format(shmLevels)+'''
 					{
 						type wall;
 					}

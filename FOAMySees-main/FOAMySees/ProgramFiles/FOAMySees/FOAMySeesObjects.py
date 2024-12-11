@@ -7,7 +7,7 @@ import subprocess
 from subprocess import Popen, DEVNULL, STDOUT
 import time
 import logging
-logging.basicConfig(filename='errors.log', level=logging.ERROR)
+#logging.basicConfig(filename='errors.log', level=logging.ERROR)
 
 import pandas as pd
 import re, csv
@@ -19,7 +19,7 @@ sys.path.insert(0, '../')
 sys.path.insert(0, '.')
 sys.path.insert(0, '../OpenSeesPySettings')
 sys.path.insert(0, '../fromUser')
-sys.stderr = open('./error.log', 'w')
+#sys.stderr = open('./error.log', 'w')
 import configureCoupledCase as config
 
 try:
@@ -327,7 +327,8 @@ class FOAMySeesInstance():
 	def iterate(self,CurrSteps,stepDT):
 		
 		ForcePrediction=self.TSExpPredict(self.Flast5times)
-
+		Currdt=stepDT/CurrSteps
+                
 		for node_num in range(self.NNODES):
 			FX=self.force[node_num][0]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][0]
 			FY=self.force[node_num][1]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][1] 
@@ -337,8 +338,10 @@ class FOAMySeesInstance():
 			MZ=self.moment[node_num][2]*(1-self.ForcePredictionAlpha) + self.ForcePredictionAlpha*ForcePrediction[node_num][5]
 			#print( FX, FY, FZ, MX, MY, MZ)
 			ops.load(self.nodeList[node_num], FX, FY, FZ, MX, MY, MZ)
-				
-		Currdt=stepDT/CurrSteps
+			
+		with open(self.opensees_log_location, 'a+') as f:
+			print('analyzing t={} stepDT={} subStepDT={}'.format(self.thisTime,CurrSteps*Currdt,Currdt),file=f)				
+		
 		# ops.partition()
 		self.timeInt()
 

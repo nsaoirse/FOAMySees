@@ -1,4 +1,4 @@
-def buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesStructure(nameOfCoupledPatchOrSurfaceFile,writeHere,shmLOC):
+def buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesStructure(nameOfCoupledPatchOrSurfaceFile,writeHere,shmLOC,shmLevels):
 	print('Building SHM and Surface Feature Extract Dictionaries')
 	
 	patchLayers='''
@@ -25,12 +25,12 @@ def buildSnappyHexMeshAndSurfaceFeatureExtractDictionariesStructure(nameOfCouple
 	 
 	refineSurfs='''
 			{}'''.format(nameOfCoupledPatchOrSurfaceFile)+'''
-			{
-				level	(1 3);
-				patchInfo
-				{
-					type wall;
-				}
+			{'''+'''
+                                level	(1 {});
+                                patchInfo'''.format(shmLevels)+'''
+                                {
+                                        type wall;
+                                }
 			}
 			'''
 	

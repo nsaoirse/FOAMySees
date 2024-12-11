@@ -1,5 +1,5 @@
-def buildSnappyHexMeshAndSurfaceFeatureExtractDictionaries(bathExists,nameOfCoupledPatchOrSurfaceFile,writeHere,shmLOC):
-	print('Building SHM and Surface Feature Extract Dictionaries')
+def buildSnappyHexMeshAndSurfaceFeatureExtractDictionaries(bathExists,nameOfCoupledPatchOrSurfaceFile,writeHere,shmLOC,shmLevels):
+        print('Building SHM and Surface Feature Extract Dictionaries')
 	
 	patchLayers='''
 			{}'''.format(nameOfCoupledPatchOrSurfaceFile)+'''
@@ -25,12 +25,12 @@ def buildSnappyHexMeshAndSurfaceFeatureExtractDictionaries(bathExists,nameOfCoup
 	 
 	refineSurfs='''
 			{}'''.format(nameOfCoupledPatchOrSurfaceFile)+'''
-			{
-				level	(1 3);
-				patchInfo
-				{
-					type wall;
-				}
+			{'''+'''
+                                level	(1 {});
+                                patchInfo'''.format(shmLevels)+'''
+                                {
+                                        type wall;
+                                }
 			}
 			'''
 	if bathExists==1:
@@ -58,14 +58,14 @@ def buildSnappyHexMeshAndSurfaceFeatureExtractDictionaries(bathExists,nameOfCoup
 		 
 		refineSurfs+='''	
 			flumeFloor
-				{
-					level	(1 1);
-					patchInfo
-					{
-						type wall;
-					}
-				}
-				'''
+				{'''+'''
+                                level	(1 {});
+                                patchInfo'''.format(shmLevels)+'''
+                                {
+                                        type wall;
+                                }
+			}
+			'''
 				
 	SHMDict=['''
 	FoamFile

@@ -40,10 +40,9 @@ sys.path.append(FOAMySeesSrcDir+"/ProgramFiles/config_helpers")
 sys.path.append(FOAMySeesSrcDir+"/ProgramFiles/FOAMySees")
 
 import configureCoupledCase as config
-try:
-    import buildOpenSeesModelInThisFile as userModel
-except:
-    pass
+
+import buildOpenSeesModelInThisFile as userModel
+
 from FOAMySeesObjects import *
 
 ## precice

@@ -142,6 +142,8 @@ if __name__ == '__main__':# and rank==0:
 	# force and displacement are currently applied and calculated at the face centers of the OpenFOAM patch cells
 	vertexIDsForce = vertexIDsDisplacement
 
+	print('Number of OpenFOAM Coupled Nodes {}'.format(len(Branches)))
+	print('Number of OpenSees Coupled Nodes {}'.format(len(FOAMySees.nodeLocs)))
 
 	#################################################################################################		  
 	# using SciPy to calculate the K-means clustering  
@@ -314,10 +316,14 @@ if __name__ == '__main__':# and rank==0:
                         if FOAMySees.thisTime<FOAMySees.config.couplingStartTime:					
                                 with open('./fys_logs/tlog', 'a+') as f:
                                         print("{} {} {} {}".format(ops.getTime(),FOAMySees.stepNumber,FOAMySees.totalSteps,FOAMySees.iteration),file=f)
+                                with open('./fys_logs/olog', 'a+') as f:
+                                        print("1 0 0",file=f)
 
                                 interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, LastDisplacement)
                                 interface.requires_reading_checkpoint()
-                                FOAMySees.stepForward(DT)			
+                                FOAMySees.stepForward(DT)
+                                with open('./fys_logs/olog', 'a+') as f:
+                                        print("0 1 0",file=f)
                                 interface.advance(DT)
                                 FOAMySees.thisTime+=DT
                                 print("Uncoupled Simulation Time: {}s, {}% to coupling start time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.couplingStartTime,FOAMySees.config.couplingStartTime))
@@ -327,17 +333,21 @@ if __name__ == '__main__':# and rank==0:
                         else:
                                 print("Coupled Simulation Time: {}s, {}% to termination time at {}s".format(FOAMySees.thisTime,100*FOAMySees.thisTime/FOAMySees.config.endTime,FOAMySees.config.endTime))
                                 #################################################################################################
-                                # preCICE action - checking if a database needs to be written (implicit only)
+                                # preCICE action - checking if a database needs to be written (implicit only)	
                                 if (interface.requires_writing_checkpoint()) or newStep==1:
-
+                                        with open('./fys_logs/olog', 'a+') as f:
+                                                print("0 0 1",file=f)
                                         # summons database save in OpenSees
                                         FOAMySees.writeCheckpoint(stepOut)
 
                                 if (interface.requires_reading_checkpoint()):
-
+                                        with open('./fys_logs/olog', 'a+') as f:
+                                                print("0 0 1",file=f)
                                         # summons database save in OpenSees
                                         FOAMySees.readCheckpoint(stepOut)
 
+                                with open('./fys_logs/olog', 'a+') as f:
+                                        print("1 0 0",file=f)                               
                                 #################################################################################################		
                                 # creating OpenSees recorders for the timestep				
                                 FOAMySees.createRecorders.createNodeRecorders(FOAMySees,FOAMySees.nodeRecInfoList)
@@ -346,8 +356,15 @@ if __name__ == '__main__':# and rank==0:
                                 #################################################################################################
 
                                 # gathering forces from preCICE
+                                with open('./fys_logs/olog', 'a+') as f:
+                                        print("0 1 0",file=f)        
                                 Forces=oneWayD*interface.read_data("Coupling-Data-Projection-Mesh","Force", vertexIDsForce,0)
-
+                                with open('./fys_logs/olog', 'a+') as f:
+                                        print("1 0 1",file=f)
+                                with open('./fys_logs/verticesForce.log','w') as f:
+                                        for force in Forces:
+                                                print("{} {} {}".format(force[0],force[1],force[2]),file=f)
+                                        
                                 for substep in range(1,noOpenSeessubsteps+1):						
                                         currForces=(copy.deepcopy(Forces)-LastForces)*(substep/noOpenSeessubsteps) + LastForces
 
@@ -378,7 +395,9 @@ if __name__ == '__main__':# and rank==0:
                                 #################################################################################################			
                                 # projecting the displacement field from OpenSees to the coupling data projection mesh				
                                 Displacement=oneWay*FOAMySees.projectDisplacements(Displacement)
-                                
+                                with open('./fys_logs/verticesDisplacement.log','w') as f:
+                                        for delta in Displacement:
+                                                print("{} {} {}".format(delta[0],delta[1],delta[2]),file=f)	                                
                                 #################################################################################################			
                                 # calculating the Work
                                                 
@@ -390,14 +409,24 @@ if __name__ == '__main__':# and rank==0:
                                         FOAMySees.WorkOut+=np.sum((Forces)*(Displacement-LastDisplacement)*(1/noOpenFOAMsubsteps))
                                         with open(fys_couplingdriver_log_location, 'a+') as f:
                                                 print('iteration:',iteration,', Time: ',ops.getTime(),'Work Transfer -- error (%)',100*(FOAMySees.WorkIn-FOAMySees.WorkOut)/FOAMySees.WorkIn,' W(f->s)/W(s->f)  (Ratio)',FOAMySees.WorkIn/FOAMySees.WorkOut,', W(f->s) (Joules): ',FOAMySees.WorkIn,', W(s->f) (Joules): ',FOAMySees.WorkOut,file=f)
-                                
+
+                                        with open('./fys_logs/olog', 'a+') as f:
+                                                print("0 1 0",file=f)
+                                                
                                         #################################################################################################
                                         # sending the projected displacements to preCICE to be mapped to OpenFOAM during the next iteration or timestep
                                         interface.write_data("Coupling-Data-Projection-Mesh","Displacement", vertexIDsDisplacement, oneWay*(LastDisplacement+(Displacement-LastDisplacement)*(substep/noOpenFOAMsubsteps)))
+
+                                        with open('./fys_logs/olog', 'a+') as f:
+                                                print("1 0 0",file=f)
                                         #################################################################################################		
                                         # Advancing the coupling scheme -
                                         # precice_dt=interface.advance(precice_dt)			
+                                        with open('./fys_logs/olog', 'a+') as f:
+                                                print("0 1 1",file=f)
                                         precice_dt_return=interface.advance(DT/noOpenFOAMsubsteps)
+                                        with open('./fys_logs/olog', 'a+') as f:
+                                                print("1 0 0",file=f)
                                         with open(fys_couplingdriver_log_location, 'a+') as f:
                                                 print('OpenFOAM substep ', substep,' of ', noOpenFOAMsubsteps, 'OpenSees time: ', ops.getTime(), 'OpenFOAM time: ', ops.getTime() -(noOpenFOAMsubsteps-(substep))*DT/noOpenFOAMsubsteps ,file=f)
                                 
@@ -405,7 +434,9 @@ if __name__ == '__main__':# and rank==0:
                                 #################################################################################################		
                                 # checking with preCICE to see if we have converged, or if we need to try the timestep again with new coupling data
                                 if interface.requires_reading_checkpoint():
-                                        #FOAMySees.CurrSteps+=1				
+                                        #FOAMySees.CurrSteps+=1
+                                        with open('./fys_logs/olog', 'a+') as f:
+                                                print("0 0 1",file=f)
                                         FOAMySees.readCheckpoint(stepOut)
                                         # reading the previously saved database
                                         StepCheck=0
@@ -417,13 +448,9 @@ if __name__ == '__main__':# and rank==0:
                                         LastForces=copy.deepcopy(Forces)
                                         LastDisplacement=copy.deepcopy(Displacement)
                                         FOAMySees.StepsPerFluidStep=1
-
-                                        with open('./fys_logs/verticesForce.log','w') as f:
-                                                for force in Forces:
-                                                        print("{} {} {}".format(force[0],force[1],force[2]),file=f)
-                                        with open('./fys_logs/verticesDisplacement.log','w') as f:
-                                                for delta in Displacement:
-                                                        print("{} {} {}".format(delta[0],delta[1],delta[2]),file=f)				
+                                        with open('./fys_logs/olog', 'a+') as f:
+                                                print("1 1 1",file=f)
+			
                                         
                                         #################################################################################################
                                         # saving these for some sort of surrogate model?
@@ -485,12 +512,14 @@ if __name__ == '__main__':# and rank==0:
                             #################################################################################################
                             # preCICE action - checking if a database needs to be written (implicit only)
                             if (interface.requires_writing_checkpoint()) or newStep==1:
-
+                                    with open('./fys_logs/olog', 'a+') as f:
+                                        print("0 0 1",file=f)
                                     # summons database save in OpenSees
                                     FOAMySees.writeCheckpoint(stepOut)
 
                             if (interface.requires_reading_checkpoint()):
-
+                                    with open('./fys_logs/olog', 'a+') as f:
+                                        print("0 0 1",file=f)
                                     # summons database save in OpenSees
                                     FOAMySees.readCheckpoint(stepOut)
 

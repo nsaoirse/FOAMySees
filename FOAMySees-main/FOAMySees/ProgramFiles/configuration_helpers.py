@@ -31,6 +31,7 @@ from makeVelocityInletTHBC import *
 from writeControlDict import *
 from writeOpenFOAMDecomposition import *
 from writeOpenFOAMpreCICEDict import *
+from writeOpenFOAMpreCICEDictSinglePhase import *
 
 from writeUserLoadRoutines import *
 
