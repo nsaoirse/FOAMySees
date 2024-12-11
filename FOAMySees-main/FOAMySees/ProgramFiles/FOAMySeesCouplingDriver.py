@@ -364,10 +364,11 @@ if __name__ == '__main__':# and rank==0:
                                 with open('./fys_logs/verticesForce.log','w') as f:
                                         for force in Forces:
                                                 print("{} {} {}".format(force[0],force[1],force[2]),file=f)
-                                        
+
                                 for substep in range(1,noOpenSeessubsteps+1):						
                                         currForces=(copy.deepcopy(Forces)-LastForces)*(substep/noOpenSeessubsteps) + LastForces
-
+                                        nStepIncr=1
+                                        StepCheck=1
                                         #################################################################################################		
                                         # looping through the branch groups and determining applied FEM nodal forces
                                         for node in FOAMySees.NodeToCellFaceCenterRelationships:
@@ -375,22 +376,23 @@ if __name__ == '__main__':# and rank==0:
                                         #################################################################################################		
                                         # looping through the branch groups and determining applied FEM nodal moments
                                         FOAMySees.calculateUpdatedMoments(currForces)
-
-                                        #################################################################################################		
-                                        # stepping forward in time with a variableTransient time integration
-                                        # the forces and moments are applied to the coupled nodes here
-                                        StepCheck=FOAMySees.stepForward(FOAMySees.dt/noOpenSeessubsteps)
-
+                                        while (StepCheck!=0):
+                                                #################################################################################################		
+                                                # stepping forward in time with a variableTransient time integration
+                                                # the forces and moments are applied to the coupled nodes here
+                                                StepCheck=FOAMySees.stepForward(FOAMySees.dt/noOpenSeessubsteps,nStepIncr)
+                                                #################################################################################################
+                                                # did the step converge?
+                                                if (StepCheck!=0):
+                                                        with open('./fys_logs/What is Happening With OpenSees.log', 'a+') as f:
+                                                                print('at T={} OpenSeesPy Step did not converge with {} substeps. Trying again with more substeps'.format(FOAMySees.thisTime, FOAMySees.CurrSteps*nStepIncr),file=f)
+                                                        nStepIncr+=1
                                         #################################################################################################		
                                         # reporting
                                         with open(fys_couplingdriver_log_location, 'a+') as f:
                                                 print(ops.getTime(),' = OpenSees time\n', substep,'/',noOpenSeessubsteps, ' = substep/noOpenSeessubsteps',file=f)
 
-                                        #################################################################################################
-                                        # did the step converge?
-                                        if (StepCheck!=0):
-                                                with open(fys_couplingdriver_log_location, 'a+') as f:
-                                                        print(' OpenSeesPy Step did not converge :(',FOAMySees.thisTime,file=f)
+
                                                 
                                 #################################################################################################			
                                 # projecting the displacement field from OpenSees to the coupling data projection mesh				

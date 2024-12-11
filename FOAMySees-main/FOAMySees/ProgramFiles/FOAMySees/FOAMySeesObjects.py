@@ -19,7 +19,7 @@ sys.path.insert(0, '../')
 sys.path.insert(0, '.')
 sys.path.insert(0, '../OpenSeesPySettings')
 sys.path.insert(0, '../fromUser')
-#sys.stderr = open('./error.log', 'w')
+sys.stderr = open('./fys_logs/What is Happening With OpenSees.log', 'a+')
 import configureCoupledCase as config
 
 try:
@@ -291,7 +291,7 @@ class FOAMySeesInstance():
 		ops.analysis(self.config.Analysis[0])
 		#ops.analysis('Transient')
 
-	def stepForward(self,stepDT):
+	def stepForward(self,stepDT,nStepIncr):
 	
 		maxNumIter = 10
 
@@ -308,7 +308,7 @@ class FOAMySeesInstance():
 		ops.timeSeries('Constant', 10001+self.step)
 		ops.pattern('Plain', 10000+self.step, 10001+self.step)
 	
-		StepCheck=self.iterate(self.CurrSteps,stepDT)
+		StepCheck=self.iterate(self.CurrSteps*nStepIncr,stepDT)
 	
 		ops.remove('loadPattern',10000+self.step)
 		ops.remove('timeSeries', 10001+self.step)  
@@ -339,16 +339,16 @@ class FOAMySeesInstance():
 			#print( FX, FY, FZ, MX, MY, MZ)
 			ops.load(self.nodeList[node_num], FX, FY, FZ, MX, MY, MZ)
 			
-		with open(self.opensees_log_location, 'a+') as f:
-			print('analyzing t={} stepDT={} subStepDT={}'.format(self.thisTime,CurrSteps*Currdt,Currdt),file=f)				
-		
+	
 		# ops.partition()
 		self.timeInt()
 
-		StepCheck=ops.analyze(CurrSteps, Currdt, 1e-10, Currdt, 100)
+		StepCheck=ops.analyze(CurrSteps, Currdt, 1e-10, Currdt, 1000)
 		# StepCheck=ops.analyze(CurrSteps,Currdt,1e-10,Currdt, 100)
 		
-
+		with open(self.opensees_log_location, 'a+') as f:
+			print('analyzing t={} num steps={} subStepDT={} status={}'.format(self.thisTime,CurrSteps,Currdt,StepCheck),file=f)				
+	
 		return StepCheck
 		
 	def rampIterate(self,increment):
