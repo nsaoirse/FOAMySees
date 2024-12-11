@@ -380,13 +380,12 @@ if __name__ == '__main__':# and rank==0:
                                                 #################################################################################################		
                                                 # stepping forward in time with a variableTransient time integration
                                                 # the forces and moments are applied to the coupled nodes here
-                                                StepCheck=FOAMySees.stepForward(FOAMySees.dt/noOpenSeessubsteps,nStepIncr)
+                                                StepCheck=FOAMySees.stepForward(FOAMySees.dt/noOpenSeessubsteps)
                                                 #################################################################################################
                                                 # did the step converge?
                                                 if (StepCheck!=0):
                                                         with open('./fys_logs/What is Happening With OpenSees.log', 'a+') as f:
                                                                 print('at T={} OpenSeesPy Step did not converge with {} substeps. Trying again with more substeps'.format(FOAMySees.thisTime, FOAMySees.CurrSteps*nStepIncr),file=f)
-                                                        nStepIncr+=1
                                         #################################################################################################		
                                         # reporting
                                         with open(fys_couplingdriver_log_location, 'a+') as f:

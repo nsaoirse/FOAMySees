@@ -291,7 +291,7 @@ class FOAMySeesInstance():
 		ops.analysis(self.config.Analysis[0])
 		#ops.analysis('Transient')
 
-	def stepForward(self,stepDT,nStepIncr):
+	def stepForward(self,stepDT):
 	
 		maxNumIter = 10
 
@@ -308,7 +308,7 @@ class FOAMySeesInstance():
 		ops.timeSeries('Constant', 10001+self.step)
 		ops.pattern('Plain', 10000+self.step, 10001+self.step)
 	
-		StepCheck=self.iterate(self.CurrSteps*nStepIncr,stepDT)
+		StepCheck=self.iterate(self.CurrSteps,stepDT)
 	
 		ops.remove('loadPattern',10000+self.step)
 		ops.remove('timeSeries', 10001+self.step)  

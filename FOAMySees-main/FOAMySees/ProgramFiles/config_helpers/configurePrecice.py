@@ -118,7 +118,7 @@ def configurePrecice(implicitOrExplicit,outputDataFromCouplingIterations,couplin
 	<participant name="OpenFOAMCase">
 					''',FluidWatchPoints,'''
 	''',doWeOutputPreCICEData,'''
-		<receive-mesh name="Coupling-Data-Projection-Mesh" from="FOAMySeesCouplingDriver" />
+		<receive-mesh name="Coupling-Data-Projection-Mesh" from="FOAMySeesCouplingDriver" geometric-filter="no-filter"/>
 		<provide-mesh name="OpenFOAM-Mesh" />
 		<write-data name="Force" mesh="OpenFOAM-Mesh" />
 		<read-data name="Displacement" mesh="OpenFOAM-Mesh" />

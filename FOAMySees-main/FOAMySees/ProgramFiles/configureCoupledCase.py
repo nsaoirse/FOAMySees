@@ -19,10 +19,11 @@ try:
 	os.mkdir('OpenFOAM_logs')
 except:
 	pass
-    
+couplingStartTime=0
 stagger='no'
 betaTS=1
 accelerateWhatData='both' # this will be overwritten below if that variable is defined in the configuration file
+runSnappyHexMesh='no'
 
 
 Popen('mkdir fys_logs', shell=True, stdout=DEVNULL,stderr=STDOUT).wait()
@@ -51,7 +52,6 @@ except:
 		print('nothing saved yet;',file=f)
 		
 writeOpenSeesHere='./'	
-
 UserLoadApplyFile='userLoadApply.txt'
 UserLoadRemoveFile='userLoadRemove.txt' # the python functions for applying and removing loadings will be built from this set of files
 copyCaseFilesTo='./'

@@ -36,6 +36,7 @@ export FYS_shmLocX="0.1"
 export FYS_shmLocY="0.1"
 export FYS_shmLocZ="0.1"
 export FYS_shmMaxLevels="4"
+export FYS_OF2VTK=1
 # you can change this
 caseFolder="RunCase"
 FYS_OpenFOAMFileHandler="collated" # 'collated' or 'uncollated'
@@ -179,9 +180,14 @@ surfaceMeshExtract -case ${FYS_OpenFOAMCaseFolder} -patches ${FYS_nameOfCoupledP
 cp ${FYS_OpenFOAMCaseFolder}/${FYS_CouplingDataProjectionMesh} .
 decomposePar -force -fileHandler ${FYS_OpenFOAMFileHandler} -case ${FYS_OpenFOAMCaseFolder} > OpenFOAM_logs/decomposePar.log 2>&1
 
+# if [ ${FYS_OF2VTK} -ne 1 ]; then
+# 	echo "nothing to be done"
+# else
+# 	foamToVTK -case ${FYS_OpenFOAMCaseFolder} > OpenFOAM_logs/foamToVTK.log
+# fi
 
-if [ ${nproc} -ne 1 ]; then
-	mpirun -np ${nproc} ${Solver1} -parallel -case ${FYS_OpenFOAMCaseFolder} > OpenFOAM_logs/${Participant1}.log &
+if [ ${FYS_Nprocessors} -ne 1 ]; then
+	mpirun -np ${FYS_Nprocessors} ${Solver1} -parallel -case ${FYS_OpenFOAMCaseFolder} > OpenFOAM_logs/${Participant1}.log &
 else
 	mpirun -np 1 ${Solver1} -case ${FYS_OpenFOAMCaseFolder} > OpenFOAM_logs/${Participant1}.log & 
 fi

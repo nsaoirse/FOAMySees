@@ -1284,6 +1284,10 @@ The work which led to development of this tool was funded by the National Scienc
 
 				self.CouplingMeshView.add_mesh(warped, color='maroon', point_size=5.0, render_points_as_spheres=True)
 				self.CouplingMeshView.add_mesh(arrows, scalar_bar_args={'title': "Force Magnitude"})
+				#mesh2 = pv.read("./RunCase/OpenFOAMCase/system/blockMeshDict")
+
+                                # Plot the mesh
+				#self.CouplingMeshView.add_mesh(mesh2)
 			except:
 				print('No surface file available to plot. Trying again.')
 
@@ -2074,9 +2078,8 @@ The work which led to development of this tool was funded by the National Scienc
 	def clearLog(self):
 		try:
 		 #Popen("cd "+GUIRootLocation).wait()
-			with open("FOAMySeesGUILog", "w") as fileInput: 
-				fileInput.seek(0)
-				fileInput.truncate()
+			with open("fys_logs/FOAMySeesCouplingDriver.log", "r") as fileInput: 
+				self.textEdit.append(fileInput.read())
 		except: 
 				self.textEdit.append('no log file ')
 
