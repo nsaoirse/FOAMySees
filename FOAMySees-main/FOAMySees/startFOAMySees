@@ -165,8 +165,8 @@ PIDParticipant2=$!
 # starting the OpenFOAM model
 echo "Preparing the OpenFOAM Model..."
 cd ${FYS_OpenFOAMCaseFolder}
-        nproc=$(getNumberOfProcessors)
-        Solver1=$(getApplication)    # solver
+        nproc=$(grep "numberOfSubdomains" system/decomposeParDict)
+        Solver1=$(grep "application" system/controlDict | cut -d' ' -f2 | tr -d ';')    # solver
 cd ..
 
 surfaceMeshExtract -case ${FYS_OpenFOAMCaseFolder} -patches ${FYS_nameOfCoupledPatchOrSurfaceFile} -latestTime ../${FYS_CouplingDataProjectionMesh} > OpenFOAM_logs/surfaceFeatureExtract.log 2>&1
