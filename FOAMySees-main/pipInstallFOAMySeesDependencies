@@ -7,3 +7,4 @@ python3 -m pip install opensees --break-system-packages
 python3 -m pip install matplotlib --break-system-packages
 python3 -m pip install PyQt5 --break-system-packages
 python3 -m pip install openseespy --break-system-packages
+python3 -m pip install pyprecice --break-system-packages
