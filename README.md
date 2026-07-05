@@ -179,7 +179,7 @@ unzip develop.zip
 source /usr/lib/openfoam/openfoam2606/etc/bashrc
 
 # add this to the end of bashrc
-echo "source /usr/lib/openfoam/openfoam2606/etc/bashrc">>~/.bashrc
+echo ". /usr/lib/openfoam/openfoam2606/etc/bashrc">>~/.bashrc
 
 cd openfoam-adapter-develop/
 
