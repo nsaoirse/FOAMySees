@@ -39,9 +39,11 @@ variable to be defined to locate the .H files required to compile shared objects
 
 easiest-> (1) [use docker](https://hub.docker.com/r/nicoletteslewis/foamysees) **OR**
 
-difficult-> (2) install everything from source **OR**
+medium-> (2) use system packages (tested 7/4/2026)
 
-bloaty-> (3) [find a suitable virtual machine from preCICE, then install other dependencies with pip](https://precice.org/installation-vm.html#connecting-to-the-vm-via-ssh)
+difficult-> (3) install everything from source **OR**
+
+bloaty-> (4) [find a suitable virtual machine from preCICE, then install other dependencies with pip](https://precice.org/installation-vm.html#connecting-to-the-vm-via-ssh)
 
 ---------------------------------------
 
@@ -151,7 +153,57 @@ olaFlow (https://github.com/phicau/olaFlow)
 swak4Foam (https://openfoamwiki.net/index.php/Contrib/swak4Foam)
 
 
-_** (2) Installing all FOAMySees Dependencies from source.... not recommended for new users**_
+_** (2) Using system packages (specific to ubuntu, tested on v24.04 on July 4 2026)**_
+
+#from a fresh Ubuntu environment
+
+sudo apt update && sudo apt install build-essential cmake libeigen3-dev libxml2-dev libboost-all-dev petsc-dev python3-dev python3-numpy
+sudo apt install python3-pip
+
+sudo apt install precice
+
+wget https://github.com/precice/precice/releases/download/v3.4.1/libprecice3_3.4.1_noble.deb
+
+sudo apt install ./libprecice3_3.4.1_noble.deb
+
+wget -q -O - https://dl.openfoam.com/add-debian-repo.sh | sudo bash
+
+sudo apt-get install openfoam2606-dev
+
+wget https://github.com/precice/openfoam-adapter/archive/refs/heads/develop.zip
+
+sudo apt install unzip
+
+unzip develop.zip
+
+source /usr/lib/openfoam/openfoam2606/etc/bashrc
+
+# add this to the end of bashrc
+echo "source /usr/lib/openfoam/openfoam2606/etc/bashrc">>~/.bashrc
+
+cd openfoam-adapter-develop/
+
+./Allwmake
+
+wget https://github.com/nsaoirse/FOAMySees/archive/refs/heads/dev.zip
+
+unzip dev.zip
+
+cd FOAMySees-dev/
+
+cd FOAMySees-main/
+
+chmod +x pipInstallFOAMySeesDependencies
+
+./pipInstallFOAMySeesDependencies
+
+./setFOAMySeesEnvironment
+
+bash
+        
+
+
+_** (3) Installing all FOAMySees Dependencies from source.... not recommended for new users**_
 
 Download the Github repository to somewhere you'd like it to stay. 
 The files within the repository are largely Python and bash files which will construct a coupled analysis case, depending on the inputs to the program provided. (the files are needed for case setup, and this directory is added to your user .bashrc profile, as well as a few aliases)
