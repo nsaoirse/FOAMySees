@@ -116,7 +116,7 @@ Don't worry about these. Follow the instructions below and everything _should_ i
 
 # Installation Instructions
 
-_Appoaches: (1) [use docker](https://hub.docker.com/r/nicoletteslewis/foamysees) (2) install everything from source (3) [find a suitable virtual machine from preCICE](https://precice.org/installation-vm.html#connecting-to-the-vm-via-ssh)
+_Appoaches: (1) [use docker](https://hub.docker.com/r/nicoletteslewis/foamysees) (2) use system packages (easy, fast) (3) install everything from source (4) [find a suitable virtual machine from preCICE](https://precice.org/installation-vm.html#connecting-to-the-vm-via-ssh)
 
 ** (1) USE DOCKER IMAGE FOR EASIEST APPROACH**
 
